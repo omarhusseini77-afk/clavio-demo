@@ -51,7 +51,7 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}>
           <div style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '-0.5px' }}>
-            CLA<span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 300 }}>/</span>IO
+            CLA<span style={{ color: '#5B82BD' }}>V</span>IO
           </div>
           <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 3 }}>
             Portfolio Intelligence
