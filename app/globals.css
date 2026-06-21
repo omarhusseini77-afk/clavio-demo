@@ -48,9 +48,12 @@ input, select, textarea {
   align-items: start;
 }
 
+.show-mobile { display: none; }
+
 @media (max-width: 767px) {
   .gp-trend-grid { grid-template-columns: 1fr; }
   .hide-mobile { display: none !important; }
+  .show-mobile { display: inline !important; }
 }
 
 @keyframes clavio-pulse {

@@ -344,7 +344,7 @@ function PerformanceTab() {
     <div>
       {/* Header metrics */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div>
+        <div className="hide-mobile">
           <h2 style={{ fontSize: 20, fontWeight: 700 }}>Fund performance</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.period}</p>
         </div>
@@ -538,45 +538,126 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 // ── Documents tab ────────────────────────────────────────────────────────────
 
 function DocumentsTab() {
+  const [query, setQuery] = useState('')
+  const [openDoc, setOpenDoc] = useState<string | null>(null)
+  const [summaries, setSummaries] = useState<Record<string, string>>({})
+  const [loadingDoc, setLoadingDoc] = useState<string | null>(null)
+  const [errorDoc, setErrorDoc] = useState<Record<string, string>>({})
+
+  const q = query.trim().toLowerCase()
+  const filtered = DOCUMENTS.filter(d =>
+    !q || d.title.toLowerCase().includes(q) || d.type.toLowerCase().includes(q)
+  )
+
+  const summarize = async (title: string, type: string) => {
+    setOpenDoc(prev => (prev === title ? null : title))
+    if (summaries[title] || loadingDoc === title) return
+    setLoadingDoc(title)
+    setErrorDoc(e => ({ ...e, [title]: '' }))
+    try {
+      const question = `Summarise the "${title}" (a ${type.toLowerCase()} for ${FUND.name}) for an investor in exactly 3 short bullet points. Each bullet on its own line starting with "• ". Ground every bullet in the fund and portfolio figures you have. No preamble, just the 3 bullets.`
+      const res = await fetch('/api/ask', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Request failed')
+      setSummaries(s => ({ ...s, [title]: data.answer || '' }))
+    } catch (e: unknown) {
+      setErrorDoc(er => ({ ...er, [title]: e instanceof Error ? e.message : 'Could not summarise' }))
+    } finally {
+      setLoadingDoc(null)
+    }
+  }
+
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
+      <div className="hide-mobile" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700 }}>Documents</h2>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>Reports, notices and tax documents for {FUND.name}</p>
       </div>
+
+      {/* Search */}
+      <div style={{ position: 'relative', marginBottom: 12 }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 14 }}>⌕</span>
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search documents…"
+          style={{ width: '100%', padding: '11px 14px 11px 36px', borderRadius: 10, fontSize: 14, border: '1px solid var(--border)', outline: 'none', background: 'white' }}
+        />
+      </div>
+
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
-        {DOCUMENTS.map((doc, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            padding: '16px 20px',
-            borderBottom: i < DOCUMENTS.length - 1 ? '1px solid #F3F4F6' : 'none',
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: doc.type === 'Notice' ? '#FEF3C7' : doc.type === 'Tax' ? '#EEF3FA' : '#F3F4F6',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14,
-            }}>
-              {doc.type === 'Notice' ? '!' : doc.type === 'Tax' ? '§' : '≡'}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>{doc.title}</span>
-                {doc.isNew && (
-                  <span style={{ fontSize: 10, fontWeight: 700, background: '#ECFDF5', color: '#065F46', padding: '2px 7px', borderRadius: 20, letterSpacing: '0.05em' }}>NEW</span>
-                )}
+        {filtered.length === 0 && (
+          <div style={{ padding: '28px 20px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>No documents match “{query}”.</div>
+        )}
+        {filtered.map((doc, i) => {
+          const isOpen = openDoc === doc.title
+          return (
+            <div key={doc.title} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                  background: doc.type === 'Notice' ? '#FEF3C7' : doc.type === 'Tax' ? '#EEF3FA' : '#F3F4F6',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                }}>
+                  {doc.type === 'Notice' ? '!' : doc.type === 'Tax' ? '§' : '≡'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{doc.title}</span>
+                    {doc.isNew && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: '#ECFDF5', color: '#065F46', padding: '2px 7px', borderRadius: 20, letterSpacing: '0.05em' }}>NEW</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{doc.type} · {doc.date}</div>
+                </div>
+                <button
+                  onClick={() => summarize(doc.title, doc.type)}
+                  style={{
+                    padding: '7px 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
+                    border: `1px solid ${isOpen ? 'var(--accent)' : '#D7E2F2'}`,
+                    background: isOpen ? 'var(--accent)' : '#F4F8FE', color: isOpen ? 'white' : 'var(--accent)',
+                    cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  ✦ <span className="hide-mobile">Summary</span>
+                </button>
+                <button style={{
+                  padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                  border: '1px solid var(--border)', background: 'white', color: 'var(--text)',
+                  cursor: 'pointer', flexShrink: 0,
+                }}>
+                  <span className="hide-mobile">Download</span>
+                  <span className="show-mobile">↓</span>
+                </button>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{doc.type} · {doc.date}</div>
+
+              {isOpen && (
+                <div style={{ padding: '0 20px 16px 70px' }}>
+                  <div style={{ background: '#F7FAFE', border: '1px solid #E3ECF8', borderRadius: 10, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>✦ AI Summary</span>
+                    </div>
+                    {loadingDoc === doc.title ? (
+                      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                        {[0, 1, 2].map(k => (
+                          <span key={k} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: `clavio-pulse 1.2s ${k * 0.18}s infinite ease-in-out` }} />
+                        ))}
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Reading the document…</span>
+                      </div>
+                    ) : errorDoc[doc.title] ? (
+                      <div style={{ fontSize: 12.5, color: 'var(--red)' }}>{errorDoc[doc.title]}</div>
+                    ) : (
+                      <div style={{ fontSize: 13, lineHeight: 1.65, color: '#374151', whiteSpace: 'pre-wrap' }}>{summaries[doc.title]}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <button style={{
-              padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-              border: '1px solid var(--border)', background: 'white', color: 'var(--text)',
-              cursor: 'pointer', flexShrink: 0,
-            }}>
-              Download
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
