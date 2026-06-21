@@ -122,7 +122,45 @@ export default function Home() {
           </div>
         )}
 
-        <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '28px 28px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
+        {/* Content header */}
+        {!isMobile && (
+          <div style={{
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--white)',
+            padding: '18px 32px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0,
+          }}>
+            <div>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>
+                {role === 'gp' ? 'Dashboard' : role === 'lp' ? 'LP Report' : 'Submit Financials'}
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+                {role === 'gp' ? 'Partner view · Live data' : role === 'lp' ? 'Investor view · Confidential' : 'Portfolio Co. · Quarterly submission'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 4 }}>Currency</span>
+              {(['GBP', 'USD', 'EUR'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  style={{
+                    padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                    border: currency === c ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                    background: currency === c ? 'var(--accent)' : 'transparent',
+                    color: currency === c ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '28px 32px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
               <Spinner /> Loading data…
