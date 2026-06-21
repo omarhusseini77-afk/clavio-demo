@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
-import { FUND, COMPANIES, DOCUMENTS } from '@/lib/fundData'
+import { FUND, COMPANIES, DOCUMENTS, CAPITAL_EVENTS, FORECAST } from '@/lib/fundData'
 import BottomTabBar from './BottomTabBar'
 
 const LP_TABS = [
@@ -200,6 +200,12 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
         </div>
       </div>
 
+      {/* Cash-flow forecast */}
+      <ForecastStrip currency={currency} />
+
+      {/* Capital account activity timeline */}
+      <CapitalActivity currency={currency} />
+
       {/* Partners' Letter */}
       <div style={{ ...styles.card, marginBottom: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -222,6 +228,111 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       >
         View full fund performance →
       </button>
+    </div>
+  )
+}
+
+// ── Cash-flow forecast strip ─────────────────────────────────────────────────
+
+function ForecastStrip({ currency }: { currency: Currency }) {
+  return (
+    <div style={{ ...styles.card, marginBottom: 10, borderLeft: '3px solid var(--accent)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Cash-Flow Forecast</span>
+        <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>PROJECTED</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
+        <ForecastItem
+          dir="out"
+          label="Next capital call"
+          amount={`~${fmtM(FORECAST.nextCall.amount, currency)}`}
+          period={FORECAST.nextCall.period}
+          note={FORECAST.nextCall.note}
+        />
+        <ForecastItem
+          dir="in"
+          label="Next distribution"
+          amount={`~${fmtM(FORECAST.nextDistribution.amount, currency)}`}
+          period={FORECAST.nextDistribution.period}
+          note={FORECAST.nextDistribution.note}
+        />
+        <ForecastItem
+          dir="in"
+          label="Distributions, next 18m"
+          amount={`~${fmtM(FORECAST.projectedDistributions18m, currency)}`}
+          period="Through 2027"
+          note="Based on the fund's realisation plan"
+        />
+      </div>
+    </div>
+  )
+}
+
+function ForecastItem({ dir, label, amount, period, note }: {
+  dir: 'in' | 'out'; label: string; amount: string; period: string; note: string
+}) {
+  const isIn = dir === 'in'
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+        <span style={{
+          width: 18, height: 18, borderRadius: 5, flexShrink: 0, fontSize: 11,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: isIn ? '#ECFDF5' : '#EEF3FA', color: isIn ? '#10B981' : 'var(--accent)',
+        }}>{isIn ? '↓' : '↑'}</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.03em', textTransform: 'uppercase' }}>{label}</span>
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: isIn ? '#0F7B4F' : 'var(--text)' }}>{amount}</div>
+      <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 500, marginTop: 1 }}>{period}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 }}>{note}</div>
+    </div>
+  )
+}
+
+// ── Capital account activity timeline ────────────────────────────────────────
+
+function CapitalActivity({ currency }: { currency: Currency }) {
+  // Most recent first
+  const events = [...CAPITAL_EVENTS].reverse()
+  return (
+    <div style={{ ...styles.card, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, flexWrap: 'wrap', gap: 6 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Capital Account Activity</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+          {fmtM(FUND.called, currency)} called · {fmtM(FUND.distributed, currency)} distributed
+        </span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        {/* vertical line */}
+        <div style={{ position: 'absolute', left: 7, top: 6, bottom: 6, width: 2, background: 'var(--border)' }} />
+        {events.map((e, i) => {
+          const isCall = e.type === 'call'
+          return (
+            <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', paddingBottom: i < events.length - 1 ? 16 : 0, position: 'relative' }}>
+              <span style={{
+                width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 2, zIndex: 1,
+                border: '2px solid white', boxShadow: '0 0 0 1px var(--border)',
+                background: isCall ? 'var(--accent)' : '#10B981',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }} />
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.35 }}>{e.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{e.date}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isCall ? 'var(--text)' : '#0F7B4F' }}>
+                    {isCall ? '−' : '+'}{fmtM(e.amount, currency)}
+                  </div>
+                  <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    {isCall ? 'Called' : 'Distributed'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

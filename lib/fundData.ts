@@ -81,6 +81,35 @@ export const COMPANIES: Company[] = [
   },
 ]
 
+// The investor's own capital account history — calls (cash in) and
+// distributions (cash out to the LP). Totals tie to FUND.called / FUND.distributed.
+export interface CapitalEvent {
+  date: string
+  type: 'call' | 'distribution'
+  label: string
+  amount: number
+}
+
+export const CAPITAL_EVENTS: CapitalEvent[] = [
+  { date: '15 Jun 2022', type: 'call', label: 'Capital Call 1 · Initial deployment', amount: 750000 },
+  { date: '20 Nov 2022', type: 'call', label: 'Capital Call 2', amount: 600000 },
+  { date: '18 Apr 2023', type: 'call', label: 'Capital Call 3', amount: 550000 },
+  { date: '22 Sep 2023', type: 'call', label: 'Capital Call 4', amount: 500000 },
+  { date: '14 Mar 2024', type: 'call', label: 'Capital Call 5', amount: 550000 },
+  { date: '12 May 2024', type: 'distribution', label: 'Distribution 1 · Delacourt dividend recap', amount: 380000 },
+  { date: '19 Sep 2024', type: 'call', label: 'Capital Call 6 · Abington add-on', amount: 450000 },
+  { date: '28 Nov 2024', type: 'distribution', label: 'Distribution 2 · Portfolio refinancing', amount: 420000 },
+  { date: '20 Nov 2025', type: 'distribution', label: 'Distribution 3', amount: 440000 },
+  { date: '02 Apr 2026', type: 'call', label: 'Capital Call 7', amount: 450000 },
+]
+
+// Forward-looking projection shown to the investor.
+export const FORECAST = {
+  nextCall: { period: 'Q3 2026', amount: 450000, note: 'Planned add-on acquisition at Abington Technical Services' },
+  nextDistribution: { period: 'Q4 2026', amount: 320000, note: 'Expected from Marlow & Reed recapitalisation' },
+  projectedDistributions18m: 1600000,
+}
+
 export const DOCUMENTS = [
   { title: 'Q1 2026 Quarterly Report', type: 'Report', date: '16 Apr 2026', isNew: true },
   { title: 'Capital Call Notice · Call 7', type: 'Notice', date: '02 Apr 2026', isNew: true },
@@ -100,5 +129,9 @@ export function fundContext(): string {
     annualAccounts: c.data,
     note: c.commentary,
   }))
-  return JSON.stringify({ fund: FUND, portfolioCompanies: companies }, null, 2)
+  return JSON.stringify({
+    fund: FUND,
+    portfolioCompanies: companies,
+    yourCapitalAccount: { events: CAPITAL_EVENTS, forecast: FORECAST },
+  }, null, 2)
 }
