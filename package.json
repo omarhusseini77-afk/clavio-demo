@@ -14,7 +14,10 @@
     "react": "^18",
     "react-dom": "^18",
     "@supabase/supabase-js": "^2.44.4",
-    "recharts": "^2.12.7"
+    "recharts": "^2.12.7",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20",

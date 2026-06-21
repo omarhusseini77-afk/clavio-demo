@@ -3,21 +3,21 @@ import { useEffect, useState } from 'react'
 import PortfolioView from '@/components/PortfolioView'
 import GPView from '@/components/GPView'
 import LPView from '@/components/LPView'
+import { supabase } from '@/lib/supabase'
 import type { Quarter } from '@/lib/supabase'
 
 type Role = 'portfolio' | 'gp' | 'lp'
 
-const ROLES: { id: Role; label: string; sub: string }[] = [
-  { id: 'portfolio', label: 'Portfolio Co.', sub: 'Submit financials' },
-  { id: 'gp', label: 'GP / Partner', sub: 'Cyril — dashboard' },
-  { id: 'lp', label: 'LP / Investor', sub: 'Investor report' },
+const ROLES: { id: Role; label: string }[] = [
+  { id: 'portfolio', label: 'Portfolio Co.' },
+  { id: 'gp', label: 'GP / Partner' },
+  { id: 'lp', label: 'LP / Investor' },
 ]
 
 export default function Home() {
   const [role, setRole] = useState<Role>('gp')
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
-  const [seeded, setSeeded] = useState(false)
 
   const fetchQuarters = async () => {
     const res = await fetch('/api/quarters')
@@ -27,14 +27,22 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const seed = async () => {
-      if (seeded) return
+    const init = async () => {
       await fetch('/api/seed', { method: 'POST' })
-      setSeeded(true)
       await fetchQuarters()
     }
-    seed()
-  }, [seeded])
+    init()
+
+    // Live auto-refresh via Supabase realtime
+    const channel = supabase
+      .channel('quarters-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quarters' }, () => {
+        fetchQuarters()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   const onSubmit = async (q: Omit<Quarter, 'id' | 'created_at'>) => {
     const res = await fetch('/api/quarters', {
@@ -46,21 +54,39 @@ export default function Home() {
     return res.ok
   }
 
+  const onDelete = async (id: number) => {
+    await fetch(`/api/quarters/${id}`, { method: 'DELETE' })
+    await fetchQuarters()
+  }
+
+  const onUpdate = async (id: number, q: Omit<Quarter, 'id' | 'created_at'>) => {
+    const res = await fetch(`/api/quarters/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(q),
+    })
+    if (res.ok) await fetchQuarters()
+    return res.ok
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{
         background: 'var(--navy)',
-        padding: '0 20px',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingBottom: 0,
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        height: 56,
+        minHeight: 'calc(56px + env(safe-area-inset-top))',
         flexShrink: 0,
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px', marginRight: 16 }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px', marginRight: 16, flexShrink: 0 }}>
           Clavio
         </span>
-        <div style={{ display: 'flex', gap: 4, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch' as never }}>
           {ROLES.map(r => (
             <button
               key={r.id}
@@ -91,7 +117,7 @@ export default function Home() {
         ) : (
           <>
             {role === 'portfolio' && <PortfolioView onSubmit={onSubmit} />}
-            {role === 'gp' && <GPView quarters={quarters} />}
+            {role === 'gp' && <GPView quarters={quarters} onDelete={onDelete} onUpdate={onUpdate} />}
             {role === 'lp' && <LPView quarters={quarters} />}
           </>
         )}

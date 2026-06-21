@@ -7,6 +7,88 @@ const fmtK = (n: number) => `£${(n / 1_000).toFixed(0)}k`
 const fmtFull = (n: number) => `£${n.toLocaleString('en-GB')}`
 const pct = (a: number, b: number) => (((a - b) / Math.abs(b)) * 100).toFixed(1)
 
+async function exportPDF(quarters: Quarter[]) {
+  const { default: jsPDF } = await import('jspdf')
+  const { default: autoTable } = await import('jspdf-autotable')
+
+  const latest = quarters[quarters.length - 1]
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+  // Header block
+  doc.setFillColor(10, 14, 26)
+  doc.rect(0, 0, 210, 40, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Portfolio Financial Summary', 14, 18)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(180, 195, 220)
+  doc.text(`Period: ${latest.period}  ·  Prepared ${today}  ·  Clavio Capital  ·  Confidential`, 14, 30)
+
+  // KPI row
+  const margin = (latest.gross / latest.turnover * 100).toFixed(1)
+  const opMargin = (latest.op / latest.turnover * 100).toFixed(1)
+  doc.setTextColor(10, 14, 26)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'bold')
+  const kpis = [
+    ['Revenue', fmtFull(latest.turnover)],
+    ['Gross Profit', `${fmtFull(latest.gross)} (${margin}%)`],
+    ['Op. Profit', `${fmtFull(latest.op)} (${opMargin}%)`],
+    ['Net Assets', fmtFull(latest.net_assets)],
+  ]
+  kpis.forEach(([label, value], i) => {
+    const x = 14 + i * 47
+    doc.setTextColor(100, 100, 120)
+    doc.text(label.toUpperCase(), x, 50)
+    doc.setTextColor(10, 14, 26)
+    doc.setFontSize(11)
+    doc.text(value, x, 57)
+    doc.setFontSize(9)
+  })
+
+  // Narrative
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(55, 65, 81)
+  const narrative = `The portfolio company reported turnover of ${fmtFull(latest.turnover)} for ${latest.period}, generating a gross profit of ${fmtFull(latest.gross)} (${margin}% gross margin) and operating profit of ${fmtFull(latest.op)} (${opMargin}% operating margin). Profit before tax stood at ${fmtFull(latest.pbt)}, with retained profit of ${fmtFull(latest.retained)}. Net assets are ${fmtFull(latest.net_assets)}, supported by cash of ${fmtFull(latest.cash)}.`
+  const lines = doc.splitTextToSize(narrative, 182)
+  doc.text(lines, 14, 68)
+
+  // Table
+  const tableRows = [...quarters].reverse().map(q => [
+    q.period,
+    fmtFull(q.turnover),
+    `${(q.gross / q.turnover * 100).toFixed(1)}%`,
+    `${(q.op / q.turnover * 100).toFixed(1)}%`,
+    fmtFull(q.pbt),
+    fmtFull(q.net_assets),
+  ])
+
+  autoTable(doc, {
+    startY: 68 + lines.length * 5 + 6,
+    head: [['Period', 'Revenue', 'Gross Margin', 'Op. Margin', 'PBT', 'Net Assets']],
+    body: tableRows,
+    headStyles: { fillColor: [10, 14, 26], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 9, textColor: [30, 30, 40] },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    margin: { left: 14, right: 14 },
+  })
+
+  // Footer
+  const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(150)
+    doc.text(`This document is confidential · Clavio Capital · ${today} · Page ${i} of ${pageCount}`, 14, 290)
+  }
+
+  doc.save(`clavio-investor-report-${latest.period.replace(/\s/g, '-')}.pdf`)
+}
+
 export default function LPView({ quarters }: { quarters: Quarter[] }) {
   const latest = quarters[quarters.length - 1]
   const prev = quarters[quarters.length - 2]
@@ -40,9 +122,17 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
             <h1 style={styles.reportTitle}>Portfolio Financial Summary</h1>
             <p style={styles.reportPeriod}>Period: {latest.period} · Prepared {today}</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>CLAVIO CAPITAL</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Confidential</div>
+          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>CLAVIO CAPITAL</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Confidential</div>
+            </div>
+            <button
+              onClick={() => exportPDF(quarters)}
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: 'white', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+            >
+              ↓ Export PDF
+            </button>
           </div>
         </div>
       </div>
