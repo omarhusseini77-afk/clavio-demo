@@ -170,79 +170,80 @@ function AccountTab({ currency, goToPerformance }: { currency: Currency; goToPer
 
   return (
     <div>
-      {/* Position header */}
-      <div style={{ ...styles.card, marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Your position</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{FUND.name} · as at {FUND.date}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>NAV</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{fmtM(FUND.nav, currency)}</div>
+      {/* Top summary: fund name + 3 headline numbers in one compact card */}
+      <div style={{ ...styles.card, marginBottom: 10 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{FUND.name} · as at {FUND.date}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
+          {[
+            { label: 'NAV', value: fmtM(FUND.nav, currency), accent: true },
+            { label: 'TVPI', value: `${FUND.tvpi}x`, accent: false },
+            { label: 'DPI', value: `${FUND.dpi}x`, accent: false },
+          ].map((s, i) => (
+            <div key={s.label} style={{
+              paddingRight: i < 2 ? 16 : 0,
+              borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              paddingLeft: i > 0 ? 16 : 0,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: s.accent ? 'var(--accent)' : 'var(--text)' }}>{s.value}</div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>TVPI</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{FUND.tvpi}x</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>DPI</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{FUND.dpi}x</div>
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
-
-      {/* 6 KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12, marginBottom: 16 }}>
-        {[
-          { label: 'COMMITMENT', value: fmtFull(FUND.commitment, currency), sub: 'Total committed' },
-          { label: 'CALLED TO DATE', value: fmtFull(FUND.called, currency), sub: `${calledPct.toFixed(0)}% of commitment` },
-          { label: 'UNFUNDED', value: fmtFull(FUND.unfunded, currency), sub: 'Remaining to be called' },
-          { label: 'DISTRIBUTED', value: fmtFull(FUND.distributed, currency), sub: 'Returned to you' },
-          { label: 'CURRENT NAV', value: fmtFull(FUND.nav, currency), sub: 'Value of your holding' },
-          { label: 'SHARE OF FUND', value: `${FUND.shareOfFund}%`, sub: 'Your stake' },
-        ].map(k => (
-          <div key={k.label} style={styles.card}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>{k.label}</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{k.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{k.sub}</div>
-          </div>
-        ))}
       </div>
 
       {/* Capital called progress */}
-      <div style={{ ...styles.card, marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Capital Called</div>
-        <div style={{ background: '#F3F4F6', borderRadius: 4, height: 8, marginBottom: 12 }}>
-          <div style={{ background: 'var(--accent)', borderRadius: 4, height: 8, width: `${calledPct}%`, transition: 'width 0.6s' }} />
+      <div style={{ ...styles.card, marginBottom: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Capital Called</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{calledPct.toFixed(0)}% of commitment</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-          <span style={{ fontWeight: 500 }}>{fmtFull(FUND.called, currency)} called</span>
-          <span style={{ color: 'var(--text-muted)' }}>{fmtFull(FUND.unfunded, currency)} remaining</span>
+        <div style={{ background: '#F3F4F6', borderRadius: 4, height: 6, marginBottom: 8 }}>
+          <div style={{ background: 'var(--accent)', borderRadius: 4, height: 6, width: `${calledPct}%` }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ fontWeight: 500 }}>{fmtM(FUND.called, currency)} called</span>
+          <span style={{ color: 'var(--text-muted)' }}>{fmtM(FUND.unfunded, currency)} remaining</span>
+        </div>
+      </div>
+
+      {/* 6 KPIs in a tight 3-column grid */}
+      <div style={{ ...styles.card, marginBottom: 10, padding: '14px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 12px' }}>
+          {[
+            { label: 'Commitment', value: fmtM(FUND.commitment, currency) },
+            { label: 'Called', value: fmtM(FUND.called, currency) },
+            { label: 'Unfunded', value: fmtM(FUND.unfunded, currency) },
+            { label: 'Distributed', value: fmtM(FUND.distributed, currency) },
+            { label: 'Current NAV', value: fmtM(FUND.nav, currency) },
+            { label: 'Share of Fund', value: `${FUND.shareOfFund}%` },
+          ].map(k => (
+            <div key={k.label}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>{k.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{k.value}</div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Partners' Letter */}
-      <div style={{ ...styles.card, marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
+      <div style={{ ...styles.card, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
           Partners&apos; Letter · Q1 2026
         </div>
-        <p style={{ fontSize: 14, lineHeight: 1.75, color: '#374151', marginBottom: 14 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>
           Fund II closed the quarter at 1.39x MOIC, with three of four portfolio companies delivering steady operational performance. Aggregate portfolio revenue grew approximately 8% year on year, led by Abington Technical Services and Marlow &amp; Reed Joinery.
         </p>
-        <p style={{ fontSize: 14, lineHeight: 1.75, color: '#374151', marginBottom: 14 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>
           Two companies are flagged for monitoring. Delacourt Frères continues to see gross-margin compression in its core distribution business, and we are working with management on a price-led recovery for the second half. Atelier Saint-Pierre&apos;s working capital has tightened and we are reviewing cash management with the team.
         </p>
-        <p style={{ fontSize: 14, lineHeight: 1.75, color: '#374151' }}>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
           We expect to make our next capital call in Q3 in connection with a planned add-on acquisition at Abington. We welcome any questions at the upcoming quarterly LP meeting.
         </p>
       </div>
 
       <button
         onClick={goToPerformance}
-        style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 40 }}
+        style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}
       >
         View full fund performance →
       </button>
