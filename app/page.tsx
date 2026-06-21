@@ -71,12 +71,13 @@ export default function Home() {
       {/* Sidebar — always visible on desktop (≥768px), toggled on mobile */}
       <style>{`
         @media (min-width: 768px) {
-          .sidebar-panel { transform: translateX(0) !important; position: relative !important; }
+          .sidebar-panel { transform: translateX(0) !important; position: relative !important; min-height: 100vh; }
           .mobile-topbar { display: none !important; }
           .main-content { margin-left: 0 !important; }
         }
         @media (max-width: 767px) {
-          .desktop-only { display: none !important; }
+          .main-content { margin-left: 0 !important; }
+          .mobile-topbar { display: flex !important; }
         }
       `}</style>
 
@@ -90,7 +91,7 @@ export default function Home() {
       />
 
       {/* Right side content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, marginLeft: 240 }} className="main-content">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="main-content">
         {/* Mobile top bar */}
         <div className="mobile-topbar" style={{
           display: 'flex', alignItems: 'center', gap: 14,
