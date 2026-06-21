@@ -11,6 +11,7 @@ interface Props {
   setCurrency: (c: Currency) => void
   isOpen: boolean
   onClose: () => void
+  isMobile: boolean
 }
 
 const NAV: { id: Role; label: string; sub: string; icon: React.ReactNode }[] = [
@@ -56,7 +57,7 @@ const NAV: { id: Role; label: string; sub: string; icon: React.ReactNode }[] = [
 const CURRENCIES: Currency[] = ['GBP', 'USD', 'EUR']
 const CURRENCY_LABELS: Record<Currency, string> = { GBP: '£ GBP', USD: '$ USD', EUR: '€ EUR' }
 
-export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, onClose }: Props) {
+export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, onClose, isMobile }: Props) {
   const [showSettings, setShowSettings] = useState(false)
 
   const handleNav = (r: Role) => {
@@ -67,7 +68,7 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
   return (
     <>
       {/* Mobile overlay backdrop */}
-      {isOpen && (
+      {isMobile && isOpen && (
         <div
           onClick={onClose}
           style={{
@@ -86,15 +87,16 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
-        position: 'fixed',
+        // On mobile: fixed overlay, slide in/out. On desktop: in-flow, always visible.
+        position: isMobile ? 'fixed' : 'relative',
         top: 0,
         left: 0,
         bottom: 0,
-        zIndex: 200,
-        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+        zIndex: isMobile ? 200 : 'auto',
+        transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
         transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
         overflowY: 'auto',
-      }} className="sidebar-panel">
+      }}>
         {/* Logo */}
         <div style={{
           padding: '28px 24px 20px',

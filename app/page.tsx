@@ -16,6 +16,14 @@ export default function Home() {
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const fetchQuarters = async () => {
     const res = await fetch('/api/quarters')
@@ -68,19 +76,6 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Sidebar — always visible on desktop (≥768px), toggled on mobile */}
-      <style>{`
-        @media (min-width: 768px) {
-          .sidebar-panel { transform: translateX(0) !important; position: relative !important; min-height: 100vh; }
-          .mobile-topbar { display: none !important; }
-          .main-content { margin-left: 0 !important; }
-        }
-        @media (max-width: 767px) {
-          .main-content { margin-left: 0 !important; }
-          .mobile-topbar { display: flex !important; }
-        }
-      `}</style>
-
       <Sidebar
         role={role}
         setRole={setRole}
@@ -88,34 +83,35 @@ export default function Home() {
         setCurrency={setCurrency}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isMobile={isMobile}
       />
 
-      {/* Right side content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="main-content">
-        {/* Mobile top bar */}
-        <div className="mobile-topbar" style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          padding: '0 16px',
-          height: 'calc(52px + env(safe-area-inset-top))',
-          paddingTop: 'env(safe-area-inset-top)',
-          background: 'var(--navy)',
-          flexShrink: 0,
-        }}>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 4, display: 'flex' }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <span style={{ color: 'white', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>Clavio</span>
-        </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
+        {/* Mobile top bar — only shown on mobile */}
+        {isMobile && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            paddingLeft: 16, paddingRight: 16,
+            paddingTop: 'env(safe-area-inset-top)',
+            height: 'calc(52px + env(safe-area-inset-top))',
+            background: 'var(--navy)',
+            flexShrink: 0,
+          }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 4, display: 'flex' }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <span style={{ color: 'white', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>Clavio</span>
+          </div>
+        )}
 
-        {/* Main content area */}
-        <main style={{ flex: 1, padding: '28px 28px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
+        <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '28px 28px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
               <Spinner /> Loading data…
