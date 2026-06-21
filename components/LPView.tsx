@@ -272,7 +272,9 @@ function PerformanceTab() {
                   <div style={{ fontSize: 16, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
                 </div>
               </div>
-              <Sparkline data={co.trend} color={co.status === 'green' ? '#10B981' : '#F59E0B'} />
+              <div style={{ overflow: 'hidden', flexShrink: 0 }}>
+                <Sparkline data={co.trend} color={co.status === 'green' ? '#10B981' : '#F59E0B'} />
+              </div>
             </div>
           </div>
         ))}
@@ -426,8 +428,8 @@ function Sparkline({ data, color = '#10B981', width = 80, height = 36 }: { data:
   const min = Math.min(...data)
   const max = Math.max(...data)
   const range = max - min || 1
-  const pad = 3
-  const w = width - pad * 2
+  const pad = 4
+  const w = width - pad * 2 - 4 // 4px right margin for the dot
   const h = height - pad * 2
   const points = data.map((v, i) => {
     const x = pad + (i / (data.length - 1)) * w
@@ -437,7 +439,7 @@ function Sparkline({ data, color = '#10B981', width = 80, height = 36 }: { data:
   const lastX = pad + w
   const lastY = pad + h - ((data[data.length - 1] - min) / range) * h
   return (
-    <svg width={width} height={height} style={{ display: 'block', overflow: 'visible' }}>
+    <svg width={width} height={height} style={{ display: 'block', overflow: 'hidden' }}>
       <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={lastX.toFixed(1)} cy={lastY.toFixed(1)} r="3" fill={color} />
     </svg>
