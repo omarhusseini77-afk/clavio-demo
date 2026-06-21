@@ -85,8 +85,19 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
 
   return (
     <div>
-      <h1 style={styles.pageTitle}>Submit Quarterly Financials</h1>
-      <p style={styles.pageSubtitle}>Upload your accounts or enter figures manually. All values are stored in GBP.</p>
+      {/* Gradient hero banner */}
+      <div style={{
+        borderRadius: 14, marginBottom: 16, padding: '22px 24px',
+        background: 'linear-gradient(135deg, #0A0E1A 0%, #16233E 55%, #1E3A5F 100%)',
+        color: 'white', position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, position: 'relative' }}>Portfolio Co. · Quarterly submission</div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 6, position: 'relative' }}>Submit Quarterly Financials</h1>
+        <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, position: 'relative', maxWidth: 520 }}>
+          Upload your management accounts and Clavio&apos;s AI fills the form for you — or enter figures manually. All values stored in GBP.
+        </p>
+      </div>
 
       {/* AI Upload zone */}
       <div style={styles.card}>

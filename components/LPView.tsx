@@ -1,9 +1,11 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
 import { FUND, COMPANIES, DOCUMENTS, CAPITAL_EVENTS, FORECAST } from '@/lib/fundData'
+import { useCountUp } from '@/lib/useCountUp'
+import AskPanel from './AskPanel'
 import BottomTabBar from './BottomTabBar'
 
 const LP_TABS = [
@@ -113,8 +115,8 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void }) {
   const calledPct = (FUND.called / FUND.commitment) * 100
   const navCount = useCountUp(FUND.nav)
-  const tvpiCount = useCountUp(FUND.tvpi, 1000, 2)
-  const dpiCount = useCountUp(FUND.dpi, 1000, 2)
+  const tvpiCount = useCountUp(FUND.tvpi)
+  const dpiCount = useCountUp(FUND.dpi)
 
   return (
     <div>
@@ -665,162 +667,22 @@ function DocumentsTab() {
 
 // ── Ask AI tab ───────────────────────────────────────────────────────────────
 
-interface ChatMsg { role: 'user' | 'assistant'; content: string }
-
-const SUGGESTED = [
-  'Why did Delacourt’s gross margin compress?',
-  'Compare Abington and Marlow revenue growth over three years',
-  'Which company has the weakest cash position and why?',
-  'What’s my unfunded commitment and likely next call?',
-]
-
 function AskTab({ isMobile }: { isMobile?: boolean }) {
-  const [messages, setMessages] = useState<ChatMsg[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, loading])
-
-  const send = async (text: string) => {
-    const q = text.trim()
-    if (!q || loading) return
-    setError('')
-    setInput('')
-    const history = messages
-    const next = [...messages, { role: 'user' as const, content: q }]
-    setMessages(next)
-    setLoading(true)
-    try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, messages: history }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Request failed')
-      setMessages(m => [...m, { role: 'assistant', content: data.answer || '…' }])
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const empty = messages.length === 0
-
   return (
-    <div style={{ marginBottom: isMobile ? 12 : 40 }}>
-      {/* Connected-data banner */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#0F7B4F', background: '#ECFDF5', border: '1px solid #BBF7D0', borderRadius: 20, padding: '4px 10px' }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-          Connected to live accounting data
-        </span>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QuickBooks · {COMPANIES.length} entities · synced {FUND.date}</span>
-      </div>
-
-      {/* Conversation */}
-      <div
-        ref={scrollRef}
-        style={{
-          ...styles.card, padding: empty ? '24px 20px' : '8px 4px',
-          minHeight: empty ? 'auto' : 260, maxHeight: isMobile ? 'none' : 440,
-          overflowY: 'auto', marginBottom: 12,
-        }}
-      >
-        {empty ? (
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Ask Clavio about Fund II</div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 18 }}>
-              Clavio reads the portfolio companies&apos; books directly. Ask a question in plain English and it pulls the exact figures to answer — no spreadsheets, no waiting on the GP.
-            </p>
-            <div style={{ display: 'grid', gap: 8 }}>
-              {SUGGESTED.map(s => (
-                <button key={s} onClick={() => send(s)} style={{
-                  textAlign: 'left', padding: '11px 14px', borderRadius: 10,
-                  border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
-                  fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <span style={{ color: 'var(--accent)', fontSize: 14 }}>✦</span>
-                  <span>{s}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {messages.map((m, i) => <ChatBubble key={i} role={m.role} content={m.content} />)}
-            {loading && <ThinkingBubble />}
-          </div>
-        )}
-      </div>
-
-      {error && (
-        <div style={{ fontSize: 12.5, color: 'var(--red)', marginBottom: 10 }}>{error}</div>
-      )}
-
-      {/* Input */}
-      <form onSubmit={e => { e.preventDefault(); send(input) }} style={{ display: 'flex', gap: 8 }}>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Ask about revenue, margins, cash, your position…"
-          style={{
-            flex: 1, padding: '12px 16px', borderRadius: 10, fontSize: 14,
-            border: '1px solid var(--border)', outline: 'none', background: 'white',
-          }}
-        />
-        <button type="submit" disabled={loading || !input.trim()} style={{
-          padding: '0 20px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 600,
-          background: loading || !input.trim() ? '#C7D2E0' : 'var(--accent)', color: 'white',
-          cursor: loading || !input.trim() ? 'default' : 'pointer',
-        }}>
-          {loading ? '…' : 'Ask'}
-        </button>
-      </form>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
-        Clavio AI can make mistakes. Verify material figures against source reports.
-      </div>
-    </div>
-  )
-}
-
-function ChatBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
-  const isUser = role === 'user'
-  return (
-    <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', padding: '6px 8px' }}>
-      <div style={{
-        maxWidth: '88%', padding: '11px 14px', borderRadius: 12, fontSize: 13.5, lineHeight: 1.6,
-        whiteSpace: 'pre-wrap',
-        background: isUser ? 'var(--accent)' : 'var(--bg)',
-        color: isUser ? 'white' : 'var(--text)',
-        border: isUser ? 'none' : '1px solid var(--border)',
-        borderBottomRightRadius: isUser ? 4 : 12,
-        borderBottomLeftRadius: isUser ? 12 : 4,
-      }}>
-        {content}
-      </div>
-    </div>
-  )
-}
-
-function ThinkingBubble() {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '6px 8px' }}>
-      <div style={{ padding: '12px 16px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', gap: 5, alignItems: 'center' }}>
-        {[0, 1, 2].map(i => (
-          <span key={i} style={{
-            width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
-            animation: `clavio-pulse 1.2s ${i * 0.18}s infinite ease-in-out`,
-          }} />
-        ))}
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Reading the books…</span>
-      </div>
-    </div>
+    <AskPanel
+      isMobile={isMobile}
+      connectedLabel="Connected to live accounting data"
+      connectedSub={`QuickBooks · ${COMPANIES.length} entities · synced ${FUND.date}`}
+      introTitle="Ask Clavio about Fund II"
+      introBody="Clavio reads the portfolio companies’ books directly. Ask a question in plain English and it pulls the exact figures to answer — no spreadsheets, no waiting on the GP."
+      placeholder="Ask about revenue, margins, cash, your position…"
+      suggestions={[
+        'Why did Delacourt’s gross margin compress?',
+        'Compare Abington and Marlow revenue growth over three years',
+        'Which company has the weakest cash position and why?',
+        'What’s my unfunded commitment and likely next call?',
+      ]}
+    />
   )
 }
 
@@ -986,27 +848,6 @@ function AllocationDonut() {
       </div>
     </div>
   )
-}
-
-// ── Count-up hook ────────────────────────────────────────────────────────────
-
-function useCountUp(target: number, duration = 1000, decimals = 0) {
-  const [value, setValue] = useState(0)
-  useEffect(() => {
-    let raf = 0
-    const start = performance.now()
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - p, 3) // ease-out cubic
-      setValue(target * eased)
-      if (p < 1) raf = requestAnimationFrame(tick)
-      else setValue(target)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, duration])
-  void decimals
-  return value
 }
 
 // ── Sparkline ────────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import BottomTabBar from '@/components/BottomTabBar'
 import type { Currency } from '@/lib/currency'
 import { useQuarters } from '@/lib/useQuarters'
 
-type GpSection = 'overview' | 'data'
+type GpSection = 'overview' | 'ask' | 'data'
 
 const GP_TABS = [
   {
@@ -15,6 +15,16 @@ const GP_TABS = [
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
         <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+      </svg>
+    ),
+  },
+  {
+    id: 'ask',
+    label: 'Ask AI',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z" />
+        <path d="M19 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
       </svg>
     ),
   },

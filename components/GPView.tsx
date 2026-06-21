@@ -4,14 +4,15 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, Ca
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtShort, fmtFull, symbol } from '@/lib/currency'
+import { useCountUp } from '@/lib/useCountUp'
+import AskPanel from './AskPanel'
 
+// Secondary metrics shown beneath the hero (hero covers turnover/gross/op/pbt).
 const COLS: { key: keyof Quarter; label: string }[] = [
-  { key: 'turnover', label: 'Turnover' },
-  { key: 'gross', label: 'Gross Profit' },
-  { key: 'op', label: 'Op. Profit' },
-  { key: 'pbt', label: 'PBT' },
   { key: 'retained', label: 'Retained' },
   { key: 'net_assets', label: 'Net Assets' },
+  { key: 'cash', label: 'Cash at Bank' },
+  { key: 'debtors', label: 'Debtors' },
 ]
 
 const ALL_FIELDS: { key: keyof Quarter; label: string }[] = [
@@ -50,7 +51,7 @@ type Props = {
   onDelete: (id: number) => Promise<void>
   onUpdate: (id: number, q: Omit<Quarter, 'id' | 'created_at'>) => Promise<boolean>
   currency: Currency
-  mobileSection?: 'overview' | 'data'
+  mobileSection?: 'overview' | 'data' | 'ask'
 }
 
 export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection }: Props) {
@@ -61,6 +62,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
   const latest = quarters[quarters.length - 1]
   const prev = quarters[quarters.length - 2]
+  const turnoverCount = useCountUp(latest?.turnover ?? 0)
 
   if (!latest) {
     return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No data yet.</div>
@@ -159,6 +161,26 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
   const showOverview = !mobileSection || mobileSection === 'overview'
   const showData = !mobileSection || mobileSection === 'data'
+  const showAsk = !mobileSection || mobileSection === 'ask'
+
+  const heroSubs: { key: keyof Quarter; label: string }[] = [
+    { key: 'gross', label: 'Gross Profit' },
+    { key: 'op', label: 'Operating Profit' },
+    { key: 'pbt', label: 'Profit Before Tax' },
+  ]
+  const turnoverDelta = delta('turnover')
+
+  // Compact dataset the AI assistant reasons over (all quarters, GBP).
+  const askContext = {
+    entity: 'Portfolio company (standardised quarterly accounts)',
+    currency: 'GBP',
+    quarters: quarters.map(q => ({
+      period: q.period, turnover: q.turnover, costOfSales: q.cos, grossProfit: q.gross,
+      adminExpenses: q.admin, operatingProfit: q.op, profitBeforeTax: q.pbt, tax: q.tax,
+      retainedProfit: q.retained, fixedAssets: q.fixed, stock: q.stock, debtors: q.debtors,
+      cash: q.cash, creditors: q.creditors, netAssets: q.net_assets, shareholdersFunds: q.funds,
+    })),
+  }
 
   return (
     <div>
@@ -176,11 +198,49 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           </div>
         )}
       </div>
-      <p style={{ color: 'var(--text-muted)', marginBottom: 24, fontSize: 14 }}>
+      <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: 14 }}>
         {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live · Displaying in {currency}
       </p>
 
-      {/* KPI strip */}
+      {/* Gradient hero — headline result with count-up */}
+      <div style={{
+        borderRadius: 14, marginBottom: 16, padding: '22px 24px',
+        background: 'linear-gradient(135deg, #0A0E1A 0%, #16233E 55%, #1E3A5F 100%)',
+        color: 'white', position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Turnover · {latest.period}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18, position: 'relative' }}>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtShort(turnoverCount, currency)}</div>
+          {turnoverDelta !== null && (
+            <div style={{ fontSize: 13, color: turnoverDelta >= 0 ? '#7FE6B0' : '#FCA5A5', fontWeight: 600 }}>
+              {turnoverDelta >= 0 ? '▲' : '▼'} {Math.abs(turnoverDelta).toFixed(1)}% vs prev
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, position: 'relative' }}>
+          {heroSubs.map((s, i) => {
+            const d = delta(s.key)
+            return (
+              <div key={s.key} style={{
+                paddingRight: i < 2 ? 16 : 0,
+                borderRight: i < 2 ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                paddingLeft: i > 0 ? 16 : 0,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</div>
+                <div style={{ fontSize: 19, fontWeight: 700 }}>{fmtShort(latest[s.key] as number, currency)}</div>
+                {d !== null && (
+                  <div style={{ fontSize: 11, marginTop: 2, color: d >= 0 ? '#7FE6B0' : '#FCA5A5', fontWeight: 500 }}>
+                    {d >= 0 ? '▲' : '▼'} {Math.abs(d).toFixed(1)}%
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* KPI strip — balance-sheet metrics */}
       <div style={styles.kpiGrid}>
         {COLS.map(c => {
           const d = delta(c.key)
@@ -274,6 +334,27 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         ))}
       </div>
         </>
+      )}
+
+      {showAsk && (
+        <div style={{ marginBottom: mobileSection ? 0 : 8 }}>
+          {!mobileSection && <h3 style={styles.sectionTitle}>Ask Clavio</h3>}
+          <AskPanel
+            isMobile={mobileSection === 'ask'}
+            context={askContext}
+            connectedLabel="Connected to live accounting data"
+            connectedSub={`QuickBooks · ${quarters.length} quarters · latest ${latest.period}`}
+            introTitle="Ask Clavio about this company"
+            introBody="Clavio reads the standardised quarterly accounts directly. Ask in plain English and it pulls the exact figures — no digging through the table."
+            placeholder="Ask about turnover, margins, PBT, cash…"
+            suggestions={[
+              `How has turnover trended over the last ${Math.min(quarters.length, 4)} quarters?`,
+              'What happened to gross margin in the latest quarter?',
+              'Compare operating profit this quarter vs last',
+              'Is the cash position improving or deteriorating?',
+            ]}
+          />
+        </div>
       )}
 
       {showData && (
