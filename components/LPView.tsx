@@ -125,6 +125,7 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
         borderRadius: 14, marginBottom: 10, padding: '22px 24px',
         background: 'linear-gradient(135deg, #0A0E1A 0%, #16233E 55%, #1E3A5F 100%)',
         color: 'white', position: 'relative', overflow: 'hidden',
+        boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
         <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Your position · {FUND.name}</div>
@@ -136,7 +137,7 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
           {[
             { label: 'TVPI', value: `${tvpiCount.toFixed(2)}x` },
             { label: 'DPI', value: `${dpiCount.toFixed(2)}x` },
-            { label: 'Share of fund', value: `${FUND.shareOfFund}%` },
+            { label: 'Fund share', value: `${FUND.shareOfFund}%` },
           ].map((s, i) => (
             <div key={s.label} style={{
               paddingRight: i < 2 ? 16 : 0,
@@ -153,6 +154,7 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       {/* Ask AI prompt */}
       <button
         onClick={goToAsk}
+        className="lift"
         style={{
           width: '100%', textAlign: 'left', marginBottom: 10, cursor: 'pointer',
           borderRadius: 12, padding: '13px 16px', border: '1px solid #D7E2F2',
@@ -907,5 +909,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--white)', borderRadius: 12,
     padding: '20px', marginBottom: 0,
     border: '1px solid var(--border)',
+    boxShadow: '0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.04)',
   },
 }

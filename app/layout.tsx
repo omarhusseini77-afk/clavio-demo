@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     title: 'Clavio Submit',
   },
   icons: {
+    icon: '/icon-192.png',
     apple: '/icon-192.png',
   },
 }

@@ -79,7 +79,7 @@ export default function AskPanel({ suggestions, introTitle, introBody, connected
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 18 }}>{introBody}</p>
             <div style={{ display: 'grid', gap: 8 }}>
               {suggestions.map(s => (
-                <button key={s} onClick={() => send(s)} style={{
+                <button key={s} onClick={() => send(s)} className="lift" style={{
                   textAlign: 'left', padding: '11px 14px', borderRadius: 10,
                   border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
                   fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10,
@@ -157,4 +157,5 @@ function ThinkingBubble() {
 
 const card: React.CSSProperties = {
   background: 'var(--white)', borderRadius: 12, border: '1px solid var(--border)',
+  boxShadow: '0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.04)',
 }

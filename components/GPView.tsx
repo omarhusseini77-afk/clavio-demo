@@ -165,8 +165,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
   const heroSubs: { key: keyof Quarter; label: string }[] = [
     { key: 'gross', label: 'Gross Profit' },
-    { key: 'op', label: 'Operating Profit' },
-    { key: 'pbt', label: 'Profit Before Tax' },
+    { key: 'op', label: 'Op. Profit' },
+    { key: 'pbt', label: 'PBT' },
   ]
   const turnoverDelta = delta('turnover')
 
@@ -207,6 +207,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         borderRadius: 14, marginBottom: 16, padding: '22px 24px',
         background: 'linear-gradient(135deg, #0A0E1A 0%, #16233E 55%, #1E3A5F 100%)',
         color: 'white', position: 'relative', overflow: 'hidden',
+        boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
         <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Turnover · {latest.period}</div>
@@ -503,10 +504,10 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
 
 const styles: Record<string, React.CSSProperties> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 20 },
-  kpiCard: { background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px' },
+  kpiCard: { background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.04)' },
   kpiLabel: { fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
   kpiValue: { fontSize: 20, fontWeight: 700, color: 'var(--text)' },
-  card: { background: 'var(--white)', borderRadius: 12, padding: '20px', marginBottom: 16, border: '1px solid var(--border)' },
+  card: { background: 'var(--white)', borderRadius: 12, padding: '20px', marginBottom: 16, border: '1px solid var(--border)', boxShadow: '0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.04)' },
   sectionTitle: { fontSize: 13, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 700 },
   th: { textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '2px solid var(--border)' },
