@@ -28,7 +28,18 @@ export default function Home() {
   const fetchQuarters = async () => {
     const res = await fetch('/api/quarters')
     const data = await res.json()
-    setQuarters(Array.isArray(data) ? data : [])
+    if (Array.isArray(data)) {
+      data.sort((a, b) => {
+        const parse = (p: string) => {
+          const m = p.match(/Q(\d+)\s+FY(\d+)/i)
+          return m ? parseInt(m[2]) * 10 + parseInt(m[1]) : 0
+        }
+        return parse(a.period) - parse(b.period)
+      })
+      setQuarters(data)
+    } else {
+      setQuarters([])
+    }
     setLoading(false)
   }
 
