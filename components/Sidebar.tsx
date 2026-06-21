@@ -50,8 +50,8 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
           paddingTop: isMobile ? 'max(24px, calc(env(safe-area-inset-top) + 16px))' : '24px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}>
-          <div style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '0.5px' }}>
-            CLA<span style={{ color: '#5B82BD', letterSpacing: '-3px', marginLeft: '-1px' }}>V</span>IO
+          <div style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '1px' }}>
+            CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
           </div>
           <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 3 }}>
             Portfolio Intelligence
