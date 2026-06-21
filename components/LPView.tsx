@@ -272,9 +272,13 @@ function PerformanceTab() {
                   <div style={{ fontSize: 16, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
                 </div>
               </div>
-              <div style={{ overflow: 'hidden', flexShrink: 0 }}>
-                <Sparkline data={co.trend} color={co.status === 'green' ? '#10B981' : '#F59E0B'} />
-              </div>
+              <Sparkline
+                data={co.trend}
+                color={co.status === 'green' ? '#10B981' : '#F59E0B'}
+                startLabel={`${co.sym}${(co.trend[0] / 1_000_000).toFixed(1)}M`}
+                endLabel={`${co.sym}${(co.trend[co.trend.length - 1] / 1_000_000).toFixed(1)}M`}
+                width={100} height={48}
+              />
             </div>
           </div>
         ))}
@@ -356,7 +360,7 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
                     <td key={j} style={{ padding: '12px 16px', textAlign: 'right', fontWeight: j === row.values.length - 1 ? 600 : 400, whiteSpace: 'nowrap' }}>{v}</td>
                   ))}
                   <td className="hide-mobile" style={{ padding: '8px 16px', textAlign: 'right' }}>
-                    <Sparkline data={row.trend} color={row.color} width={72} height={28} />
+                    <Sparkline data={row.trend} color={row.color} width={72} height={36} />
                   </td>
                 </tr>
               ))}
@@ -423,26 +427,51 @@ function DocumentsTab() {
 
 // ── Sparkline ────────────────────────────────────────────────────────────────
 
-function Sparkline({ data, color = '#10B981', width = 80, height = 36 }: { data: number[]; color?: string; width?: number; height?: number }) {
+function Sparkline({ data, color = '#10B981', width = 110, height = 44, startLabel, endLabel }: {
+  data: number[]; color?: string; width?: number; height?: number
+  startLabel?: string; endLabel?: string
+}) {
   if (data.length < 2) return null
   const min = Math.min(...data)
   const max = Math.max(...data)
   const range = max - min || 1
-  const pad = 4
-  const w = width - pad * 2 - 4 // 4px right margin for the dot
-  const h = height - pad * 2
-  const points = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * w
-    const y = pad + h - ((v - min) / range) * h
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-  const lastX = pad + w
-  const lastY = pad + h - ((data[data.length - 1] - min) / range) * h
+  const padX = 2; const padY = 4
+  const w = width - padX * 2
+  const h = height - padY * 2 - 16 // 16px reserved for labels at bottom
+  const uid = `grad-${color.replace('#', '')}`
+
+  const pts = data.map((v, i) => ({
+    x: padX + (i / (data.length - 1)) * w,
+    y: padY + h - ((v - min) / range) * h,
+  }))
+
+  const linePts = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaBottom = padY + h
+  const areaPts = [
+    `${pts[0].x.toFixed(1)},${areaBottom}`,
+    ...pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`),
+    `${pts[pts.length - 1].x.toFixed(1)},${areaBottom}`,
+  ].join(' ')
+
   return (
-    <svg width={width} height={height} style={{ display: 'block', overflow: 'hidden' }}>
-      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lastX.toFixed(1)} cy={lastY.toFixed(1)} r="3" fill={color} />
-    </svg>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <svg width={width} height={height} style={{ display: 'block', overflow: 'hidden' }}>
+        <defs>
+          <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <polygon points={areaPts} fill={`url(#${uid})`} />
+        <polyline points={linePts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {(startLabel || endLabel) && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: color, fontWeight: 600, marginTop: 2, paddingLeft: padX, paddingRight: padX }}>
+          <span>{startLabel}</span>
+          <span>{endLabel}</span>
+        </div>
+      )}
+    </div>
   )
 }
 
