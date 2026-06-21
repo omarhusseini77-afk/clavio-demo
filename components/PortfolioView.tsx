@@ -28,7 +28,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
   const [values, setValues] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
 
-  const sections = [...new Set(FIELDS.map(f => f.section))]
+  const sections = Array.from(new Set(FIELDS.map(f => f.section)))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
