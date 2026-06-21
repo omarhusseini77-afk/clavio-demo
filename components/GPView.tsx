@@ -56,6 +56,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [investigateAnomaly, setInvestigateAnomaly] = useState<typeof ANOMALIES[0] | null>(null)
 
   const latest = quarters[quarters.length - 1]
   const prev = quarters[quarters.length - 2]
@@ -87,6 +88,43 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
     const { id, created_at, ...rest } = editValues as Quarter
     await onUpdate(editingId, rest)
     setEditingId(null)
+  }
+
+  const exportPDF = async (qs: Quarter[], cur: typeof currency) => {
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const latest = qs[qs.length - 1]
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+    doc.setFillColor(10, 14, 26)
+    doc.rect(0, 0, 297, 30, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold')
+    doc.text('Partner Dashboard — Quarterly Data', 14, 14)
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 195, 220)
+    doc.text(`${qs.length} quarters · Latest: ${latest?.period} · ${today} · ${cur}`, 14, 23)
+    const rows = [...qs].reverse().map(q => [
+      q.period,
+      fmtFull(q.turnover, cur), fmtFull(q.gross, cur),
+      `${q.turnover > 0 ? ((q.gross / q.turnover) * 100).toFixed(1) : 0}%`,
+      fmtFull(q.op, cur), fmtFull(q.pbt, cur),
+      fmtFull(q.retained, cur), fmtFull(q.net_assets, cur), fmtFull(q.cash, cur),
+    ])
+    autoTable(doc, {
+      startY: 36,
+      head: [['Period', 'Turnover', 'Gross Profit', 'Gross Margin', 'Op. Profit', 'PBT', 'Retained', 'Net Assets', 'Cash']],
+      body: rows,
+      headStyles: { fillColor: [10, 14, 26], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: [30, 30, 40] },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { left: 14, right: 14 },
+    })
+    const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i); doc.setFontSize(7); doc.setTextColor(150)
+      doc.text(`Clavio · Partner Dashboard · ${today} · Page ${i} of ${pageCount}`, 14, 205)
+    }
+    doc.save(`clavio-partner-dashboard.pdf`)
   }
 
   const exportExcel = async () => {
@@ -125,9 +163,10 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>Partner Dashboard</h1>
           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Latest: {latest.period}</span>
         </div>
-        <button onClick={exportExcel} style={styles.exportBtn}>
-          ↓ Export Excel
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={exportExcel} style={styles.exportBtn}>↓ Excel</button>
+          <button onClick={() => exportPDF(quarters, currency)} style={styles.exportBtn}>↓ PDF</button>
+        </div>
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: 24, fontSize: 14 }}>
         {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live · Displaying in {currency}
@@ -152,7 +191,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
       </div>
 
       {/* Signals + Trend row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, marginBottom: 16, alignItems: 'start' }}>
+      <div className="gp-trend-grid">
         <div style={styles.card}>
           <h3 style={styles.sectionTitle}>Performance Trend</h3>
         <div style={{ height: 260 }}>
@@ -217,7 +256,10 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{a.title}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{a.detail}</div>
             </div>
-            <button style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0, fontWeight: 500 }}>
+            <button
+              onClick={() => setInvestigateAnomaly(a)}
+              style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0, fontWeight: 500 }}
+            >
               Investigate →
             </button>
           </div>
@@ -283,6 +325,35 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
             <button onClick={saveEdit} style={styles.submitBtn}>Save Changes</button>
             <button onClick={() => setEditingId(null)} style={styles.cancelBtn}>Cancel</button>
           </div>
+        </Modal>
+      )}
+
+      {/* Investigate modal */}
+      {investigateAnomaly && (
+        <Modal title="Anomaly Investigation" onClose={() => setInvestigateAnomaly(null)}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+              background: investigateAnomaly.level === 'red' ? '#FEF2F2' : '#FEF3C7',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 15, color: investigateAnomaly.level === 'red' ? '#EF4444' : '#D97706',
+            }}>!</div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 4 }}>{investigateAnomaly.company}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{investigateAnomaly.title}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>{investigateAnomaly.detail}</div>
+            </div>
+          </div>
+          <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Actions</div>
+            <ul style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: 18 }}>
+              <li>Schedule a call with the portfolio company CFO</li>
+              <li>Request updated management accounts for the current period</li>
+              <li>Review against prior-period variance thresholds</li>
+              <li>Flag for discussion at the next IC / partner meeting</li>
+            </ul>
+          </div>
+          <button onClick={() => setInvestigateAnomaly(null)} style={styles.submitBtn}>Close</button>
         </Modal>
       )}
 

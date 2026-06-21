@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { ResponsiveContainer, LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
@@ -78,6 +77,7 @@ type Tab = 'account' | 'performance' | 'portfolio' | 'documents'
 export default function LPView({ quarters, currency }: { quarters: Quarter[]; currency: Currency }) {
   const [tab, setTab] = useState<Tab>('account')
   const [selectedCompany, setSelectedCompany] = useState(COMPANIES[0].id)
+  void quarters // kept for future real-data integration
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -112,7 +112,7 @@ export default function LPView({ quarters, currency }: { quarters: Quarter[]; cu
         ))}
       </div>
 
-      {tab === 'account' && <AccountTab currency={currency} />}
+      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => setTab('performance')} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
       {tab === 'documents' && <DocumentsTab />}
@@ -122,7 +122,7 @@ export default function LPView({ quarters, currency }: { quarters: Quarter[]; cu
 
 // ── My Account tab ───────────────────────────────────────────────────────────
 
-function AccountTab({ currency }: { currency: Currency }) {
+function AccountTab({ currency, goToPerformance }: { currency: Currency; goToPerformance: () => void }) {
   const calledPct = (FUND.called / FUND.commitment) * 100
 
   return (
@@ -198,7 +198,7 @@ function AccountTab({ currency }: { currency: Currency }) {
       </div>
 
       <button
-        onClick={() => {}}
+        onClick={goToPerformance}
         style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 40 }}
       >
         View full fund performance →
@@ -326,39 +326,41 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
       </div>
 
       {/* Metrics table */}
-      <div style={{ ...styles.card, marginBottom: 16 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Metric</th>
-              {co.data.map(d => (
-                <th key={d.fy} style={{ textAlign: 'right', padding: '10px 14px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{d.fy}</th>
-              ))}
-              <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { label: 'Revenue', values: co.data.map(d => `${co.sym}${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
-              { label: 'Gross margin %', values: co.data.map(d => `${d.grossMargin}%`), trend: co.data.map(d => d.grossMargin), color: '#10B981' },
-              { label: 'EBITDA', values: co.data.map(d => `${co.sym}${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
-              { label: 'Net profit', values: co.data.map(d => `${co.sym}${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
-              { label: 'Cash', values: co.data.map(d => `${co.sym}${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
-              { label: 'Receivables', values: co.data.map(d => `${co.sym}${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
-              { label: 'Payables', values: co.data.map(d => `${co.sym}${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
-            ].map((row, i) => (
-              <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
-                <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>{row.label}</td>
-                {row.values.map((v, j) => (
-                  <td key={j} style={{ padding: '12px 14px', textAlign: 'right', fontWeight: j === row.values.length - 1 ? 600 : 400 }}>{v}</td>
+      <div style={{ ...styles.card, marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', minWidth: 420, borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Metric</th>
+                {co.data.map(d => (
+                  <th key={d.fy} style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{d.fy}</th>
                 ))}
-                <td style={{ padding: '6px 14px', textAlign: 'right' }}>
-                  <Sparkline data={row.trend} color={row.color} width={70} height={30} />
-                </td>
+                <th className="hide-mobile" style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Trend</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[
+                { label: 'Revenue', values: co.data.map(d => `${co.sym}${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
+                { label: 'Gross margin %', values: co.data.map(d => `${d.grossMargin}%`), trend: co.data.map(d => d.grossMargin), color: '#10B981' },
+                { label: 'EBITDA', values: co.data.map(d => `${co.sym}${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
+                { label: 'Net profit', values: co.data.map(d => `${co.sym}${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
+                { label: 'Cash', values: co.data.map(d => `${co.sym}${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
+                { label: 'Receivables', values: co.data.map(d => `${co.sym}${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
+                { label: 'Payables', values: co.data.map(d => `${co.sym}${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
+              ].map((row, i) => (
+                <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{row.label}</td>
+                  {row.values.map((v, j) => (
+                    <td key={j} style={{ padding: '12px 16px', textAlign: 'right', fontWeight: j === row.values.length - 1 ? 600 : 400, whiteSpace: 'nowrap' }}>{v}</td>
+                  ))}
+                  <td className="hide-mobile" style={{ padding: '8px 16px', textAlign: 'right' }}>
+                    <Sparkline data={row.trend} color={row.color} width={72} height={28} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* AI Commentary */}
@@ -420,13 +422,25 @@ function DocumentsTab() {
 // ── Sparkline ────────────────────────────────────────────────────────────────
 
 function Sparkline({ data, color = '#10B981', width = 80, height = 36 }: { data: number[]; color?: string; width?: number; height?: number }) {
-  const chartData = data.map((v, i) => ({ i, v }))
+  if (data.length < 2) return null
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const pad = 3
+  const w = width - pad * 2
+  const h = height - pad * 2
+  const points = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * w
+    const y = pad + h - ((v - min) / range) * h
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  const lastX = pad + w
+  const lastY = pad + h - ((data[data.length - 1] - min) / range) * h
   return (
-    <ResponsiveContainer width={width} height={height}>
-      <LineChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
-        <Line type="monotone" dataKey="v" stroke={color} strokeWidth={2} dot={false} />
-      </LineChart>
-    </ResponsiveContainer>
+    <svg width={width} height={height} style={{ display: 'block', overflow: 'visible' }}>
+      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lastX.toFixed(1)} cy={lastY.toFixed(1)} r="3" fill={color} />
+    </svg>
   )
 }
 

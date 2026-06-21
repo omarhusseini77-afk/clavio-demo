@@ -39,3 +39,16 @@ button {
 input, select, textarea {
   font-family: inherit;
 }
+
+.gp-trend-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+@media (max-width: 767px) {
+  .gp-trend-grid { grid-template-columns: 1fr; }
+  .hide-mobile { display: none !important; }
+}
