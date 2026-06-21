@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
+import { FUND, COMPANIES, DOCUMENTS } from '@/lib/fundData'
 import BottomTabBar from './BottomTabBar'
 
 const LP_TABS = [
@@ -11,7 +12,11 @@ const LP_TABS = [
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
   },
   {
-    id: 'performance', label: 'Performance',
+    id: 'ask', label: 'Ask AI',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>,
+  },
+  {
+    id: 'performance', label: 'Fund',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
   },
   {
@@ -19,80 +24,14 @@ const LP_TABS = [
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
   },
   {
-    id: 'documents', label: 'Documents',
+    id: 'documents', label: 'Docs',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
   },
 ]
 
-// ── Synthetic fund data ──────────────────────────────────────────────────────
-
-const FUND = {
-  name: 'Fund II', period: 'Q1 2026', date: '31 March 2026',
-  nav: 5220000, tvpi: 1.68, dpi: 0.32,
-  commitment: 5000000, called: 3850000, unfunded: 1150000,
-  distributed: 1240000, shareOfFund: 14.8,
-}
-
-const COMPANIES = [
-  {
-    id: 'mrj', name: 'Marlow & Reed Joinery', sector: 'Manufacturing', country: 'UK',
-    moic: 1.69, revenue: 3980000, sym: '£', status: 'green',
-    trend: [3280000, 3450000, 3610000, 3780000, 3980000],
-    data: [
-      { fy: 'FY23', revenue: 3280000, grossMargin: 41, ebitda: 749000, netProfit: 562000, cash: 1270000, receivables: 572000, payables: 163000 },
-      { fy: 'FY24', revenue: 3610000, grossMargin: 42, ebitda: 889000, netProfit: 702000, cash: 2490000, receivables: 639000, payables: 337000 },
-      { fy: 'FY25', revenue: 3980000, grossMargin: 43, ebitda: 1040000, netProfit: 824000, cash: 2980000, receivables: 692000, payables: 412000 },
-    ],
-    commentary: 'Revenue grew 21.3% over three years with gross margin expanding from 41% to 43%, a structural gain rather than a one-off. EBITDA rose from £749k to £1.04M and cash more than doubled, with no debt drawn. The balance sheet now supports an add-on.',
-  },
-  {
-    id: 'df', name: 'Delacourt Frères', sector: 'F&B Distribution', country: 'France',
-    moic: 1.35, revenue: 13680000, sym: '€', status: 'amber',
-    trend: [11200000, 11800000, 12400000, 13000000, 13680000],
-    data: [
-      { fy: 'FY23', revenue: 11200000, grossMargin: 28, ebitda: 980000, netProfit: 620000, cash: 1840000, receivables: 2100000, payables: 890000 },
-      { fy: 'FY24', revenue: 12400000, grossMargin: 27, ebitda: 1050000, netProfit: 680000, cash: 1650000, receivables: 2380000, payables: 1020000 },
-      { fy: 'FY25', revenue: 13680000, grossMargin: 26, ebitda: 1120000, netProfit: 710000, cash: 1420000, receivables: 2640000, payables: 1180000 },
-    ],
-    commentary: 'Revenue is growing but gross margin has compressed from 28% to 26% as input costs remain elevated. Working capital has tightened — receivables up 26% while cash declined. Management is executing a price-led recovery for H2.',
-  },
-  {
-    id: 'ats', name: 'Abington Technical Services', sector: 'B2B Services', country: 'UK',
-    moic: 1.34, revenue: 8240000, sym: '£', status: 'green',
-    trend: [5980000, 6400000, 7100000, 7600000, 8240000],
-    data: [
-      { fy: 'FY23', revenue: 5980000, grossMargin: 52, ebitda: 1240000, netProfit: 890000, cash: 2100000, receivables: 980000, payables: 310000 },
-      { fy: 'FY24', revenue: 7100000, grossMargin: 53, ebitda: 1580000, netProfit: 1120000, cash: 2840000, receivables: 1240000, payables: 380000 },
-      { fy: 'FY25', revenue: 8240000, grossMargin: 54, ebitda: 1920000, netProfit: 1380000, cash: 3620000, receivables: 1490000, payables: 440000 },
-    ],
-    commentary: 'Strong performance across all metrics. Revenue up 37.8% over three years with consistent margin expansion. The B2B services model generates high cash conversion — cash has grown to £3.6M. Pipeline supports continued growth into FY26.',
-  },
-  {
-    id: 'asp', name: 'Atelier Saint-Pierre', sector: 'Specialty Mfg', country: 'France',
-    moic: 1.09, revenue: 4210000, sym: '€', status: 'amber',
-    trend: [3840000, 3900000, 3980000, 4100000, 4210000],
-    data: [
-      { fy: 'FY23', revenue: 3840000, grossMargin: 38, ebitda: 580000, netProfit: 320000, cash: 920000, receivables: 710000, payables: 290000 },
-      { fy: 'FY24', revenue: 3980000, grossMargin: 37, ebitda: 540000, netProfit: 290000, cash: 780000, receivables: 820000, payables: 340000 },
-      { fy: 'FY25', revenue: 4210000, grossMargin: 36, ebitda: 510000, netProfit: 270000, cash: 640000, receivables: 890000, payables: 390000 },
-    ],
-    commentary: 'Revenue is growing modestly but profitability is declining as gross margins compress. Cash has fallen from €920k to €640k while receivables have grown. Working capital management is a priority and the team is reviewing pricing and operational costs.',
-  },
-]
-
-const DOCUMENTS = [
-  { title: 'Q1 2026 Quarterly Report', type: 'Report', date: '16 Apr 2026', isNew: true },
-  { title: 'Capital Call Notice · Call 7', type: 'Notice', date: '02 Apr 2026', isNew: true },
-  { title: 'Q4 2025 Quarterly Report', type: 'Report', date: '18 Jan 2026', isNew: false },
-  { title: '2025 Annual Report & Audited Accounts', type: 'Report', date: '12 Jan 2026', isNew: false },
-  { title: 'Distribution Notice · Dist 3', type: 'Notice', date: '20 Nov 2025', isNew: false },
-  { title: 'Q3 2025 Quarterly Report', type: 'Report', date: '15 Oct 2025', isNew: false },
-  { title: '2024 Tax Statement', type: 'Tax', date: '30 Mar 2025', isNew: false },
-]
-
 // ── Main component ───────────────────────────────────────────────────────────
 
-type Tab = 'account' | 'performance' | 'portfolio' | 'documents'
+type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'documents'
 
 export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
   const [tab, setTab] = useState<Tab>('account')
@@ -114,25 +53,30 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
         <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
           {([
             { id: 'account', label: 'My account' },
+            { id: 'ask', label: '✦ Ask AI' },
             { id: 'performance', label: 'Fund performance' },
             { id: 'portfolio', label: 'Portfolio' },
             { id: 'documents', label: 'Documents' },
-          ] as { id: Tab; label: string }[]).map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              style={{
-                padding: '8px 16px', fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
-                border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
-                background: tab === t.id ? 'var(--navy)' : 'transparent',
-                color: tab === t.id ? 'white' : 'var(--text-muted)',
-                borderBottom: tab === t.id ? '2px solid var(--navy)' : '2px solid transparent',
-                marginBottom: -1,
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+          ] as { id: Tab; label: string }[]).map(t => {
+            const isAsk = t.id === 'ask'
+            const active = tab === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  padding: '8px 16px', fontSize: 13, fontWeight: active || isAsk ? 600 : 400,
+                  border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
+                  background: active ? 'var(--navy)' : 'transparent',
+                  color: active ? 'white' : isAsk ? 'var(--accent)' : 'var(--text-muted)',
+                  borderBottom: active ? '2px solid var(--navy)' : '2px solid transparent',
+                  marginBottom: -1,
+                }}
+              >
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -140,13 +84,14 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {isMobile && (
         <div style={{ marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>
-            {tab === 'account' ? 'My Account' : tab === 'performance' ? 'Fund Performance' : tab === 'portfolio' ? 'Portfolio' : 'Documents'}
+            {tab === 'account' ? 'My Account' : tab === 'ask' ? 'Ask Clavio AI' : tab === 'performance' ? 'Fund Performance' : tab === 'portfolio' ? 'Portfolio' : 'Documents'}
           </h2>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.date}</p>
         </div>
       )}
 
-      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => setTab('performance')} />}
+      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => setTab('performance')} goToAsk={() => setTab('ask')} />}
+      {tab === 'ask' && <AskTab isMobile={isMobile} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
       {tab === 'documents' && <DocumentsTab />}
@@ -165,31 +110,61 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 
 // ── My Account tab ───────────────────────────────────────────────────────────
 
-function AccountTab({ currency, goToPerformance }: { currency: Currency; goToPerformance: () => void }) {
+function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void }) {
   const calledPct = (FUND.called / FUND.commitment) * 100
+  const navCount = useCountUp(FUND.nav)
+  const tvpiCount = useCountUp(FUND.tvpi, 1000, 2)
+  const dpiCount = useCountUp(FUND.dpi, 1000, 2)
 
   return (
     <div>
-      {/* Top summary: fund name + 3 headline numbers in one compact card */}
-      <div style={{ ...styles.card, marginBottom: 10 }}>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{FUND.name} · as at {FUND.date}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
+      {/* Hero position card — gradient + animated count-up */}
+      <div style={{
+        borderRadius: 14, marginBottom: 10, padding: '22px 24px',
+        background: 'linear-gradient(135deg, #0A0E1A 0%, #16233E 55%, #1E3A5F 100%)',
+        color: 'white', position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Your position · {FUND.name}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18, position: 'relative' }}>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtM(navCount, currency)}</div>
+          <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {FUND.tvpi}x net</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, position: 'relative' }}>
           {[
-            { label: 'NAV', value: fmtM(FUND.nav, currency), accent: true },
-            { label: 'TVPI', value: `${FUND.tvpi}x`, accent: false },
-            { label: 'DPI', value: `${FUND.dpi}x`, accent: false },
+            { label: 'TVPI', value: `${tvpiCount.toFixed(2)}x` },
+            { label: 'DPI', value: `${dpiCount.toFixed(2)}x` },
+            { label: 'Share of fund', value: `${FUND.shareOfFund}%` },
           ].map((s, i) => (
             <div key={s.label} style={{
               paddingRight: i < 2 ? 16 : 0,
-              borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              borderRight: i < 2 ? '1px solid rgba(255,255,255,0.12)' : 'none',
               paddingLeft: i > 0 ? 16 : 0,
             }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: s.accent ? 'var(--accent)' : 'var(--text)' }}>{s.value}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{s.value}</div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Ask AI prompt */}
+      <button
+        onClick={goToAsk}
+        style={{
+          width: '100%', textAlign: 'left', marginBottom: 10, cursor: 'pointer',
+          borderRadius: 12, padding: '13px 16px', border: '1px solid #D7E2F2',
+          background: 'linear-gradient(90deg, #F4F8FE, #FFFFFF)',
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}
+      >
+        <span style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✦</span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Ask Clavio anything about your fund</span>
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)' }}>“Why did Delacourt&apos;s margin fall?” · “What&apos;s my next capital call?”</span>
+        </span>
+        <span style={{ fontSize: 18, color: 'var(--accent)', flexShrink: 0 }}>→</span>
+      </button>
 
       {/* Capital called progress */}
       <div style={{ ...styles.card, marginBottom: 10 }}>
@@ -291,6 +266,33 @@ function PerformanceTab() {
             <div style={{ fontSize: 26, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
+      </div>
+
+      {/* Value creation bridge */}
+      <div style={{ ...styles.card, marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Value Creation Bridge</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Invested cost → current value</div>
+        </div>
+        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
+          How the fund grew gross value from £16.9M invested to £23.5M, decomposed by driver.
+        </p>
+        <ValueBridge />
+      </div>
+
+      {/* J-curve + allocation row */}
+      <div className="gp-trend-grid" style={{ marginBottom: 24 }}>
+        <div style={styles.card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Fund J-Curve</div>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+            Cumulative net cash flow to investors. Crossed into positive territory in 2025.
+          </p>
+          <JCurve />
+        </div>
+        <div style={styles.card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Allocation by Sector</div>
+          <AllocationDonut />
+        </div>
       </div>
 
       {/* Portfolio companies grid */}
@@ -467,6 +469,352 @@ function DocumentsTab() {
       </div>
     </div>
   )
+}
+
+// ── Ask AI tab ───────────────────────────────────────────────────────────────
+
+interface ChatMsg { role: 'user' | 'assistant'; content: string }
+
+const SUGGESTED = [
+  'Why did Delacourt’s gross margin compress?',
+  'Compare Abington and Marlow revenue growth over three years',
+  'Which company has the weakest cash position and why?',
+  'What’s my unfunded commitment and likely next call?',
+]
+
+function AskTab({ isMobile }: { isMobile?: boolean }) {
+  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, loading])
+
+  const send = async (text: string) => {
+    const q = text.trim()
+    if (!q || loading) return
+    setError('')
+    setInput('')
+    const history = messages
+    const next = [...messages, { role: 'user' as const, content: q }]
+    setMessages(next)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, messages: history }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Request failed')
+      setMessages(m => [...m, { role: 'assistant', content: data.answer || '…' }])
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const empty = messages.length === 0
+
+  return (
+    <div style={{ marginBottom: isMobile ? 12 : 40 }}>
+      {/* Connected-data banner */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#0F7B4F', background: '#ECFDF5', border: '1px solid #BBF7D0', borderRadius: 20, padding: '4px 10px' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+          Connected to live accounting data
+        </span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QuickBooks · {COMPANIES.length} entities · synced {FUND.date}</span>
+      </div>
+
+      {/* Conversation */}
+      <div
+        ref={scrollRef}
+        style={{
+          ...styles.card, padding: empty ? '24px 20px' : '8px 4px',
+          minHeight: empty ? 'auto' : 260, maxHeight: isMobile ? 'none' : 440,
+          overflowY: 'auto', marginBottom: 12,
+        }}
+      >
+        {empty ? (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Ask Clavio about Fund II</div>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 18 }}>
+              Clavio reads the portfolio companies&apos; books directly. Ask a question in plain English and it pulls the exact figures to answer — no spreadsheets, no waiting on the GP.
+            </p>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {SUGGESTED.map(s => (
+                <button key={s} onClick={() => send(s)} style={{
+                  textAlign: 'left', padding: '11px 14px', borderRadius: 10,
+                  border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
+                  fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ color: 'var(--accent)', fontSize: 14 }}>✦</span>
+                  <span>{s}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {messages.map((m, i) => <ChatBubble key={i} role={m.role} content={m.content} />)}
+            {loading && <ThinkingBubble />}
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div style={{ fontSize: 12.5, color: 'var(--red)', marginBottom: 10 }}>{error}</div>
+      )}
+
+      {/* Input */}
+      <form onSubmit={e => { e.preventDefault(); send(input) }} style={{ display: 'flex', gap: 8 }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Ask about revenue, margins, cash, your position…"
+          style={{
+            flex: 1, padding: '12px 16px', borderRadius: 10, fontSize: 14,
+            border: '1px solid var(--border)', outline: 'none', background: 'white',
+          }}
+        />
+        <button type="submit" disabled={loading || !input.trim()} style={{
+          padding: '0 20px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 600,
+          background: loading || !input.trim() ? '#C7D2E0' : 'var(--accent)', color: 'white',
+          cursor: loading || !input.trim() ? 'default' : 'pointer',
+        }}>
+          {loading ? '…' : 'Ask'}
+        </button>
+      </form>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
+        Clavio AI can make mistakes. Verify material figures against source reports.
+      </div>
+    </div>
+  )
+}
+
+function ChatBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+  const isUser = role === 'user'
+  return (
+    <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', padding: '6px 8px' }}>
+      <div style={{
+        maxWidth: '88%', padding: '11px 14px', borderRadius: 12, fontSize: 13.5, lineHeight: 1.6,
+        whiteSpace: 'pre-wrap',
+        background: isUser ? 'var(--accent)' : 'var(--bg)',
+        color: isUser ? 'white' : 'var(--text)',
+        border: isUser ? 'none' : '1px solid var(--border)',
+        borderBottomRightRadius: isUser ? 4 : 12,
+        borderBottomLeftRadius: isUser ? 12 : 4,
+      }}>
+        {content}
+      </div>
+    </div>
+  )
+}
+
+function ThinkingBubble() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '6px 8px' }}>
+      <div style={{ padding: '12px 16px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', gap: 5, alignItems: 'center' }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{
+            width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
+            animation: `clavio-pulse 1.2s ${i * 0.18}s infinite ease-in-out`,
+          }} />
+        ))}
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Reading the books…</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Value creation bridge (custom SVG waterfall) ─────────────────────────────
+
+function ValueBridge() {
+  // £M figures: start at invested cost, build to current gross value
+  const steps = [
+    { label: 'Invested', value: 16.9, type: 'total' as const },
+    { label: 'Revenue\ngrowth', value: 4.3, type: 'up' as const },
+    { label: 'Margin\nexpansion', value: 2.1, type: 'up' as const },
+    { label: 'Multiple', value: 1.4, type: 'up' as const },
+    { label: 'Net debt\npaydown', value: 0.9, type: 'up' as const },
+    { label: 'FX', value: -2.1, type: 'down' as const },
+    { label: 'Current\nvalue', value: 23.5, type: 'total' as const },
+  ]
+  const maxVal = 26
+  const chartH = 180
+  const colW = 100 / steps.length
+  const scale = (v: number) => (v / maxVal) * chartH
+
+  let running = 0
+  const bars = steps.map((s) => {
+    if (s.type === 'total') {
+      const bar = { x: 0, base: 0, height: scale(s.value), top: s.value }
+      running = s.value
+      return { ...s, ...bar }
+    }
+    const prev = running
+    running += s.value
+    const base = Math.min(prev, running)
+    const bar = { base: scale(base), height: scale(Math.abs(s.value)), top: running }
+    return { ...s, x: 0, ...bar }
+  })
+
+  const color = (t: 'total' | 'up' | 'down') => t === 'total' ? '#1E3A5F' : t === 'up' ? '#10B981' : '#EF4444'
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <div style={{ minWidth: 460 }}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height={chartH} style={{ display: 'block', overflow: 'visible' }}>
+          {bars.map((b, i) => {
+            const x = i * colW + colW * 0.18
+            const w = colW * 0.64
+            const yTop = ((chartH - b.base - b.height) / chartH) * 100
+            const h = (b.height / chartH) * 100
+            return (
+              <g key={i}>
+                <rect x={x} y={yTop} width={w} height={Math.max(h, 0.4)} fill={color(b.type)} rx="0.8" vectorEffect="non-scaling-stroke" />
+                {i < bars.length - 1 && (
+                  <line
+                    x1={x} y1={((chartH - b.top) / chartH) * 100 * (b.type === 'down' ? 1 : 1)}
+                    x2={x + colW} y2={((chartH - b.top) / chartH) * 100}
+                    stroke="#CBD5E1" strokeWidth="0.4" strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke"
+                  />
+                )}
+              </g>
+            )
+          })}
+        </svg>
+        {/* Labels */}
+        <div style={{ display: 'flex', marginTop: 8 }}>
+          {bars.map((b, i) => (
+            <div key={i} style={{ width: `${colW}%`, textAlign: 'center', padding: '0 2px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: color(b.type), marginBottom: 2 }}>
+                {b.type === 'up' ? '+' : b.type === 'down' ? '−' : ''}£{Math.abs(b.value).toFixed(1)}M
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.2, whiteSpace: 'pre-line' }}>{b.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── J-curve (cumulative cash flow) ───────────────────────────────────────────
+
+function JCurve() {
+  // Cumulative net cash flow to LPs over fund life (£M), turning positive in 2025
+  const pts = [
+    { t: '2022', v: -3.2 },
+    { t: '2023', v: -8.1 },
+    { t: '2024', v: -5.4 },
+    { t: '2025', v: 1.8 },
+    { t: '2026', v: 6.6 },
+  ]
+  const W = 300, H = 170, padL = 26, padR = 24, padT = 12, padB = 24
+  const vals = pts.map(p => p.v)
+  const min = Math.min(...vals, 0), max = Math.max(...vals, 0)
+  const range = max - min || 1
+  const x = (i: number) => padL + (i / (pts.length - 1)) * (W - padL - padR)
+  const y = (v: number) => padT + (1 - (v - min) / range) * (H - padT - padB)
+  const zeroY = y(0)
+  const linePts = pts.map((p, i) => `${x(i)},${y(p.v)}`).join(' ')
+  const areaPts = `${x(0)},${zeroY} ${linePts} ${x(pts.length - 1)},${zeroY}`
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id="jcurve-pos" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10B981" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* zero line */}
+      <line x1={padL} y1={zeroY} x2={W - padR} y2={zeroY} stroke="#E5E7EB" strokeWidth="1" />
+      <text x={padL - 5} y={zeroY + 3} textAnchor="end" fontSize="9" fill="#9CA3AF">0</text>
+      <polygon points={areaPts} fill="url(#jcurve-pos)" />
+      <polyline points={linePts} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {pts.map((p, i) => (
+        <g key={i}>
+          <circle cx={x(i)} cy={y(p.v)} r="3" fill="white" stroke="var(--accent)" strokeWidth="2" />
+          <text x={x(i)} y={H - 8} textAnchor="middle" fontSize="9.5" fill="#6B7280">{p.t}</text>
+        </g>
+      ))}
+      {/* breakeven marker */}
+      <text x={x(3)} y={y(1.8) - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill="#10B981">Breakeven</text>
+    </svg>
+  )
+}
+
+// ── Allocation donut ─────────────────────────────────────────────────────────
+
+function AllocationDonut() {
+  // Share of fund gross value by sector
+  const slices = [
+    { label: 'B2B Services', value: 33, color: '#1E3A5F' },
+    { label: 'F&B Distribution', value: 28, color: '#5B82BD' },
+    { label: 'Manufacturing', value: 23, color: '#10B981' },
+    { label: 'Specialty Mfg', value: 16, color: '#F59E0B' },
+  ]
+  const total = slices.reduce((a, s) => a + s.value, 0)
+  const R = 52, stroke = 20, C = 2 * Math.PI * R
+  let offset = 0
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+      <svg width="132" height="132" viewBox="0 0 132 132" style={{ flexShrink: 0 }}>
+        <g transform="rotate(-90 66 66)">
+          {slices.map((s, i) => {
+            const frac = s.value / total
+            const dash = frac * C
+            const seg = (
+              <circle key={i} cx="66" cy="66" r={R} fill="none" stroke={s.color} strokeWidth={stroke}
+                strokeDasharray={`${dash} ${C - dash}`} strokeDashoffset={-offset} />
+            )
+            offset += dash
+            return seg
+          })}
+        </g>
+        <text x="66" y="62" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--text)">£23.5M</text>
+        <text x="66" y="76" textAnchor="middle" fontSize="9" fill="#9CA3AF">gross value</text>
+      </svg>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 130 }}>
+        {slices.map(s => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: 'var(--text)', flex: 1 }}>{s.label}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{s.value}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Count-up hook ────────────────────────────────────────────────────────────
+
+function useCountUp(target: number, duration = 1000, decimals = 0) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3) // ease-out cubic
+      setValue(target * eased)
+      if (p < 1) raf = requestAnimationFrame(tick)
+      else setValue(target)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  void decimals
+  return value
 }
 
 // ── Sparkline ────────────────────────────────────────────────────────────────

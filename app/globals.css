@@ -52,3 +52,8 @@ input, select, textarea {
   .gp-trend-grid { grid-template-columns: 1fr; }
   .hide-mobile { display: none !important; }
 }
+
+@keyframes clavio-pulse {
+  0%, 60%, 100% { transform: scale(0.7); opacity: 0.4; }
+  30% { transform: scale(1.1); opacity: 1; }
+}
