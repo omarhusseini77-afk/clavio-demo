@@ -34,6 +34,17 @@ const ALL_FIELDS: { key: keyof Quarter; label: string }[] = [
   { key: 'funds', label: "Shareholders' Funds" },
 ]
 
+const SIGNALS = [
+  { company: 'Halcyon Textiles', detail: 'Lost client >5% · Bank discussions · Miss next target', level: 'red' },
+  { company: 'Sentinel Security NW', detail: 'Miss next target', level: 'amber' },
+]
+
+const ANOMALIES = [
+  { company: 'HALCYON TEXTILES', title: 'EBITDA margin contracted 4.2pp month-over-month', detail: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', level: 'red' },
+  { company: 'SENTINEL SECURITY NW', title: 'Reported EBITDA inconsistent with prior pattern', detail: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', level: 'amber' },
+  { company: 'HALCYON TEXTILES', title: 'Receivables aging — 18% in 30+ day bucket', detail: 'Up from 9% three months ago. Trend warrants follow-up with management.', level: 'amber' },
+]
+
 type Props = {
   quarters: Quarter[]
   onDelete: (id: number) => Promise<void>
@@ -140,9 +151,10 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
         })}
       </div>
 
-      {/* Trend chart */}
-      <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>Performance Trend</h3>
+      {/* Signals + Trend row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, marginBottom: 16, alignItems: 'start' }}>
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Performance Trend</h3>
         <div style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
@@ -158,6 +170,58 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
             </LineChart>
           </ResponsiveContainer>
         </div>
+        </div>
+
+        {/* Objective Signals */}
+        <div style={styles.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <h3 style={styles.sectionTitle}>Objective Signals</h3>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Flagged this month</span>
+          </div>
+          {SIGNALS.map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < SIGNALS.length - 1 ? 14 : 0, alignItems: 'flex-start' }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                background: s.level === 'red' ? '#FEF2F2' : '#FEF3C7',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, color: s.level === 'red' ? '#EF4444' : '#D97706',
+              }}>!</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{s.company}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{s.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Anomaly Detection */}
+      <div style={{ ...styles.card, marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+          <h3 style={styles.sectionTitle}>Anomaly Detection</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Statistical patterns flagged this month</span>
+            <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>V2</span>
+          </div>
+        </div>
+        {ANOMALIES.map((a, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              background: a.level === 'red' ? '#FEF2F2' : '#FEF3C7',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: a.level === 'red' ? '#EF4444' : '#D97706', marginTop: 2,
+            }}>!</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 3 }}>{a.company}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{a.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{a.detail}</div>
+            </div>
+            <button style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0, fontWeight: 500 }}>
+              Investigate →
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Data table */}
