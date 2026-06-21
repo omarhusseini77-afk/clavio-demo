@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: 'Clavio Partner',
   description: 'Partner dashboard — Clavio',
   manifest: '/manifest-gp.json',
+  icons: { apple: '/icon-gp-192.png' },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
