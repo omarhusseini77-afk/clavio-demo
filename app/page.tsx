@@ -118,7 +118,9 @@ export default function Home() {
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>Clavio</span>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '0.5px' }}>
+              CLA<span style={{ color: '#5B82BD', letterSpacing: '-3px', marginLeft: '-1px' }}>V</span>IO
+            </span>
           </div>
         )}
 
