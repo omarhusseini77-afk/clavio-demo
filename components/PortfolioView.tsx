@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Quarter } from '@/lib/supabase'
 
 const FIELDS: { key: keyof Omit<Quarter, 'id' | 'period' | 'created_at'>; label: string; section: string }[] = [
@@ -27,8 +27,44 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
   const [period, setPeriod] = useState('')
   const [values, setValues] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [extracting, setExtracting] = useState(false)
+  const [extractError, setExtractError] = useState('')
+  const [extractSuccess, setExtractSuccess] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const sections = Array.from(new Set(FIELDS.map(f => f.section)))
+
+  const handleExtract = async (file: File) => {
+    setExtracting(true)
+    setExtractError('')
+    setExtractSuccess(false)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/extract', { method: 'POST', body: form })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Extraction failed')
+      if (data.period) setPeriod(data.period)
+      const newValues = { ...EMPTY }
+      for (const f of FIELDS) {
+        if (data[f.key] !== undefined) newValues[f.key] = String(data[f.key])
+      }
+      setValues(newValues)
+      setExtractSuccess(true)
+    } catch (e: unknown) {
+      setExtractError(e instanceof Error ? e.message : 'Extraction failed')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleExtract(file)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +78,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
     if (ok) {
       setPeriod('')
       setValues(EMPTY)
+      setExtractSuccess(false)
       setTimeout(() => setStatus('idle'), 4000)
     }
   }
@@ -49,7 +86,62 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
   return (
     <div>
       <h1 style={styles.pageTitle}>Submit Quarterly Financials</h1>
-      <p style={styles.pageSubtitle}>Enter figures in GBP. All values will be visible to the GP and LP once submitted.</p>
+      <p style={styles.pageSubtitle}>Upload your accounts or enter figures manually. All values are stored in GBP.</p>
+
+      {/* AI Upload zone */}
+      <div style={styles.card}>
+        <h3 style={styles.sectionTitle}>
+          <span style={{ marginRight: 8 }}>✦</span>
+          Extract with AI
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Attach your management accounts (PDF or Excel) and Claude will read and fill the form automatically.
+        </p>
+        <div
+          onDrop={handleDrop}
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onClick={() => fileRef.current?.click()}
+          style={{
+            border: `2px dashed ${dragging ? 'var(--accent)' : 'var(--border)'}`,
+            borderRadius: 12,
+            padding: '28px 20px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            background: dragging ? 'rgba(91,130,189,0.05)' : 'var(--bg)',
+            transition: 'all 0.15s',
+          }}
+        >
+          <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
+          <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>
+            Drop a file here or <span style={{ color: 'var(--accent)', textDecoration: 'underline' }}>browse</span>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>PDF, XLSX, XLS, or CSV</div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.xlsx,.xls,.csv"
+            style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleExtract(f); e.target.value = '' }}
+          />
+        </div>
+
+        {extracting && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, fontSize: 14, color: 'var(--accent)' }}>
+            <Spinner /> Reading document with AI…
+          </div>
+        )}
+        {extractSuccess && !extracting && (
+          <div style={{ ...styles.alert, background: '#ECFDF5', borderColor: '#10B981', color: '#065F46', marginTop: 14, marginBottom: 0 }}>
+            Fields auto-filled from your document. Review and submit below.
+          </div>
+        )}
+        {extractError && (
+          <div style={{ ...styles.alert, background: '#FEF2F2', borderColor: '#EF4444', color: '#991B1B', marginTop: 14, marginBottom: 0 }}>
+            {extractError}
+          </div>
+        )}
+      </div>
 
       {status === 'success' && (
         <div style={{ ...styles.alert, background: '#ECFDF5', borderColor: '#10B981', color: '#065F46' }}>
@@ -110,6 +202,16 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
   )
 }
 
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  )
+}
+
 const styles: Record<string, React.CSSProperties> = {
   pageTitle: { fontSize: 22, fontWeight: 700, marginBottom: 6 },
   pageSubtitle: { color: 'var(--text-muted)', marginBottom: 24, fontSize: 14 },
@@ -128,7 +230,6 @@ const styles: Record<string, React.CSSProperties> = {
   submitBtn: {
     background: 'var(--accent)', color: 'white', border: 'none',
     borderRadius: 10, padding: '13px 32px', fontSize: 15, fontWeight: 600,
-    width: '100%', marginBottom: 40,
-    opacity: 1,
+    width: '100%', marginBottom: 40, cursor: 'pointer',
   },
 }

@@ -2,11 +2,8 @@
 import { useState } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts'
 import type { Quarter } from '@/lib/supabase'
-
-const fmt = (n: number) =>
-  n >= 1_000_000 ? `£${(n / 1_000_000).toFixed(2)}m` : `£${(n / 1_000).toFixed(0)}k`
-
-const fmtFull = (n: number) => `£${n.toLocaleString('en-GB')}`
+import type { Currency } from '@/lib/currency'
+import { fmtShort, fmtFull, symbol } from '@/lib/currency'
 
 const COLS: { key: keyof Quarter; label: string }[] = [
   { key: 'turnover', label: 'Turnover' },
@@ -41,9 +38,10 @@ type Props = {
   quarters: Quarter[]
   onDelete: (id: number) => Promise<void>
   onUpdate: (id: number, q: Omit<Quarter, 'id' | 'created_at'>) => Promise<boolean>
+  currency: Currency
 }
 
-export default function GPView({ quarters, onDelete, onUpdate }: Props) {
+export default function GPView({ quarters, onDelete, onUpdate, currency }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -107,6 +105,8 @@ export default function GPView({ quarters, onDelete, onUpdate }: Props) {
     writeFile(wb, 'clavio-quarterly-data.xlsx')
   }
 
+  const sym = symbol(currency)
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
@@ -119,7 +119,7 @@ export default function GPView({ quarters, onDelete, onUpdate }: Props) {
         </button>
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: 24, fontSize: 14 }}>
-        {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live
+        {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live · Displaying in {currency}
       </p>
 
       {/* KPI strip */}
@@ -129,7 +129,7 @@ export default function GPView({ quarters, onDelete, onUpdate }: Props) {
           return (
             <div key={c.key} style={styles.kpiCard}>
               <div style={styles.kpiLabel}>{c.label}</div>
-              <div style={styles.kpiValue}>{fmt(latest[c.key] as number)}</div>
+              <div style={styles.kpiValue}>{fmtShort(latest[c.key] as number, currency)}</div>
               {d !== null && (
                 <div style={{ fontSize: 12, marginTop: 4, color: d >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>
                   {d >= 0 ? '▲' : '▼'} {Math.abs(d).toFixed(1)}% vs prev
@@ -148,8 +148,8 @@ export default function GPView({ quarters, onDelete, onUpdate }: Props) {
             <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
-              <YAxis tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={60} />
-              <Tooltip formatter={(v: number) => fmtFull(v)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
+              <YAxis tickFormatter={v => `${sym}${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={64} />
+              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="Turnover" stroke="#5B82BD" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="Gross Profit" stroke="#10B981" strokeWidth={2} dot={false} />
@@ -182,13 +182,13 @@ export default function GPView({ quarters, onDelete, onUpdate }: Props) {
               {[...quarters].reverse().map((q, i) => (
                 <tr key={q.id ?? i} style={{ background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
                   <td style={{ ...styles.td, fontWeight: 600 }}>{q.period}</td>
-                  <td style={styles.td}>{fmtFull(q.turnover)}</td>
-                  <td style={styles.td}>{fmtFull(q.gross)}</td>
-                  <td style={styles.td}>{fmtFull(q.op)}</td>
-                  <td style={styles.td}>{fmtFull(q.pbt)}</td>
-                  <td style={styles.td}>{fmtFull(q.retained)}</td>
-                  <td style={styles.td}>{fmtFull(q.net_assets)}</td>
-                  <td style={styles.td}>{fmtFull(q.cash)}</td>
+                  <td style={styles.td}>{fmtFull(q.turnover, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.gross, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.op, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.pbt, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.retained, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.net_assets, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.cash, currency)}</td>
                   <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
                     <button onClick={() => startEdit(q)} style={styles.editBtn}>Edit</button>
                     <button onClick={() => setConfirmDeleteId(q.id!)} style={styles.deleteBtn}>Delete</button>

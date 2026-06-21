@@ -1,19 +1,20 @@
 'use client'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import type { Quarter } from '@/lib/supabase'
+import type { Currency } from '@/lib/currency'
+import { fmtM, fmtK, fmtFull, symbol } from '@/lib/currency'
 
-const fmtM = (n: number) => `£${(n / 1_000_000).toFixed(2)}m`
-const fmtK = (n: number) => `£${(n / 1_000).toFixed(0)}k`
-const fmtFull = (n: number) => `£${n.toLocaleString('en-GB')}`
 const pct = (a: number, b: number) => (((a - b) / Math.abs(b)) * 100).toFixed(1)
 
-async function exportPDF(quarters: Quarter[]) {
+async function exportPDF(quarters: Quarter[], currency: Currency) {
   const { default: jsPDF } = await import('jspdf')
   const { default: autoTable } = await import('jspdf-autotable')
 
   const latest = quarters[quarters.length - 1]
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+  const f = (n: number) => fmtFull(n, currency)
 
   // Header block
   doc.setFillColor(10, 14, 26)
@@ -25,7 +26,7 @@ async function exportPDF(quarters: Quarter[]) {
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(180, 195, 220)
-  doc.text(`Period: ${latest.period}  ·  Prepared ${today}  ·  Clavio Capital  ·  Confidential`, 14, 30)
+  doc.text(`Period: ${latest.period}  ·  Prepared ${today}  ·  Clavio Capital  ·  Confidential  ·  ${currency}`, 14, 30)
 
   // KPI row
   const margin = (latest.gross / latest.turnover * 100).toFixed(1)
@@ -34,10 +35,10 @@ async function exportPDF(quarters: Quarter[]) {
   doc.setFontSize(9)
   doc.setFont('helvetica', 'bold')
   const kpis = [
-    ['Revenue', fmtFull(latest.turnover)],
-    ['Gross Profit', `${fmtFull(latest.gross)} (${margin}%)`],
-    ['Op. Profit', `${fmtFull(latest.op)} (${opMargin}%)`],
-    ['Net Assets', fmtFull(latest.net_assets)],
+    ['Revenue', f(latest.turnover)],
+    ['Gross Profit', `${f(latest.gross)} (${margin}%)`],
+    ['Op. Profit', `${f(latest.op)} (${opMargin}%)`],
+    ['Net Assets', f(latest.net_assets)],
   ]
   kpis.forEach(([label, value], i) => {
     const x = 14 + i * 47
@@ -53,18 +54,18 @@ async function exportPDF(quarters: Quarter[]) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(55, 65, 81)
-  const narrative = `The portfolio company reported turnover of ${fmtFull(latest.turnover)} for ${latest.period}, generating a gross profit of ${fmtFull(latest.gross)} (${margin}% gross margin) and operating profit of ${fmtFull(latest.op)} (${opMargin}% operating margin). Profit before tax stood at ${fmtFull(latest.pbt)}, with retained profit of ${fmtFull(latest.retained)}. Net assets are ${fmtFull(latest.net_assets)}, supported by cash of ${fmtFull(latest.cash)}.`
+  const narrative = `The portfolio company reported turnover of ${f(latest.turnover)} for ${latest.period}, generating a gross profit of ${f(latest.gross)} (${margin}% gross margin) and operating profit of ${f(latest.op)} (${opMargin}% operating margin). Profit before tax stood at ${f(latest.pbt)}, with retained profit of ${f(latest.retained)}. Net assets are ${f(latest.net_assets)}, supported by cash of ${f(latest.cash)}.`
   const lines = doc.splitTextToSize(narrative, 182)
   doc.text(lines, 14, 68)
 
   // Table
   const tableRows = [...quarters].reverse().map(q => [
     q.period,
-    fmtFull(q.turnover),
+    f(q.turnover),
     `${(q.gross / q.turnover * 100).toFixed(1)}%`,
     `${(q.op / q.turnover * 100).toFixed(1)}%`,
-    fmtFull(q.pbt),
-    fmtFull(q.net_assets),
+    f(q.pbt),
+    f(q.net_assets),
   ])
 
   autoTable(doc, {
@@ -89,7 +90,7 @@ async function exportPDF(quarters: Quarter[]) {
   doc.save(`clavio-investor-report-${latest.period.replace(/\s/g, '-')}.pdf`)
 }
 
-export default function LPView({ quarters }: { quarters: Quarter[] }) {
+export default function LPView({ quarters, currency }: { quarters: Quarter[]; currency: Currency }) {
   const latest = quarters[quarters.length - 1]
   const prev = quarters[quarters.length - 2]
   const first = quarters[0]
@@ -102,6 +103,7 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
   const opMargin = latest.op / latest.turnover * 100
   const revenueGrowth = prev ? pct(latest.turnover, prev.turnover) : null
   const totalRevenueGrowth = first ? pct(latest.turnover, first.turnover) : null
+  const sym = symbol(currency)
 
   const chartData = quarters.map(q => ({
     period: q.period,
@@ -125,10 +127,10 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
             <div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>CLAVIO CAPITAL</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Confidential</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Confidential · {currency}</div>
             </div>
             <button
-              onClick={() => exportPDF(quarters)}
+              onClick={() => exportPDF(quarters, currency)}
               style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: 'white', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
             >
               ↓ Export PDF
@@ -140,10 +142,10 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
       {/* Headline KPIs */}
       <div style={styles.kpiStrip}>
         {[
-          { label: 'Revenue', value: fmtM(latest.turnover), sub: revenueGrowth ? `${Number(revenueGrowth) >= 0 ? '+' : ''}${revenueGrowth}% QoQ` : '' },
-          { label: 'Gross Profit', value: fmtK(latest.gross), sub: `${margin.toFixed(1)}% margin` },
-          { label: 'Operating Profit', value: fmtK(latest.op), sub: `${opMargin.toFixed(1)}% op. margin` },
-          { label: 'Net Assets', value: fmtM(latest.net_assets), sub: totalRevenueGrowth ? `Revenue +${totalRevenueGrowth}% since inception` : '' },
+          { label: 'Revenue', value: fmtM(latest.turnover, currency), sub: revenueGrowth ? `${Number(revenueGrowth) >= 0 ? '+' : ''}${revenueGrowth}% QoQ` : '' },
+          { label: 'Gross Profit', value: fmtK(latest.gross, currency), sub: `${margin.toFixed(1)}% margin` },
+          { label: 'Operating Profit', value: fmtK(latest.op, currency), sub: `${opMargin.toFixed(1)}% op. margin` },
+          { label: 'Net Assets', value: fmtM(latest.net_assets, currency), sub: totalRevenueGrowth ? `Revenue +${totalRevenueGrowth}% since inception` : '' },
         ].map(k => (
           <div key={k.label} style={styles.kpiBox}>
             <div style={styles.kpiBoxLabel}>{k.label}</div>
@@ -157,16 +159,16 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
       <div style={styles.card}>
         <h3 style={styles.sectionTitle}>Period Summary — {latest.period}</h3>
         <p style={styles.narrative}>
-          The portfolio company reported turnover of <strong>{fmtFull(latest.turnover)}</strong> for {latest.period},
-          generating a gross profit of <strong>{fmtFull(latest.gross)}</strong> ({margin.toFixed(1)}% gross margin)
-          and operating profit of <strong>{fmtFull(latest.op)}</strong> ({opMargin.toFixed(1)}% operating margin).
-          Profit before tax stood at <strong>{fmtFull(latest.pbt)}</strong>, with retained profit of <strong>{fmtFull(latest.retained)}</strong>.
+          The portfolio company reported turnover of <strong>{fmtFull(latest.turnover, currency)}</strong> for {latest.period},
+          generating a gross profit of <strong>{fmtFull(latest.gross, currency)}</strong> ({margin.toFixed(1)}% gross margin)
+          and operating profit of <strong>{fmtFull(latest.op, currency)}</strong> ({opMargin.toFixed(1)}% operating margin).
+          Profit before tax stood at <strong>{fmtFull(latest.pbt, currency)}</strong>, with retained profit of <strong>{fmtFull(latest.retained, currency)}</strong>.
         </p>
         <p style={{ ...styles.narrative, marginTop: 12 }}>
-          The balance sheet shows net assets of <strong>{fmtFull(latest.net_assets)}</strong>,
-          supported by cash of <strong>{fmtFull(latest.cash)}</strong> and a debtors balance of <strong>{fmtFull(latest.debtors)}</strong>.
-          Creditors due within one year total <strong>{fmtFull(latest.creditors)}</strong>.
-          Shareholders&apos; funds are <strong>{fmtFull(latest.funds)}</strong>.
+          The balance sheet shows net assets of <strong>{fmtFull(latest.net_assets, currency)}</strong>,
+          supported by cash of <strong>{fmtFull(latest.cash, currency)}</strong> and a debtors balance of <strong>{fmtFull(latest.debtors, currency)}</strong>.
+          Creditors due within one year total <strong>{fmtFull(latest.creditors, currency)}</strong>.
+          Shareholders&apos; funds are <strong>{fmtFull(latest.funds, currency)}</strong>.
         </p>
       </div>
 
@@ -184,8 +186,8 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
-              <YAxis tickFormatter={v => `£${(v / 1_000_000).toFixed(1)}m`} tick={{ fontSize: 11, fill: '#6B7280' }} width={60} />
-              <Tooltip formatter={(v: number) => fmtFull(v)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
+              <YAxis tickFormatter={v => `${sym}${(v / 1_000_000).toFixed(1)}m`} tick={{ fontSize: 11, fill: '#6B7280' }} width={64} />
+              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
               <Area type="monotone" dataKey="Net Assets" stroke="#5B82BD" strokeWidth={2.5} fill="url(#netGrad)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -210,8 +212,8 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
-              <YAxis tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={60} />
-              <Tooltip formatter={(v: number) => fmtFull(v)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
+              <YAxis tickFormatter={v => `${sym}${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={64} />
+              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
               <Area type="monotone" dataKey="Turnover" stroke="#5B82BD" strokeWidth={2} fill="url(#revGrad)" />
               <Area type="monotone" dataKey="Gross Profit" stroke="#10B981" strokeWidth={2} fill="url(#gpGrad)" />
             </AreaChart>
@@ -235,11 +237,11 @@ export default function LPView({ quarters }: { quarters: Quarter[] }) {
               {[...quarters].reverse().map((q, i) => (
                 <tr key={q.id ?? i} style={{ background: i % 2 === 0 ? 'transparent' : '#F9FAFB' }}>
                   <td style={{ ...styles.td, fontWeight: 600 }}>{q.period}</td>
-                  <td style={styles.td}>{fmtFull(q.turnover)}</td>
+                  <td style={styles.td}>{fmtFull(q.turnover, currency)}</td>
                   <td style={styles.td}>{(q.gross / q.turnover * 100).toFixed(1)}%</td>
                   <td style={styles.td}>{(q.op / q.turnover * 100).toFixed(1)}%</td>
-                  <td style={styles.td}>{fmtFull(q.pbt)}</td>
-                  <td style={styles.td}>{fmtFull(q.net_assets)}</td>
+                  <td style={styles.td}>{fmtFull(q.pbt, currency)}</td>
+                  <td style={styles.td}>{fmtFull(q.net_assets, currency)}</td>
                 </tr>
               ))}
             </tbody>

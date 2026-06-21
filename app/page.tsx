@@ -3,21 +3,19 @@ import { useEffect, useState } from 'react'
 import PortfolioView from '@/components/PortfolioView'
 import GPView from '@/components/GPView'
 import LPView from '@/components/LPView'
+import Sidebar from '@/components/Sidebar'
 import { supabase } from '@/lib/supabase'
 import type { Quarter } from '@/lib/supabase'
+import type { Currency } from '@/lib/currency'
 
 type Role = 'portfolio' | 'gp' | 'lp'
 
-const ROLES: { id: Role; label: string }[] = [
-  { id: 'portfolio', label: 'Portfolio Co.' },
-  { id: 'gp', label: 'GP / Partner' },
-  { id: 'lp', label: 'LP / Investor' },
-]
-
 export default function Home() {
   const [role, setRole] = useState<Role>('gp')
+  const [currency, setCurrency] = useState<Currency>('GBP')
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const fetchQuarters = async () => {
     const res = await fetch('/api/quarters')
@@ -33,7 +31,6 @@ export default function Home() {
     }
     init()
 
-    // Live auto-refresh via Supabase realtime
     const channel = supabase
       .channel('quarters-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quarters' }, () => {
@@ -70,58 +67,67 @@ export default function Home() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <nav style={{
-        background: 'var(--navy)',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingLeft: 20,
-        paddingRight: 20,
-        paddingBottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        minHeight: 'calc(56px + env(safe-area-inset-top))',
-        flexShrink: 0,
-      }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px', marginRight: 16, flexShrink: 0 }}>
-          Clavio
-        </span>
-        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch' as never }}>
-          {ROLES.map(r => (
-            <button
-              key={r.id}
-              onClick={() => setRole(r.id)}
-              style={{
-                background: role === r.id ? 'var(--accent)' : 'transparent',
-                color: role === r.id ? 'white' : 'rgba(255,255,255,0.65)',
-                border: 'none',
-                borderRadius: 8,
-                padding: '6px 14px',
-                fontSize: 13,
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s',
-              }}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Sidebar — always visible on desktop (≥768px), toggled on mobile */}
+      <style>{`
+        @media (min-width: 768px) {
+          .sidebar-panel { transform: translateX(0) !important; position: relative !important; }
+          .mobile-topbar { display: none !important; }
+          .main-content { margin-left: 0 !important; }
+        }
+        @media (max-width: 767px) {
+          .desktop-only { display: none !important; }
+        }
+      `}</style>
 
-      <main style={{ flex: 1, padding: '24px 20px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
-            <Spinner /> Loading data…
-          </div>
-        ) : (
-          <>
-            {role === 'portfolio' && <PortfolioView onSubmit={onSubmit} />}
-            {role === 'gp' && <GPView quarters={quarters} onDelete={onDelete} onUpdate={onUpdate} />}
-            {role === 'lp' && <LPView quarters={quarters} />}
-          </>
-        )}
-      </main>
+      <Sidebar
+        role={role}
+        setRole={setRole}
+        currency={currency}
+        setCurrency={setCurrency}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Right side content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, marginLeft: 240 }} className="main-content">
+        {/* Mobile top bar */}
+        <div className="mobile-topbar" style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '0 16px',
+          height: 'calc(52px + env(safe-area-inset-top))',
+          paddingTop: 'env(safe-area-inset-top)',
+          background: 'var(--navy)',
+          flexShrink: 0,
+        }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 4, display: 'flex' }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span style={{ color: 'white', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>Clavio</span>
+        </div>
+
+        {/* Main content area */}
+        <main style={{ flex: 1, padding: '28px 28px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
+          {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
+              <Spinner /> Loading data…
+            </div>
+          ) : (
+            <>
+              {role === 'portfolio' && <PortfolioView onSubmit={onSubmit} />}
+              {role === 'gp' && <GPView quarters={quarters} onDelete={onDelete} onUpdate={onUpdate} currency={currency} />}
+              {role === 'lp' && <LPView quarters={quarters} currency={currency} />}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
