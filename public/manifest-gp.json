@@ -1,8 +1,8 @@
 {
-  "name": "Clavio Submit",
-  "short_name": "Clavio Submit",
-  "description": "Portfolio financial reporting",
-  "start_url": "/",
+  "name": "Clavio Partner",
+  "short_name": "Clavio Partner",
+  "description": "Partner dashboard — Clavio",
+  "start_url": "/gp",
   "display": "standalone",
   "background_color": "#0A0E1A",
   "theme_color": "#0A0E1A",

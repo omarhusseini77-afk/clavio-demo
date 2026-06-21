@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 export const metadata: Metadata = {
   title: 'Clavio Investor',
   description: 'Investor portal — Clavio',
+  manifest: '/manifest-lp.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

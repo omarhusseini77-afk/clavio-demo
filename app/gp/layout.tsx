@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 export const metadata: Metadata = {
   title: 'Clavio Partner',
   description: 'Partner dashboard — Clavio',
+  manifest: '/manifest-gp.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
