@@ -50,9 +50,10 @@ type Props = {
   onDelete: (id: number) => Promise<void>
   onUpdate: (id: number, q: Omit<Quarter, 'id' | 'created_at'>) => Promise<boolean>
   currency: Currency
+  mobileSection?: 'overview' | 'data'
 }
 
-export default function GPView({ quarters, onDelete, onUpdate, currency }: Props) {
+export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -156,17 +157,24 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
 
   const sym = symbol(currency)
 
+  const showOverview = !mobileSection || mobileSection === 'overview'
+  const showData = !mobileSection || mobileSection === 'data'
+
   return (
     <div>
+      {showOverview && (
+        <>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>Partner Dashboard</h1>
           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Latest: {latest.period}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={exportExcel} style={styles.exportBtn}>↓ Excel</button>
-          <button onClick={() => exportPDF(quarters, currency)} style={styles.exportBtn}>↓ PDF</button>
-        </div>
+        {!mobileSection && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={exportExcel} style={styles.exportBtn}>↓ Excel</button>
+            <button onClick={() => exportPDF(quarters, currency)} style={styles.exportBtn}>↓ PDF</button>
+          </div>
+        )}
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: 24, fontSize: 14 }}>
         {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live · Displaying in {currency}
@@ -265,7 +273,17 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
           </div>
         ))}
       </div>
+        </>
+      )}
 
+      {showData && (
+        <>
+          {mobileSection === 'data' && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button onClick={exportExcel} style={styles.exportBtn}>↓ Excel</button>
+              <button onClick={() => exportPDF(quarters, currency)} style={styles.exportBtn}>↓ PDF</button>
+            </div>
+          )}
       {/* Data table */}
       <div style={styles.card}>
         <h3 style={styles.sectionTitle}>All Quarters — Standardised</h3>
@@ -305,6 +323,9 @@ export default function GPView({ quarters, onDelete, onUpdate, currency }: Props
           </table>
         </div>
       </div>
+
+        </>
+      )}
 
       {/* Edit modal */}
       {editingId !== null && (

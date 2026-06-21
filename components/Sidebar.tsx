@@ -1,28 +1,23 @@
 'use client'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import type { Currency } from '@/lib/currency'
 
-type Role = 'portfolio' | 'gp' | 'lp'
-
 interface Props {
-  role: Role
-  setRole: (r: Role) => void
   currency: Currency
   setCurrency: (c: Currency) => void
   isOpen: boolean
   onClose: () => void
   isMobile: boolean
+  user?: { initial: string; name: string; title: string }
 }
 
 const CURRENCIES: Currency[] = ['GBP', 'USD', 'EUR']
 
-export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, onClose, isMobile }: Props) {
+export default function Sidebar({ currency, setCurrency, isOpen, onClose, isMobile, user }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false)
-
-  const handleNav = (r: Role) => {
-    setRole(r)
-    onClose()
-  }
+  const pathname = usePathname()
+  const profile = user ?? { initial: 'C', name: 'Cyril', title: 'Managing Partner' }
 
   return (
     <>
@@ -61,29 +56,32 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '16px 12px' }}>
           <NavGroup label="Overview">
-            <NavItem
-              active={role === 'gp'}
-              onClick={() => handleNav('gp')}
+            <NavLink
+              href="/gp"
+              active={pathname === '/gp'}
               icon={<IconGrid />}
               label="Dashboard"
               sub="Partner view"
+              onClick={onClose}
             />
-            <NavItem
-              active={role === 'lp'}
-              onClick={() => handleNav('lp')}
+            <NavLink
+              href="/lp"
+              active={pathname === '/lp'}
               icon={<IconDoc />}
               label="LP Reports"
               sub="Investor view"
+              onClick={onClose}
             />
           </NavGroup>
 
           <NavGroup label="Portfolio">
-            <NavItem
-              active={role === 'portfolio'}
-              onClick={() => handleNav('portfolio')}
+            <NavLink
+              href="/"
+              active={pathname === '/'}
               icon={<IconUpload />}
               label="Submit Financials"
               sub="Portfolio Co."
+              onClick={onClose}
             />
           </NavGroup>
 
@@ -100,10 +98,7 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
               >
                 <span style={{ flexShrink: 0, opacity: 0.6 }}><IconSettings /></span>
                 <span style={{ fontSize: 13 }}>Currency</span>
-                <span style={{
-                  marginLeft: 'auto', fontSize: 11, fontWeight: 600,
-                  color: 'rgba(255,255,255,0.35)', letterSpacing: '0.03em',
-                }}>
+                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>
                   {currency}
                 </span>
               </button>
@@ -149,11 +144,11 @@ export default function Sidebar({ role, setRole, currency, setCurrency, isOpen, 
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0,
           }}>
-            C
+            {profile.initial}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Cyril</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Managing Partner</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{profile.name}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{profile.title}</div>
           </div>
         </div>
       </aside>
@@ -176,12 +171,13 @@ function NavGroup({ label, children }: { label: string; children: React.ReactNod
   )
 }
 
-function NavItem({ active, onClick, icon, label, sub }: {
-  active: boolean; onClick: () => void
+function NavLink({ href, active, onClick, icon, label, sub }: {
+  href: string; active: boolean; onClick: () => void
   icon: React.ReactNode; label: string; sub: string
 }) {
   return (
-    <button
+    <a
+      href={href}
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
@@ -192,6 +188,7 @@ function NavItem({ active, onClick, icon, label, sub }: {
         textAlign: 'left',
         borderLeft: active ? '2px solid #5B82BD' : '2px solid transparent',
         marginBottom: 2,
+        textDecoration: 'none',
       }}
     >
       <span style={{ flexShrink: 0 }}>{icon}</span>
@@ -199,7 +196,7 @@ function NavItem({ active, onClick, icon, label, sub }: {
         <div style={{ fontSize: 13, fontWeight: active ? 600 : 400, lineHeight: 1.3 }}>{label}</div>
         <div style={{ fontSize: 11, opacity: 0.45, marginTop: 1 }}>{sub}</div>
       </div>
-    </button>
+    </a>
   )
 }
 

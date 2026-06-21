@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Clavio',
-  description: 'Portfolio financial reporting',
+  title: 'Clavio Submit',
+  description: 'Portfolio Co. financials — Clavio',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Clavio',
+    title: 'Clavio Submit',
   },
   icons: {
     apple: '/icon-192.png',

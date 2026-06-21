@@ -1,15 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
-import PortfolioView from '@/components/PortfolioView'
+import LPView from '@/components/LPView'
 import Sidebar from '@/components/Sidebar'
 import type { Currency } from '@/lib/currency'
-import { useQuarters } from '@/lib/useQuarters'
 
-export default function PortfolioPage() {
+export default function LPPage() {
   const [currency, setCurrency] = useState<Currency>('GBP')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const { onSubmit } = useQuarters()
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -26,7 +24,7 @@ export default function PortfolioPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isMobile={isMobile}
-        user={{ initial: 'P', name: 'Portfolio Co.', title: 'Reporting' }}
+        user={{ initial: 'J', name: 'J. Laurent', title: 'Limited Partner' }}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
@@ -52,7 +50,7 @@ export default function PortfolioPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 500, marginLeft: 2 }}>· Submit</span>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 500, marginLeft: 2 }}>· Investor</span>
           </div>
         ) : (
           <div style={{
@@ -63,14 +61,32 @@ export default function PortfolioPage() {
             flexShrink: 0,
           }}>
             <div>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>Submit Financials</h1>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>Portfolio Co. · Quarterly submission</p>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>LP Report</h1>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>Investor view · Confidential</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 4 }}>Currency</span>
+              {(['GBP', 'USD', 'EUR'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  style={{
+                    padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                    border: currency === c ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                    background: currency === c ? 'var(--accent)' : 'transparent',
+                    color: currency === c ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
         <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '28px 32px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
-          <PortfolioView onSubmit={onSubmit} />
+          <LPView quarters={[]} currency={currency} isMobile={isMobile} />
         </main>
       </div>
     </div>

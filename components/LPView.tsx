@@ -3,6 +3,26 @@ import { useState } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
+import BottomTabBar from './BottomTabBar'
+
+const LP_TABS = [
+  {
+    id: 'account', label: 'Account',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
+  },
+  {
+    id: 'performance', label: 'Performance',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  },
+  {
+    id: 'portfolio', label: 'Portfolio',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+  },
+  {
+    id: 'documents', label: 'Documents',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
+  },
+]
 
 // ── Synthetic fund data ──────────────────────────────────────────────────────
 
@@ -74,48 +94,71 @@ const DOCUMENTS = [
 
 type Tab = 'account' | 'performance' | 'portfolio' | 'documents'
 
-export default function LPView({ quarters, currency }: { quarters: Quarter[]; currency: Currency }) {
+export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
   const [tab, setTab] = useState<Tab>('account')
   const [selectedCompany, setSelectedCompany] = useState(COMPANIES[0].id)
   void quarters // kept for future real-data integration
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>My Account</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{FUND.name} · as at {FUND.date}</p>
-      </div>
+    <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: isMobile ? 'calc(72px + env(safe-area-inset-bottom))' : 0 }}>
+      {/* Page header — hide on mobile since bottom bar shows context */}
+      {!isMobile && (
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>My Account</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{FUND.name} · as at {FUND.date}</p>
+        </div>
+      )}
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
-        {([
-          { id: 'account', label: 'My account' },
-          { id: 'performance', label: 'Fund performance' },
-          { id: 'portfolio', label: 'Portfolio' },
-          { id: 'documents', label: 'Documents' },
-        ] as { id: Tab; label: string }[]).map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            style={{
-              padding: '8px 16px', fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
-              border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
-              background: tab === t.id ? 'var(--navy)' : 'transparent',
-              color: tab === t.id ? 'white' : 'var(--text-muted)',
-              borderBottom: tab === t.id ? '2px solid var(--navy)' : '2px solid transparent',
-              marginBottom: -1,
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Desktop tabs */}
+      {!isMobile && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
+          {([
+            { id: 'account', label: 'My account' },
+            { id: 'performance', label: 'Fund performance' },
+            { id: 'portfolio', label: 'Portfolio' },
+            { id: 'documents', label: 'Documents' },
+          ] as { id: Tab; label: string }[]).map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              style={{
+                padding: '8px 16px', fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
+                border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
+                background: tab === t.id ? 'var(--navy)' : 'transparent',
+                color: tab === t.id ? 'white' : 'var(--text-muted)',
+                borderBottom: tab === t.id ? '2px solid var(--navy)' : '2px solid transparent',
+                marginBottom: -1,
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Mobile section header */}
+      {isMobile && (
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>
+            {tab === 'account' ? 'My Account' : tab === 'performance' ? 'Fund Performance' : tab === 'portfolio' ? 'Portfolio' : 'Documents'}
+          </h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.date}</p>
+        </div>
+      )}
 
       {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => setTab('performance')} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
       {tab === 'documents' && <DocumentsTab />}
+
+      {/* Mobile bottom tab bar */}
+      {isMobile && (
+        <BottomTabBar
+          tabs={LP_TABS}
+          activeTab={tab}
+          onTabChange={id => setTab(id as Tab)}
+        />
+      )}
     </div>
   )
 }
