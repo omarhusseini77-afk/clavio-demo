@@ -5,6 +5,7 @@ import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
 import { FUND, COMPANIES, DOCUMENTS, CAPITAL_EVENTS, FORECAST } from '@/lib/fundData'
 import { useCountUp } from '@/lib/useCountUp'
+import { useLang, loc } from '@/lib/i18n'
 import AskPanel from './AskPanel'
 import BottomTabBar from './BottomTabBar'
 
@@ -36,36 +37,32 @@ const LP_TABS = [
 type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'documents'
 
 export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
+  const { t, lang } = useLang()
   const [tab, setTab] = useState<Tab>('account')
   const [selectedCompany, setSelectedCompany] = useState(COMPANIES[0].id)
   void quarters // kept for future real-data integration
+  const fundDate = loc(FUND.date, lang)
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: isMobile ? 'calc(72px + env(safe-area-inset-bottom))' : 0 }}>
       {/* Page header — hide on mobile since bottom bar shows context */}
       {!isMobile && (
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>My Account</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{FUND.name} · as at {FUND.date}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>{t('lp.section.account')}</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{t('lp.asAt', { name: FUND.name, date: fundDate })}</p>
         </div>
       )}
 
       {/* Desktop tabs */}
       {!isMobile && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
-          {([
-            { id: 'account', label: 'My account' },
-            { id: 'ask', label: '✦ Ask AI' },
-            { id: 'performance', label: 'Fund performance' },
-            { id: 'portfolio', label: 'Portfolio' },
-            { id: 'documents', label: 'Documents' },
-          ] as { id: Tab; label: string }[]).map(t => {
-            const isAsk = t.id === 'ask'
-            const active = tab === t.id
+          {(['account', 'ask', 'performance', 'portfolio', 'documents'] as Tab[]).map(id => {
+            const isAsk = id === 'ask'
+            const active = tab === id
             return (
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                key={id}
+                onClick={() => setTab(id)}
                 style={{
                   padding: '8px 16px', fontSize: 13, fontWeight: active || isAsk ? 600 : 400,
                   border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
@@ -75,7 +72,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
                   marginBottom: -1,
                 }}
               >
-                {t.label}
+                {t(`lp.tab.${id}`)}
               </button>
             )
           })}
@@ -85,10 +82,8 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Mobile section header */}
       {isMobile && (
         <div style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>
-            {tab === 'account' ? 'My Account' : tab === 'ask' ? 'Ask Clavio AI' : tab === 'performance' ? 'Fund Performance' : tab === 'portfolio' ? 'Portfolio' : 'Documents'}
-          </h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.date}</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
         </div>
       )}
 
@@ -101,7 +96,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Mobile bottom tab bar */}
       {isMobile && (
         <BottomTabBar
-          tabs={LP_TABS}
+          tabs={LP_TABS.map(tab => ({ ...tab, label: t(`lp.mtab.${tab.id}`) }))}
           activeTab={tab}
           onTabChange={id => setTab(id as Tab)}
         />
@@ -113,6 +108,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 // ── My Account tab ───────────────────────────────────────────────────────────
 
 function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void }) {
+  const { t } = useLang()
   const calledPct = (FUND.called / FUND.commitment) * 100
   const navCount = useCountUp(FUND.nav)
   const tvpiCount = useCountUp(FUND.tvpi)
@@ -128,16 +124,16 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
         boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Your position · {FUND.name}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.yourPosition', { name: FUND.name })}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18, position: 'relative' }}>
           <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtM(navCount, currency)}</div>
-          <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {FUND.tvpi}x net</div>
+          <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {t('lp.netSuffix', { x: FUND.tvpi })}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, position: 'relative' }}>
           {[
-            { label: 'TVPI', value: `${tvpiCount.toFixed(2)}x` },
-            { label: 'DPI', value: `${dpiCount.toFixed(2)}x` },
-            { label: 'Fund share', value: `${FUND.shareOfFund}%` },
+            { label: t('lp.tvpi'), value: `${tvpiCount.toFixed(2)}x` },
+            { label: t('lp.dpi'), value: `${dpiCount.toFixed(2)}x` },
+            { label: t('lp.fundShare'), value: `${FUND.shareOfFund}%` },
           ].map((s, i) => (
             <div key={s.label} style={{
               paddingRight: i < 2 ? 16 : 0,
@@ -164,8 +160,8 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       >
         <span style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✦</span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Ask Clavio anything about your fund</span>
-          <span style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)' }}>“Why did Delacourt&apos;s margin fall?” · “What&apos;s my next capital call?”</span>
+          <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t('lp.askPromptTitle')}</span>
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.askPromptSub')}</span>
         </span>
         <span style={{ fontSize: 18, color: 'var(--accent)', flexShrink: 0 }}>→</span>
       </button>
@@ -173,15 +169,15 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       {/* Capital called progress */}
       <div style={{ ...styles.card, marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Capital Called</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{calledPct.toFixed(0)}% of commitment</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{t('lp.capitalCalled')}</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.ofCommitment', { pct: calledPct.toFixed(0) })}</span>
         </div>
         <div style={{ background: '#F3F4F6', borderRadius: 4, height: 6, marginBottom: 8 }}>
           <div style={{ background: 'var(--accent)', borderRadius: 4, height: 6, width: `${calledPct}%` }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-          <span style={{ fontWeight: 500 }}>{fmtM(FUND.called, currency)} called</span>
-          <span style={{ color: 'var(--text-muted)' }}>{fmtM(FUND.unfunded, currency)} remaining</span>
+          <span style={{ fontWeight: 500 }}>{t('lp.called', { amount: fmtM(FUND.called, currency) })}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{t('lp.remaining', { amount: fmtM(FUND.unfunded, currency) })}</span>
         </div>
       </div>
 
@@ -189,12 +185,12 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       <div style={{ ...styles.card, marginBottom: 10, padding: '14px 16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 12px' }}>
           {[
-            { label: 'Commitment', value: fmtM(FUND.commitment, currency) },
-            { label: 'Called', value: fmtM(FUND.called, currency) },
-            { label: 'Unfunded', value: fmtM(FUND.unfunded, currency) },
-            { label: 'Distributed', value: fmtM(FUND.distributed, currency) },
-            { label: 'Current NAV', value: fmtM(FUND.nav, currency) },
-            { label: 'Share of Fund', value: `${FUND.shareOfFund}%` },
+            { label: t('lp.kpi.commitment'), value: fmtM(FUND.commitment, currency) },
+            { label: t('lp.kpi.called'), value: fmtM(FUND.called, currency) },
+            { label: t('lp.kpi.unfunded'), value: fmtM(FUND.unfunded, currency) },
+            { label: t('lp.kpi.distributed'), value: fmtM(FUND.distributed, currency) },
+            { label: t('lp.kpi.currentNav'), value: fmtM(FUND.nav, currency) },
+            { label: t('lp.kpi.fundShare'), value: `${FUND.shareOfFund}%` },
           ].map(k => (
             <div key={k.label}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>{k.label}</div>
@@ -213,24 +209,18 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       {/* Partners' Letter */}
       <div style={{ ...styles.card, marginBottom: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
-          Partners&apos; Letter · Q1 2026
+          {t('lp.letter')}
         </div>
-        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>
-          Fund II closed the quarter at 1.39x MOIC, with three of four portfolio companies delivering steady operational performance. Aggregate portfolio revenue grew approximately 8% year on year, led by Abington Technical Services and Marlow &amp; Reed Joinery.
-        </p>
-        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>
-          Two companies are flagged for monitoring. Delacourt Frères continues to see gross-margin compression in its core distribution business, and we are working with management on a price-led recovery for the second half. Atelier Saint-Pierre&apos;s working capital has tightened and we are reviewing cash management with the team.
-        </p>
-        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
-          We expect to make our next capital call in Q3 in connection with a planned add-on acquisition at Abington. We welcome any questions at the upcoming quarterly LP meeting.
-        </p>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>{t('lp.letter.p1')}</p>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151', marginBottom: 10 }}>{t('lp.letter.p2')}</p>
+        <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>{t('lp.letter.p3')}</p>
       </div>
 
       <button
         onClick={goToPerformance}
         style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}
       >
-        View full fund performance →
+        {t('lp.viewPerformance')}
       </button>
     </div>
   )
@@ -239,33 +229,34 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
 // ── Cash-flow forecast strip ─────────────────────────────────────────────────
 
 function ForecastStrip({ currency }: { currency: Currency }) {
+  const { t, lang } = useLang()
   return (
     <div style={{ ...styles.card, marginBottom: 10, borderLeft: '3px solid var(--accent)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Cash-Flow Forecast</span>
-        <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>PROJECTED</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.forecast')}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>{t('lp.projected')}</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
         <ForecastItem
           dir="out"
-          label="Next capital call"
+          label={t('lp.nextCall')}
           amount={`~${fmtM(FORECAST.nextCall.amount, currency)}`}
-          period={FORECAST.nextCall.period}
-          note={FORECAST.nextCall.note}
+          period={loc(FORECAST.nextCall.period, lang)}
+          note={loc(FORECAST.nextCall.note, lang)}
         />
         <ForecastItem
           dir="in"
-          label="Next distribution"
+          label={t('lp.nextDist')}
           amount={`~${fmtM(FORECAST.nextDistribution.amount, currency)}`}
-          period={FORECAST.nextDistribution.period}
-          note={FORECAST.nextDistribution.note}
+          period={loc(FORECAST.nextDistribution.period, lang)}
+          note={loc(FORECAST.nextDistribution.note, lang)}
         />
         <ForecastItem
           dir="in"
-          label="Distributions, next 18m"
+          label={t('lp.dist18m')}
           amount={`~${fmtM(FORECAST.projectedDistributions18m, currency)}`}
-          period="Through 2027"
-          note="Based on the fund's realisation plan"
+          period={loc(FORECAST.through, lang)}
+          note={loc({ en: "Based on the fund's realisation plan", fr: 'Selon le plan de réalisation du fonds' }, lang)}
         />
       </div>
     </div>
@@ -296,14 +287,15 @@ function ForecastItem({ dir, label, amount, period, note }: {
 // ── Capital account activity timeline ────────────────────────────────────────
 
 function CapitalActivity({ currency }: { currency: Currency }) {
+  const { t, lang } = useLang()
   // Most recent first
   const events = [...CAPITAL_EVENTS].reverse()
   return (
     <div style={{ ...styles.card, marginBottom: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, flexWrap: 'wrap', gap: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Capital Account Activity</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.activity')}</span>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          {fmtM(FUND.called, currency)} called · {fmtM(FUND.distributed, currency)} distributed
+          {t('lp.activitySummary', { called: fmtM(FUND.called, currency), distributed: fmtM(FUND.distributed, currency) })}
         </span>
       </div>
       <div style={{ position: 'relative' }}>
@@ -321,15 +313,15 @@ function CapitalActivity({ currency }: { currency: Currency }) {
               }} />
               <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.35 }}>{e.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{e.date}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.35 }}>{loc(e.label, lang)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{loc(e.date, lang)}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: isCall ? 'var(--text)' : '#0F7B4F' }}>
                     {isCall ? '−' : '+'}{fmtM(e.amount, currency)}
                   </div>
                   <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    {isCall ? 'Called' : 'Distributed'}
+                    {isCall ? t('lp.calledTag') : t('lp.distributedTag')}
                   </div>
                 </div>
               </div>
@@ -344,19 +336,20 @@ function CapitalActivity({ currency }: { currency: Currency }) {
 // ── Fund Performance tab ─────────────────────────────────────────────────────
 
 function PerformanceTab() {
+  const { t, lang } = useLang()
   return (
     <div>
       {/* Header metrics */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div className="hide-mobile">
-          <h2 style={{ fontSize: 20, fontWeight: 700 }}>Fund performance</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('lp.section.performance')}</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.period}</p>
         </div>
         <div style={{ display: 'flex', gap: 28, textAlign: 'right' }}>
           {[
-            { label: 'INVESTED', value: '£16.90M' },
-            { label: 'CURRENT VALUE', value: '£23.50M' },
-            { label: 'FUND MOIC', value: '1.39x', accent: true },
+            { label: t('lp.invested'), value: '£16.90M' },
+            { label: t('lp.currentValue'), value: '£23.50M' },
+            { label: t('lp.fundMoic'), value: '1.39x', accent: true },
           ].map(m => (
             <div key={m.label}>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{m.label}</div>
@@ -369,12 +362,12 @@ function PerformanceTab() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Aggregate revenue growth, YoY', value: '+8.1%', color: 'var(--green)' },
-          { label: 'Weighted avg gross margin', value: '35.4%', color: 'var(--text)' },
-          { label: 'Aggregate EBITDA growth, YoY', value: '+11.2%', color: 'var(--green)' },
-          { label: 'Companies above plan', value: '2 of 4', color: 'var(--green)' },
-          { label: 'Companies on watch', value: '2 of 4', color: '#F59E0B' },
-          { label: 'Fund cash coverage', value: '14.2 mo', color: 'var(--green)' },
+          { label: t('lp.stat.revGrowth'), value: '+8.1%', color: 'var(--green)' },
+          { label: t('lp.stat.gmargin'), value: '35.4%', color: 'var(--text)' },
+          { label: t('lp.stat.ebitdaGrowth'), value: '+11.2%', color: 'var(--green)' },
+          { label: t('lp.stat.abovePlan'), value: t('lp.stat.of4', { n: 2 }), color: 'var(--green)' },
+          { label: t('lp.stat.onWatch'), value: t('lp.stat.of4', { n: 2 }), color: '#F59E0B' },
+          { label: t('lp.stat.cashCover'), value: t('lp.stat.months', { n: '14.2' }), color: 'var(--green)' },
         ].map(s => (
           <div key={s.label} style={styles.card}>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{s.label}</div>
@@ -386,11 +379,11 @@ function PerformanceTab() {
       {/* Value creation bridge */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Value Creation Bridge</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Invested cost → current value</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.bridge')}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.bridgeSub')}</div>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
-          How the fund grew gross value from £16.9M invested to £23.5M, decomposed by driver.
+          {t('lp.bridgeDesc')}
         </p>
         <ValueBridge />
       </div>
@@ -398,38 +391,38 @@ function PerformanceTab() {
       {/* J-curve + allocation row */}
       <div className="gp-trend-grid" style={{ marginBottom: 24 }}>
         <div style={styles.card}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Fund J-Curve</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.jcurve')}</div>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-            Cumulative net cash flow to investors. Crossed into positive territory in 2025.
+            {t('lp.jcurveDesc')}
           </p>
           <JCurve />
         </div>
         <div style={styles.card}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Allocation by Sector</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>{t('lp.allocation')}</div>
           <AllocationDonut />
         </div>
       </div>
 
       {/* Portfolio companies grid */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Portfolio Companies</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>{t('lp.portfolioCompanies')}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12, marginBottom: 40 }}>
         {COMPANIES.map(co => (
           <div key={co.id} style={styles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{co.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{co.sector} · {co.country}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{loc(co.sector, lang)} · {loc(co.country, lang)}</div>
               </div>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: co.status === 'green' ? '#10B981' : '#F59E0B', marginTop: 4, flexShrink: 0 }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', gap: 24 }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>MOIC</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.moic')}</div>
                   <div style={{ fontSize: 16, fontWeight: 700 }}>{co.moic}x</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>REVENUE</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.revenue')}</div>
                   <div style={{ fontSize: 16, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
                 </div>
               </div>
@@ -451,8 +444,10 @@ function PerformanceTab() {
 // ── Portfolio tab ────────────────────────────────────────────────────────────
 
 function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany: string; setSelectedCompany: (id: string) => void }) {
+  const { t, lang } = useLang()
   const co = COMPANIES.find(c => c.id === selectedCompany)!
   const latest = co.data[co.data.length - 1]
+  void latest
 
   return (
     <div>
@@ -478,15 +473,15 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700 }}>{co.name}</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{co.sector} · {co.country}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{loc(co.sector, lang)} · {loc(co.country, lang)}</p>
         </div>
         <div style={{ display: 'flex', gap: 28, textAlign: 'right' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>MOIC</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.moic')}</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{co.moic}x</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>REVENUE</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.revenue')}</div>
             <div style={{ fontSize: 20, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
           </div>
         </div>
@@ -498,22 +493,22 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
           <table style={{ width: '100%', minWidth: 420, borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Metric</th>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.metric')}</th>
                 {co.data.map(d => (
                   <th key={d.fy} style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{d.fy}</th>
                 ))}
-                <th className="hide-mobile" style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Trend</th>
+                <th className="hide-mobile" style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.trend')}</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { label: 'Revenue', values: co.data.map(d => `${co.sym}${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
-                { label: 'Gross margin %', values: co.data.map(d => `${d.grossMargin}%`), trend: co.data.map(d => d.grossMargin), color: '#10B981' },
-                { label: 'EBITDA', values: co.data.map(d => `${co.sym}${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
-                { label: 'Net profit', values: co.data.map(d => `${co.sym}${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
-                { label: 'Cash', values: co.data.map(d => `${co.sym}${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
-                { label: 'Receivables', values: co.data.map(d => `${co.sym}${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
-                { label: 'Payables', values: co.data.map(d => `${co.sym}${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
+                { label: t('lp.m.revenue'), values: co.data.map(d => `${co.sym}${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
+                { label: t('lp.m.gmargin'), values: co.data.map(d => `${d.grossMargin}%`), trend: co.data.map(d => d.grossMargin), color: '#10B981' },
+                { label: t('lp.m.ebitda'), values: co.data.map(d => `${co.sym}${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
+                { label: t('lp.m.netProfit'), values: co.data.map(d => `${co.sym}${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
+                { label: t('lp.m.cash'), values: co.data.map(d => `${co.sym}${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
+                { label: t('lp.m.receivables'), values: co.data.map(d => `${co.sym}${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
+                { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym}${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
               ].map((row, i) => (
                 <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
                   <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{row.label}</td>
@@ -532,8 +527,8 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 
       {/* AI Commentary */}
       <div style={{ ...styles.card, marginBottom: 40, borderLeft: '3px solid var(--accent)' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>AI Commentary</div>
-        <p style={{ fontSize: 14, lineHeight: 1.75, color: '#374151' }}>{co.commentary}</p>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>{t('lp.aiCommentary')}</div>
+        <p style={{ fontSize: 14, lineHeight: 1.75, color: '#374151' }}>{loc(co.commentary, lang)}</p>
       </div>
     </div>
   )
@@ -542,6 +537,7 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 // ── Documents tab ────────────────────────────────────────────────────────────
 
 function DocumentsTab() {
+  const { t, lang } = useLang()
   const [query, setQuery] = useState('')
   const [openDoc, setOpenDoc] = useState<string | null>(null)
   const [summaries, setSummaries] = useState<Record<string, string>>({})
@@ -550,25 +546,25 @@ function DocumentsTab() {
 
   const q = query.trim().toLowerCase()
   const filtered = DOCUMENTS.filter(d =>
-    !q || d.title.toLowerCase().includes(q) || d.type.toLowerCase().includes(q)
+    !q || loc(d.title, lang).toLowerCase().includes(q) || loc(d.type, lang).toLowerCase().includes(q)
   )
 
-  const summarize = async (title: string, type: string) => {
-    setOpenDoc(prev => (prev === title ? null : title))
-    if (summaries[title] || loadingDoc === title) return
-    setLoadingDoc(title)
-    setErrorDoc(e => ({ ...e, [title]: '' }))
+  const summarize = async (id: string, titleEn: string, typeEn: string) => {
+    setOpenDoc(prev => (prev === id ? null : id))
+    if (summaries[id] || loadingDoc === id) return
+    setLoadingDoc(id)
+    setErrorDoc(e => ({ ...e, [id]: '' }))
     try {
-      const question = `Summarise the "${title}" (a ${type.toLowerCase()} for ${FUND.name}) for an investor in exactly 3 short bullet points. Each bullet on its own line starting with "• ". Ground every bullet in the fund and portfolio figures you have. No preamble, just the 3 bullets.`
+      const question = `Summarise the "${titleEn}" (a ${typeEn.toLowerCase()} for ${FUND.name}) for an investor in exactly 3 short bullet points. Each bullet on its own line starting with "• ". Ground every bullet in the fund and portfolio figures you have. No preamble, just the 3 bullets.`
       const res = await fetch('/api/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, lang }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
-      setSummaries(s => ({ ...s, [title]: data.answer || '' }))
+      setSummaries(s => ({ ...s, [id]: data.answer || '' }))
     } catch (e: unknown) {
-      setErrorDoc(er => ({ ...er, [title]: e instanceof Error ? e.message : 'Could not summarise' }))
+      setErrorDoc(er => ({ ...er, [id]: e instanceof Error ? e.message : 'Could not summarise' }))
     } finally {
       setLoadingDoc(null)
     }
@@ -577,8 +573,8 @@ function DocumentsTab() {
   return (
     <div>
       <div className="hide-mobile" style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700 }}>Documents</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>Reports, notices and tax documents for {FUND.name}</p>
+        <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('lp.section.documents')}</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.documentsSub', { name: FUND.name })}</p>
       </div>
 
       {/* Search */}
@@ -587,38 +583,39 @@ function DocumentsTab() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search documents…"
+          placeholder={t('lp.searchDocs')}
           style={{ width: '100%', padding: '11px 14px 11px 36px', borderRadius: 10, fontSize: 14, border: '1px solid var(--border)', outline: 'none', background: 'white' }}
         />
       </div>
 
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
         {filtered.length === 0 && (
-          <div style={{ padding: '28px 20px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>No documents match “{query}”.</div>
+          <div style={{ padding: '28px 20px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>{t('lp.noDocs', { q: query })}</div>
         )}
         {filtered.map((doc, i) => {
-          const isOpen = openDoc === doc.title
+          const id = doc.title.en
+          const isOpen = openDoc === id
           return (
-            <div key={doc.title} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
+            <div key={id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px' }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                  background: doc.type === 'Notice' ? '#FEF3C7' : doc.type === 'Tax' ? '#EEF3FA' : '#F3F4F6',
+                  background: doc.typeKey === 'Notice' ? '#FEF3C7' : doc.typeKey === 'Tax' ? '#EEF3FA' : '#F3F4F6',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
                 }}>
-                  {doc.type === 'Notice' ? '!' : doc.type === 'Tax' ? '§' : '≡'}
+                  {doc.typeKey === 'Notice' ? '!' : doc.typeKey === 'Tax' ? '§' : '≡'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>{doc.title}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{loc(doc.title, lang)}</span>
                     {doc.isNew && (
                       <span style={{ fontSize: 10, fontWeight: 700, background: '#ECFDF5', color: '#065F46', padding: '2px 7px', borderRadius: 20, letterSpacing: '0.05em' }}>NEW</span>
                     )}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{doc.type} · {doc.date}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{loc(doc.type, lang)} · {doc.date}</div>
                 </div>
                 <button
-                  onClick={() => summarize(doc.title, doc.type)}
+                  onClick={() => summarize(id, doc.title.en, doc.typeKey)}
                   style={{
                     padding: '7px 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
                     border: `1px solid ${isOpen ? 'var(--accent)' : '#D7E2F2'}`,
@@ -626,14 +623,14 @@ function DocumentsTab() {
                     cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
                   }}
                 >
-                  ✦ <span className="hide-mobile">Summary</span>
+                  ✦ <span className="hide-mobile">{t('lp.summary')}</span>
                 </button>
                 <button style={{
                   padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
                   border: '1px solid var(--border)', background: 'white', color: 'var(--text)',
                   cursor: 'pointer', flexShrink: 0,
                 }}>
-                  <span className="hide-mobile">Download</span>
+                  <span className="hide-mobile">{t('lp.download')}</span>
                   <span className="show-mobile">↓</span>
                 </button>
               </div>
@@ -642,19 +639,19 @@ function DocumentsTab() {
                 <div style={{ padding: '0 20px 16px 70px' }}>
                   <div style={{ background: '#F7FAFE', border: '1px solid #E3ECF8', borderRadius: 10, padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>✦ AI Summary</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.aiSummary')}</span>
                     </div>
-                    {loadingDoc === doc.title ? (
+                    {loadingDoc === id ? (
                       <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                         {[0, 1, 2].map(k => (
                           <span key={k} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: `clavio-pulse 1.2s ${k * 0.18}s infinite ease-in-out` }} />
                         ))}
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Reading the document…</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{t('lp.readingDoc')}</span>
                       </div>
-                    ) : errorDoc[doc.title] ? (
-                      <div style={{ fontSize: 12.5, color: 'var(--red)' }}>{errorDoc[doc.title]}</div>
+                    ) : errorDoc[id] ? (
+                      <div style={{ fontSize: 12.5, color: 'var(--red)' }}>{errorDoc[id]}</div>
                     ) : (
-                      <div style={{ fontSize: 13, lineHeight: 1.65, color: '#374151', whiteSpace: 'pre-wrap' }}>{summaries[doc.title]}</div>
+                      <div style={{ fontSize: 13, lineHeight: 1.65, color: '#374151', whiteSpace: 'pre-wrap' }}>{summaries[id]}</div>
                     )}
                   </div>
                 </div>
@@ -670,20 +667,16 @@ function DocumentsTab() {
 // ── Ask AI tab ───────────────────────────────────────────────────────────────
 
 function AskTab({ isMobile }: { isMobile?: boolean }) {
+  const { t, lang } = useLang()
   return (
     <AskPanel
       isMobile={isMobile}
-      connectedLabel="Connected to live accounting data"
-      connectedSub={`QuickBooks · ${COMPANIES.length} entities · synced ${FUND.date}`}
-      introTitle="Ask Clavio about Fund II"
-      introBody="Clavio reads the portfolio companies’ books directly. Ask a question in plain English and it pulls the exact figures to answer — no spreadsheets, no waiting on the GP."
-      placeholder="Ask about revenue, margins, cash, your position…"
-      suggestions={[
-        'Why did Delacourt’s gross margin compress?',
-        'Compare Abington and Marlow revenue growth over three years',
-        'Which company has the weakest cash position and why?',
-        'What’s my unfunded commitment and likely next call?',
-      ]}
+      connectedLabel={t('ask.connected')}
+      connectedSub={t('ask.lp.sub', { n: COMPANIES.length, date: loc(FUND.date, lang) })}
+      introTitle={t('ask.lp.introTitle')}
+      introBody={t('ask.lp.introBody')}
+      placeholder={t('ask.lp.placeholder')}
+      suggestions={[t('ask.lp.q1'), t('ask.lp.q2'), t('ask.lp.q3'), t('ask.lp.q4')]}
     />
   )
 }
@@ -691,15 +684,16 @@ function AskTab({ isMobile }: { isMobile?: boolean }) {
 // ── Value creation bridge (custom SVG waterfall) ─────────────────────────────
 
 function ValueBridge() {
+  const { t } = useLang()
   // £M figures: start at invested cost, build to current gross value
   const steps = [
-    { label: 'Invested', value: 16.9, type: 'total' as const },
-    { label: 'Revenue\ngrowth', value: 4.3, type: 'up' as const },
-    { label: 'Margin\nexpansion', value: 2.1, type: 'up' as const },
-    { label: 'Multiple', value: 1.4, type: 'up' as const },
-    { label: 'Net debt\npaydown', value: 0.9, type: 'up' as const },
-    { label: 'FX', value: -2.1, type: 'down' as const },
-    { label: 'Current\nvalue', value: 23.5, type: 'total' as const },
+    { label: t('lp.bridge.invested'), value: 16.9, type: 'total' as const },
+    { label: t('lp.bridge.revenue'), value: 4.3, type: 'up' as const },
+    { label: t('lp.bridge.margin'), value: 2.1, type: 'up' as const },
+    { label: t('lp.bridge.multiple'), value: 1.4, type: 'up' as const },
+    { label: t('lp.bridge.debt'), value: 0.9, type: 'up' as const },
+    { label: t('lp.bridge.fx'), value: -2.1, type: 'down' as const },
+    { label: t('lp.bridge.current'), value: 23.5, type: 'total' as const },
   ]
   const maxVal = 26
   const chartH = 180
@@ -764,6 +758,7 @@ function ValueBridge() {
 // ── J-curve (cumulative cash flow) ───────────────────────────────────────────
 
 function JCurve() {
+  const { t } = useLang()
   // Cumulative net cash flow to LPs over fund life (£M), turning positive in 2025
   const pts = [
     { t: '2022', v: -3.2 },
@@ -802,7 +797,7 @@ function JCurve() {
         </g>
       ))}
       {/* breakeven marker */}
-      <text x={x(3)} y={y(1.8) - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill="#10B981">Breakeven</text>
+      <text x={x(3)} y={y(1.8) - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill="#10B981">{t('lp.breakeven')}</text>
     </svg>
   )
 }
@@ -810,12 +805,13 @@ function JCurve() {
 // ── Allocation donut ─────────────────────────────────────────────────────────
 
 function AllocationDonut() {
+  const { t, lang } = useLang()
   // Share of fund gross value by sector
   const slices = [
-    { label: 'B2B Services', value: 33, color: '#1E3A5F' },
-    { label: 'F&B Distribution', value: 28, color: '#5B82BD' },
-    { label: 'Manufacturing', value: 23, color: '#10B981' },
-    { label: 'Specialty Mfg', value: 16, color: '#F59E0B' },
+    { label: loc({ en: 'B2B Services', fr: 'Services B2B' }, lang), value: 33, color: '#1E3A5F' },
+    { label: loc({ en: 'F&B Distribution', fr: 'Distribution agroalimentaire' }, lang), value: 28, color: '#5B82BD' },
+    { label: loc({ en: 'Manufacturing', fr: 'Industrie' }, lang), value: 23, color: '#10B981' },
+    { label: loc({ en: 'Specialty Mfg', fr: 'Fabrication spécialisée' }, lang), value: 16, color: '#F59E0B' },
   ]
   const total = slices.reduce((a, s) => a + s.value, 0)
   const R = 52, stroke = 20, C = 2 * Math.PI * R
@@ -837,7 +833,7 @@ function AllocationDonut() {
           })}
         </g>
         <text x="66" y="62" textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--text)">£23.5M</text>
-        <text x="66" y="76" textAnchor="middle" fontSize="9" fill="#9CA3AF">gross value</text>
+        <text x="66" y="76" textAnchor="middle" fontSize="9" fill="#9CA3AF">{t('lp.grossValue')}</text>
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 130 }}>
         {slices.map(s => (

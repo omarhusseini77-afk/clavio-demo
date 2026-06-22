@@ -1,29 +1,31 @@
 'use client'
 import { useRef, useState } from 'react'
 import type { Quarter } from '@/lib/supabase'
+import { useLang } from '@/lib/i18n'
 
-const FIELDS: { key: keyof Omit<Quarter, 'id' | 'period' | 'created_at'>; label: string; section: string }[] = [
-  { key: 'turnover', label: 'Turnover', section: 'Profit & Loss' },
-  { key: 'cos', label: 'Cost of Sales', section: 'Profit & Loss' },
-  { key: 'gross', label: 'Gross Profit', section: 'Profit & Loss' },
-  { key: 'admin', label: 'Admin Expenses', section: 'Profit & Loss' },
-  { key: 'op', label: 'Operating Profit', section: 'Profit & Loss' },
-  { key: 'interest', label: 'Interest Received', section: 'Profit & Loss' },
-  { key: 'pbt', label: 'Profit Before Tax', section: 'Profit & Loss' },
-  { key: 'tax', label: 'Tax', section: 'Profit & Loss' },
-  { key: 'retained', label: 'Retained Profit', section: 'Profit & Loss' },
-  { key: 'fixed', label: 'Fixed Assets', section: 'Balance Sheet' },
-  { key: 'stock', label: 'Stock & WIP', section: 'Balance Sheet' },
-  { key: 'debtors', label: 'Debtors', section: 'Balance Sheet' },
-  { key: 'cash', label: 'Cash at Bank', section: 'Balance Sheet' },
-  { key: 'creditors', label: 'Creditors Due Within 1 Year', section: 'Balance Sheet' },
-  { key: 'net_assets', label: 'Net Assets', section: 'Balance Sheet' },
-  { key: 'funds', label: "Shareholders' Funds", section: 'Balance Sheet' },
+const FIELDS: { key: keyof Omit<Quarter, 'id' | 'period' | 'created_at'>; section: 'pl' | 'bs' }[] = [
+  { key: 'turnover', section: 'pl' },
+  { key: 'cos', section: 'pl' },
+  { key: 'gross', section: 'pl' },
+  { key: 'admin', section: 'pl' },
+  { key: 'op', section: 'pl' },
+  { key: 'interest', section: 'pl' },
+  { key: 'pbt', section: 'pl' },
+  { key: 'tax', section: 'pl' },
+  { key: 'retained', section: 'pl' },
+  { key: 'fixed', section: 'bs' },
+  { key: 'stock', section: 'bs' },
+  { key: 'debtors', section: 'bs' },
+  { key: 'cash', section: 'bs' },
+  { key: 'creditors', section: 'bs' },
+  { key: 'net_assets', section: 'bs' },
+  { key: 'funds', section: 'bs' },
 ]
 
 const EMPTY = Object.fromEntries(FIELDS.map(f => [f.key, ''])) as Record<string, string>
 
 export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter, 'id' | 'created_at'>) => Promise<boolean> }) {
+  const { t } = useLang()
   const [period, setPeriod] = useState('')
   const [values, setValues] = useState(EMPTY)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
@@ -93,10 +95,10 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
         boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, position: 'relative' }}>Portfolio Co. · Quarterly submission</div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 6, position: 'relative' }}>Submit Quarterly Financials</h1>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, position: 'relative' }}>{t('submit.hero.kicker')}</div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 6, position: 'relative' }}>{t('submit.hero.title')}</h1>
         <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, position: 'relative', maxWidth: 520 }}>
-          Upload your management accounts and Clavio&apos;s AI fills the form for you — or enter figures manually. All values stored in GBP.
+          {t('submit.hero.body')}
         </p>
       </div>
 
@@ -104,10 +106,10 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
       <div style={styles.card}>
         <h3 style={styles.sectionTitle}>
           <span style={{ marginRight: 8 }}>✦</span>
-          Extract with AI
+          {t('submit.extract')}
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
-          Attach your management accounts (PDF or Excel) and Claude will read and fill the form automatically.
+          {t('submit.extractBody')}
         </p>
         <div
           onDrop={handleDrop}
@@ -126,9 +128,9 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
         >
           <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
           <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>
-            Drop a file here or <span style={{ color: 'var(--accent)', textDecoration: 'underline' }}>browse</span>
+            {t('submit.drop')} <span style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{t('submit.browse')}</span>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>PDF, XLSX, XLS, or CSV</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{t('submit.fileTypes')}</div>
           <input
             ref={fileRef}
             type="file"
@@ -140,12 +142,12 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
 
         {extracting && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, fontSize: 14, color: 'var(--accent)' }}>
-            <Spinner /> Reading document with AI…
+            <Spinner /> {t('submit.reading')}
           </div>
         )}
         {extractSuccess && !extracting && (
           <div style={{ ...styles.alert, background: '#ECFDF5', borderColor: '#10B981', color: '#065F46', marginTop: 14, marginBottom: 0 }}>
-            Fields auto-filled from your document. Review and submit below.
+            {t('submit.autofilled')}
           </div>
         )}
         {extractError && (
@@ -157,34 +159,34 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
 
       {status === 'success' && (
         <div style={{ ...styles.alert, background: '#ECFDF5', borderColor: '#10B981', color: '#065F46' }}>
-          Quarter submitted successfully. The GP and LP views have been updated.
+          {t('submit.success')}
         </div>
       )}
       {status === 'error' && (
         <div style={{ ...styles.alert, background: '#FEF2F2', borderColor: '#EF4444', color: '#991B1B' }}>
-          Something went wrong. Please try again.
+          {t('submit.error')}
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
         <div style={styles.card}>
-          <label style={styles.label}>Period</label>
+          <label style={styles.label}>{t('submit.period')}</label>
           <input
             style={styles.input}
             value={period}
             onChange={e => setPeriod(e.target.value)}
-            placeholder="e.g. Q1 FY22"
+            placeholder={t('submit.periodPlaceholder')}
             required
           />
         </div>
 
         {sections.map(section => (
           <div key={section} style={styles.card}>
-            <h3 style={styles.sectionTitle}>{section}</h3>
+            <h3 style={styles.sectionTitle}>{t(`submit.${section}`)}</h3>
             <div style={styles.grid}>
               {FIELDS.filter(f => f.section === section).map(f => (
                 <div key={f.key}>
-                  <label style={styles.label}>{f.label}</label>
+                  <label style={styles.label}>{t(`field.${f.key}`)}</label>
                   <div style={styles.inputWrap}>
                     <span style={styles.prefix}>£</span>
                     <input
@@ -207,7 +209,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
           disabled={status === 'submitting'}
           style={styles.submitBtn}
         >
-          {status === 'submitting' ? 'Submitting…' : 'Submit Quarter'}
+          {status === 'submitting' ? t('submit.submitting') : t('submit.submit')}
         </button>
       </form>
     </div>

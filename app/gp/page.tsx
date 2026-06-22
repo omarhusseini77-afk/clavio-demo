@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react'
 import GPView from '@/components/GPView'
 import BottomTabBar from '@/components/BottomTabBar'
+import { DesktopControls, MobileLangToggle } from '@/components/TopControls'
 import type { Currency } from '@/lib/currency'
 import { useQuarters } from '@/lib/useQuarters'
+import { useLang } from '@/lib/i18n'
 
 type GpSection = 'overview' | 'ask' | 'data'
 
@@ -45,6 +47,7 @@ const GP_TABS = [
 ]
 
 export default function GPPage() {
+  const { t } = useLang()
   const [currency, setCurrency] = useState<Currency>('GBP')
   const [isMobile, setIsMobile] = useState(false)
   const [gpSection, setGpSection] = useState<GpSection>('overview')
@@ -73,7 +76,10 @@ export default function GPPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>Partner</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>{t('page.gp.role')}</span>
+              <MobileLangToggle />
+            </div>
           </div>
         ) : (
           <div style={{
@@ -89,21 +95,11 @@ export default function GPPage() {
               </span>
               <span style={{ width: 1, height: 18, background: 'var(--border)', display: 'inline-block' }} />
               <div>
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Partner Dashboard</span>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>Live data</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{t('gp.dashboard')}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{t('gp.liveData')}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 4 }}>Currency</span>
-              {(['GBP', 'USD', 'EUR'] as const).map(c => (
-                <button key={c} onClick={() => setCurrency(c)} style={{
-                  padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                  border: currency === c ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                  background: currency === c ? 'var(--accent)' : 'transparent',
-                  color: currency === c ? 'white' : 'var(--text-muted)', cursor: 'pointer',
-                }}>{c}</button>
-              ))}
-            </div>
+            <DesktopControls currency={currency} setCurrency={setCurrency} />
           </div>
         )}
 
@@ -115,7 +111,7 @@ export default function GPPage() {
         }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
-              <Spinner /> Loading…
+              <Spinner /> {t('chrome.loading')}
             </div>
           ) : (
             <GPView
@@ -131,7 +127,7 @@ export default function GPPage() {
 
       {isMobile && (
         <BottomTabBar
-          tabs={GP_TABS}
+          tabs={GP_TABS.map(tab => ({ ...tab, label: t(`gp.mtab.${tab.id}`) }))}
           activeTab={gpSection}
           onTabChange={id => setGpSection(id as GpSection)}
         />

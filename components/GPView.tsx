@@ -5,45 +5,38 @@ import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtShort, fmtFull, symbol } from '@/lib/currency'
 import { useCountUp } from '@/lib/useCountUp'
+import { useLang, loc } from '@/lib/i18n'
+import type { Loc } from '@/lib/loc'
 import AskPanel from './AskPanel'
 
 // Secondary metrics shown beneath the hero (hero covers turnover/gross/op/pbt).
-const COLS: { key: keyof Quarter; label: string }[] = [
-  { key: 'retained', label: 'Retained' },
-  { key: 'net_assets', label: 'Net Assets' },
-  { key: 'cash', label: 'Cash at Bank' },
-  { key: 'debtors', label: 'Debtors' },
+const COLS: { key: keyof Quarter; tKey: string }[] = [
+  { key: 'retained', tKey: 'gp.retained' },
+  { key: 'net_assets', tKey: 'gp.netAssets' },
+  { key: 'cash', tKey: 'gp.cash' },
+  { key: 'debtors', tKey: 'gp.debtors' },
 ]
 
-const ALL_FIELDS: { key: keyof Quarter; label: string }[] = [
-  { key: 'period', label: 'Period' },
-  { key: 'turnover', label: 'Turnover' },
-  { key: 'cos', label: 'Cost of Sales' },
-  { key: 'gross', label: 'Gross Profit' },
-  { key: 'admin', label: 'Admin Expenses' },
-  { key: 'op', label: 'Operating Profit' },
-  { key: 'interest', label: 'Interest Received' },
-  { key: 'pbt', label: 'Profit Before Tax' },
-  { key: 'tax', label: 'Tax' },
-  { key: 'retained', label: 'Retained Profit' },
-  { key: 'fixed', label: 'Fixed Assets' },
-  { key: 'stock', label: 'Stock & WIP' },
-  { key: 'debtors', label: 'Debtors' },
-  { key: 'cash', label: 'Cash at Bank' },
-  { key: 'creditors', label: 'Creditors Due Within 1 Year' },
-  { key: 'net_assets', label: 'Net Assets' },
-  { key: 'funds', label: "Shareholders' Funds" },
+// Edit-modal fields; label comes from field.<key> (period is special).
+const ALL_FIELDS: { key: keyof Quarter }[] = [
+  { key: 'period' }, { key: 'turnover' }, { key: 'cos' }, { key: 'gross' },
+  { key: 'admin' }, { key: 'op' }, { key: 'interest' }, { key: 'pbt' },
+  { key: 'tax' }, { key: 'retained' }, { key: 'fixed' }, { key: 'stock' },
+  { key: 'debtors' }, { key: 'cash' }, { key: 'creditors' }, { key: 'net_assets' },
+  { key: 'funds' },
 ]
 
-const SIGNALS = [
-  { company: 'Halcyon Textiles', detail: 'Lost client >5% · Bank discussions · Miss next target', level: 'red' },
-  { company: 'Sentinel Security NW', detail: 'Miss next target', level: 'amber' },
+interface Signal { company: string; detail: Loc; level: 'red' | 'amber' }
+const SIGNALS: Signal[] = [
+  { company: 'Halcyon Textiles', detail: { en: 'Lost client >5% · Bank discussions · Miss next target', fr: 'Perte client >5 % · Discussions bancaires · Objectif suivant manqué' }, level: 'red' },
+  { company: 'Sentinel Security NW', detail: { en: 'Miss next target', fr: 'Objectif suivant manqué' }, level: 'amber' },
 ]
 
-const ANOMALIES = [
-  { company: 'HALCYON TEXTILES', title: 'EBITDA margin contracted 4.2pp month-over-month', detail: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', level: 'red' },
-  { company: 'SENTINEL SECURITY NW', title: 'Reported EBITDA inconsistent with prior pattern', detail: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', level: 'amber' },
-  { company: 'HALCYON TEXTILES', title: 'Receivables aging — 18% in 30+ day bucket', detail: 'Up from 9% three months ago. Trend warrants follow-up with management.', level: 'amber' },
+interface Anomaly { company: string; title: Loc; detail: Loc; level: 'red' | 'amber' }
+const ANOMALIES: Anomaly[] = [
+  { company: 'HALCYON TEXTILES', title: { en: 'EBITDA margin contracted 4.2pp month-over-month', fr: 'Marge d’EBITDA en baisse de 4,2 pts sur un mois' }, detail: { en: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', fr: 'Hors de l’intervalle de confiance à 95 % des 6 derniers mois. Créances douteuses également en hausse de 14 %.' }, level: 'red' },
+  { company: 'SENTINEL SECURITY NW', title: { en: 'Reported EBITDA inconsistent with prior pattern', fr: 'EBITDA déclaré incohérent avec la tendance passée' }, detail: { en: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', fr: 'L’écart par rapport à la moyenne mobile sur 6 mois dépasse 2σ. Signalé pour revue des associés.' }, level: 'amber' },
+  { company: 'HALCYON TEXTILES', title: { en: 'Receivables aging — 18% in 30+ day bucket', fr: 'Vieillissement des créances — 18 % à plus de 30 jours' }, detail: { en: 'Up from 9% three months ago. Trend warrants follow-up with management.', fr: 'Contre 9 % il y a trois mois. La tendance justifie un suivi avec la direction.' }, level: 'amber' },
 ]
 
 type Props = {
@@ -55,6 +48,7 @@ type Props = {
 }
 
 export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection }: Props) {
+  const { t, lang } = useLang()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -164,9 +158,9 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   const showAsk = !mobileSection || mobileSection === 'ask'
 
   const heroSubs: { key: keyof Quarter; label: string }[] = [
-    { key: 'gross', label: 'Gross Profit' },
-    { key: 'op', label: 'Op. Profit' },
-    { key: 'pbt', label: 'PBT' },
+    { key: 'gross', label: t('gp.grossProfit') },
+    { key: 'op', label: t('gp.opProfit') },
+    { key: 'pbt', label: t('gp.pbt') },
   ]
   const turnoverDelta = delta('turnover')
 
@@ -188,8 +182,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         <>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Partner Dashboard</h1>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Latest: {latest.period}</span>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>{t('gp.dashboard')}</h1>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('gp.latest', { period: latest.period })}</span>
         </div>
         {!mobileSection && (
           <div style={{ display: 'flex', gap: 8 }}>
@@ -199,7 +193,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         )}
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: 14 }}>
-        {quarters.length} quarter{quarters.length !== 1 ? 's' : ''} on record · Updates live · Displaying in {currency}
+        {t(quarters.length === 1 ? 'gp.onRecord1' : 'gp.onRecord', { n: quarters.length, currency })}
       </p>
 
       {/* Gradient hero — headline result with count-up */}
@@ -210,12 +204,12 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Turnover · {latest.period}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('gp.turnover')} · {latest.period}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18, position: 'relative' }}>
           <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtShort(turnoverCount, currency)}</div>
           {turnoverDelta !== null && (
             <div style={{ fontSize: 13, color: turnoverDelta >= 0 ? '#7FE6B0' : '#FCA5A5', fontWeight: 600 }}>
-              {turnoverDelta >= 0 ? '▲' : '▼'} {Math.abs(turnoverDelta).toFixed(1)}% vs prev
+              {turnoverDelta >= 0 ? '▲' : '▼'} {Math.abs(turnoverDelta).toFixed(1)}% {t('gp.vsPrev')}
             </div>
           )}
         </div>
@@ -247,11 +241,11 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           const d = delta(c.key)
           return (
             <div key={c.key} style={styles.kpiCard}>
-              <div style={styles.kpiLabel}>{c.label}</div>
+              <div style={styles.kpiLabel}>{t(c.tKey)}</div>
               <div style={styles.kpiValue}>{fmtShort(latest[c.key] as number, currency)}</div>
               {d !== null && (
                 <div style={{ fontSize: 12, marginTop: 4, color: d >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>
-                  {d >= 0 ? '▲' : '▼'} {Math.abs(d).toFixed(1)}% vs prev
+                  {d >= 0 ? '▲' : '▼'} {Math.abs(d).toFixed(1)}% {t('gp.vsPrev')}
                 </div>
               )}
             </div>
@@ -262,7 +256,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       {/* Signals + Trend row */}
       <div className="gp-trend-grid">
         <div style={styles.card}>
-          <h3 style={styles.sectionTitle}>Performance Trend</h3>
+          <h3 style={styles.sectionTitle}>{t('gp.perfTrend')}</h3>
         <div style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
@@ -283,8 +277,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
         {/* Objective Signals */}
         <div style={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <h3 style={styles.sectionTitle}>Objective Signals</h3>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Flagged this month</span>
+            <h3 style={styles.sectionTitle}>{t('gp.signals')}</h3>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.flaggedMonth')}</span>
           </div>
           {SIGNALS.map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < SIGNALS.length - 1 ? 14 : 0, alignItems: 'flex-start' }}>
@@ -296,7 +290,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
               }}>!</div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{s.company}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{s.detail}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{loc(s.detail, lang)}</div>
               </div>
             </div>
           ))}
@@ -306,9 +300,9 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       {/* Anomaly Detection */}
       <div style={{ ...styles.card, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-          <h3 style={styles.sectionTitle}>Anomaly Detection</h3>
+          <h3 style={styles.sectionTitle}>{t('gp.anomalies')}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Statistical patterns flagged this month</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
             <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>V2</span>
           </div>
         </div>
@@ -322,14 +316,14 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
             }}>!</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 3 }}>{a.company}</div>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{a.title}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{a.detail}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{loc(a.title, lang)}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{loc(a.detail, lang)}</div>
             </div>
             <button
               onClick={() => setInvestigateAnomaly(a)}
               style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0, fontWeight: 500 }}
             >
-              Investigate →
+              {t('gp.investigate')}
             </button>
           </div>
         ))}
@@ -339,20 +333,20 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
       {showAsk && (
         <div style={{ marginBottom: mobileSection ? 0 : 8 }}>
-          {!mobileSection && <h3 style={styles.sectionTitle}>Ask Clavio</h3>}
+          {!mobileSection && <h3 style={styles.sectionTitle}>{t('gp.askSection')}</h3>}
           <AskPanel
             isMobile={mobileSection === 'ask'}
             context={askContext}
-            connectedLabel="Connected to live accounting data"
-            connectedSub={`QuickBooks · ${quarters.length} quarters · latest ${latest.period}`}
-            introTitle="Ask Clavio about this company"
-            introBody="Clavio reads the standardised quarterly accounts directly. Ask in plain English and it pulls the exact figures — no digging through the table."
-            placeholder="Ask about turnover, margins, PBT, cash…"
+            connectedLabel={t('ask.connected')}
+            connectedSub={t('ask.gp.sub', { n: quarters.length, period: latest.period })}
+            introTitle={t('ask.gp.introTitle')}
+            introBody={t('ask.gp.introBody')}
+            placeholder={t('ask.gp.placeholder')}
             suggestions={[
-              `How has turnover trended over the last ${Math.min(quarters.length, 4)} quarters?`,
-              'What happened to gross margin in the latest quarter?',
-              'Compare operating profit this quarter vs last',
-              'Is the cash position improving or deteriorating?',
+              t('ask.gp.q1', { n: Math.min(quarters.length, 4) }),
+              t('ask.gp.q2'),
+              t('ask.gp.q3'),
+              t('ask.gp.q4'),
             ]}
           />
         </div>
@@ -368,19 +362,19 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           )}
       {/* Data table */}
       <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>All Quarters — Standardised</h3>
+        <h3 style={styles.sectionTitle}>{t('gp.allQuarters')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>Period</th>
-                <th style={styles.th}>Turnover</th>
-                <th style={styles.th}>Gross</th>
-                <th style={styles.th}>Op. Profit</th>
-                <th style={styles.th}>PBT</th>
-                <th style={styles.th}>Retained</th>
-                <th style={styles.th}>Net Assets</th>
-                <th style={styles.th}>Cash</th>
+                <th style={styles.th}>{t('gp.col.period')}</th>
+                <th style={styles.th}>{t('gp.turnover')}</th>
+                <th style={styles.th}>{t('gp.col.gross')}</th>
+                <th style={styles.th}>{t('gp.opProfit')}</th>
+                <th style={styles.th}>{t('gp.pbt')}</th>
+                <th style={styles.th}>{t('gp.retained')}</th>
+                <th style={styles.th}>{t('gp.netAssets')}</th>
+                <th style={styles.th}>{t('gp.cash')}</th>
                 <th style={styles.th}></th>
               </tr>
             </thead>
@@ -396,8 +390,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
                   <td style={styles.td}>{fmtFull(q.net_assets, currency)}</td>
                   <td style={styles.td}>{fmtFull(q.cash, currency)}</td>
                   <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => startEdit(q)} style={styles.editBtn}>Edit</button>
-                    <button onClick={() => setConfirmDeleteId(q.id!)} style={styles.deleteBtn}>Delete</button>
+                    <button onClick={() => startEdit(q)} style={styles.editBtn}>{t('gp.edit')}</button>
+                    <button onClick={() => setConfirmDeleteId(q.id!)} style={styles.deleteBtn}>{t('gp.delete')}</button>
                   </td>
                 </tr>
               ))}
@@ -411,11 +405,11 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
       {/* Edit modal */}
       {editingId !== null && (
-        <Modal title="Edit Quarter" onClose={() => setEditingId(null)}>
+        <Modal title={t('gp.editQuarter')} onClose={() => setEditingId(null)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
             {ALL_FIELDS.map(f => (
               <div key={f.key}>
-                <label style={styles.label}>{f.label}</label>
+                <label style={styles.label}>{f.key === 'period' ? t('gp.col.period') : t(`field.${f.key}`)}</label>
                 <input
                   style={styles.input}
                   value={String(editValues[f.key] ?? '')}
@@ -425,15 +419,15 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={saveEdit} style={styles.submitBtn}>Save Changes</button>
-            <button onClick={() => setEditingId(null)} style={styles.cancelBtn}>Cancel</button>
+            <button onClick={saveEdit} style={styles.submitBtn}>{t('gp.saveChanges')}</button>
+            <button onClick={() => setEditingId(null)} style={styles.cancelBtn}>{t('gp.cancel')}</button>
           </div>
         </Modal>
       )}
 
       {/* Investigate modal */}
       {investigateAnomaly && (
-        <Modal title="Anomaly Investigation" onClose={() => setInvestigateAnomaly(null)}>
+        <Modal title={t('gp.anomalyInvestigation')} onClose={() => setInvestigateAnomaly(null)}>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
             <div style={{
               width: 32, height: 32, borderRadius: 8, flexShrink: 0,
@@ -443,37 +437,37 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
             }}>!</div>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 4 }}>{investigateAnomaly.company}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{investigateAnomaly.title}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>{investigateAnomaly.detail}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{loc(investigateAnomaly.title, lang)}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>{loc(investigateAnomaly.detail, lang)}</div>
             </div>
           </div>
           <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Actions</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('gp.recommendedActions')}</div>
             <ul style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: 18 }}>
-              <li>Schedule a call with the portfolio company CFO</li>
-              <li>Request updated management accounts for the current period</li>
-              <li>Review against prior-period variance thresholds</li>
-              <li>Flag for discussion at the next IC / partner meeting</li>
+              <li>{t('gp.action1')}</li>
+              <li>{t('gp.action2')}</li>
+              <li>{t('gp.action3')}</li>
+              <li>{t('gp.action4')}</li>
             </ul>
           </div>
-          <button onClick={() => setInvestigateAnomaly(null)} style={styles.submitBtn}>Close</button>
+          <button onClick={() => setInvestigateAnomaly(null)} style={styles.submitBtn}>{t('gp.close')}</button>
         </Modal>
       )}
 
       {/* Delete confirmation */}
       {confirmDeleteId !== null && (
-        <Modal title="Delete Quarter" onClose={() => setConfirmDeleteId(null)}>
+        <Modal title={t('gp.deleteQuarter')} onClose={() => setConfirmDeleteId(null)}>
           <p style={{ marginBottom: 20, color: 'var(--text-muted)' }}>
-            Are you sure you want to delete this quarter? This cannot be undone.
+            {t('gp.deleteConfirm')}
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={async () => { await onDelete(confirmDeleteId); setConfirmDeleteId(null) }}
               style={{ ...styles.submitBtn, background: 'var(--red)' }}
             >
-              Yes, Delete
+              {t('gp.yesDelete')}
             </button>
-            <button onClick={() => setConfirmDeleteId(null)} style={styles.cancelBtn}>Cancel</button>
+            <button onClick={() => setConfirmDeleteId(null)} style={styles.cancelBtn}>{t('gp.cancel')}</button>
           </div>
         </Modal>
       )}

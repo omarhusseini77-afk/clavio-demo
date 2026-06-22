@@ -47,9 +47,13 @@ export async function POST(req: Request) {
     const body = await req.json()
     const history: ChatTurn[] = Array.isArray(body.messages) ? body.messages : []
     const question: string = body.question ?? ''
-    const system = body.context
+    const lang: string = body.lang === 'fr' ? 'fr' : 'en'
+    const base = body.context
       ? systemForContext(typeof body.context === 'string' ? body.context : JSON.stringify(body.context, null, 2))
       : SYSTEM
+    const system = lang === 'fr'
+      ? `${base}\n\nIMPORTANT : réponds toujours en français, quelle que soit la langue de la question. Utilise les conventions de chiffres françaises (espace pour les milliers, virgule décimale) et les symboles de devise £/€.`
+      : base
 
     const messages: Anthropic.MessageParam[] = [
       ...history.map(t => ({ role: t.role, content: t.content })),

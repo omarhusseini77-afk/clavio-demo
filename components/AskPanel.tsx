@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useLang } from '@/lib/i18n'
 
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function AskPanel({ suggestions, introTitle, introBody, connectedLabel, connectedSub, placeholder, context, isMobile }: Props) {
+  const { t, lang } = useLang()
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -39,7 +41,7 @@ export default function AskPanel({ suggestions, introTitle, introBody, connected
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, messages: history, context }),
+        body: JSON.stringify({ question: q, messages: history, context, lang }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
@@ -113,11 +115,11 @@ export default function AskPanel({ suggestions, introTitle, introBody, connected
           background: loading || !input.trim() ? '#C7D2E0' : 'var(--accent)', color: 'white',
           cursor: loading || !input.trim() ? 'default' : 'pointer',
         }}>
-          {loading ? '…' : 'Ask'}
+          {loading ? '…' : t('ask.ask')}
         </button>
       </form>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
-        Clavio AI can make mistakes. Verify material figures against source reports.
+        {t('ask.disclaimer')}
       </div>
     </div>
   )
@@ -143,13 +145,14 @@ function ChatBubble({ role, content }: { role: 'user' | 'assistant'; content: st
 }
 
 function ThinkingBubble() {
+  const { t } = useLang()
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '6px 8px' }}>
       <div style={{ padding: '12px 16px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', gap: 5, alignItems: 'center' }}>
         {[0, 1, 2].map(i => (
           <span key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: `clavio-pulse 1.2s ${i * 0.18}s infinite ease-in-out` }} />
         ))}
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>Reading the books…</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{t('ask.thinking')}</span>
       </div>
     </div>
   )

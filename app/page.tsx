@@ -1,9 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
 import PortfolioView from '@/components/PortfolioView'
+import { DesktopLangToggle, MobileLangToggle } from '@/components/TopControls'
 import { useQuarters } from '@/lib/useQuarters'
+import { useLang } from '@/lib/i18n'
 
 export default function PortfolioPage() {
+  const { t } = useLang()
   const [isMobile, setIsMobile] = useState(false)
   const { onSubmit } = useQuarters()
 
@@ -30,24 +33,30 @@ export default function PortfolioPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>Submit</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>{t('page.submit.role')}</span>
+              <MobileLangToggle />
+            </div>
           </div>
         ) : (
           <div style={{
             borderBottom: '1px solid var(--border)',
             background: 'var(--white)',
             padding: '18px 32px',
-            display: 'flex', alignItems: 'center', gap: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
             flexShrink: 0,
           }}>
-            <span style={{ color: 'var(--navy)', fontWeight: 800, fontSize: 18, letterSpacing: '1px' }}>
-              CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
-            </span>
-            <span style={{ width: 1, height: 18, background: 'var(--border)', display: 'inline-block' }} />
-            <div>
-              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Submit Financials</span>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>Portfolio Co. · Quarterly submission</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ color: 'var(--navy)', fontWeight: 800, fontSize: 18, letterSpacing: '1px' }}>
+                CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
+              </span>
+              <span style={{ width: 1, height: 18, background: 'var(--border)', display: 'inline-block' }} />
+              <div>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{t('page.submit.title')}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{t('page.submit.subtitle')}</span>
+              </div>
             </div>
+            <DesktopLangToggle />
           </div>
         )}
 
