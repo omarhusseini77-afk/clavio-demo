@@ -46,7 +46,7 @@ export default function Sidebar({ currency, setCurrency, isOpen, onClose, isMobi
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}>
           <div style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '1px' }}>
-            CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
+            CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
           </div>
           <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 3 }}>
             Portfolio Intelligence
@@ -113,7 +113,7 @@ export default function Sidebar({ currency, setCurrency, isOpen, onClose, isMobi
                         style={{
                           flex: 1, padding: '6px 0', borderRadius: 6,
                           fontSize: 11, fontWeight: 600,
-                          border: currency === c ? '1.5px solid #5B82BD' : '1px solid rgba(255,255,255,0.1)',
+                          border: currency === c ? '1.5px solid #1652A0' : '1px solid rgba(255,255,255,0.1)',
                           background: currency === c ? 'rgba(91,130,189,0.2)' : 'transparent',
                           color: currency === c ? '#7BA4D4' : 'rgba(255,255,255,0.35)',
                           cursor: 'pointer',
@@ -140,7 +140,7 @@ export default function Sidebar({ currency, setCurrency, isOpen, onClose, isMobi
         }}>
           <div style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: '#5B82BD',
+            background: '#1652A0',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0,
           }}>
@@ -186,7 +186,7 @@ function NavLink({ href, active, onClick, icon, label, sub }: {
         border: 'none', cursor: 'pointer',
         color: active ? 'white' : 'rgba(255,255,255,0.45)',
         textAlign: 'left',
-        borderLeft: active ? '2px solid #5B82BD' : '2px solid transparent',
+        borderLeft: active ? '2px solid #1652A0' : '2px solid transparent',
         marginBottom: 2,
         textDecoration: 'none',
       }}

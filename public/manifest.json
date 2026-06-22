@@ -4,8 +4,8 @@
   "description": "Portfolio financial reporting",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0E1A",
-  "theme_color": "#0A0E1A",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "orientation": "portrait-primary",
   "icons": [
     {

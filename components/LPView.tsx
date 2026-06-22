@@ -841,7 +841,7 @@ function AllocationDonut() {
   // Share of fund gross value by sector
   const slices = [
     { label: loc({ en: 'B2B Services', fr: 'Services B2B' }, lang), value: 33, color: '#1E3A5F' },
-    { label: loc({ en: 'F&B Distribution', fr: 'Distribution agroalimentaire' }, lang), value: 28, color: '#5B82BD' },
+    { label: loc({ en: 'F&B Distribution', fr: 'Distribution agroalimentaire' }, lang), value: 28, color: '#1652A0' },
     { label: loc({ en: 'Manufacturing', fr: 'Industrie' }, lang), value: 23, color: '#10B981' },
     { label: loc({ en: 'Specialty Mfg', fr: 'Fabrication spécialisée' }, lang), value: 16, color: '#F59E0B' },
   ]

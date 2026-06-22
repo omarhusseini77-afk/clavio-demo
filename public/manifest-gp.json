@@ -4,8 +4,8 @@
   "description": "Partner dashboard — Clavio",
   "start_url": "/gp",
   "display": "standalone",
-  "background_color": "#0D1B2A",
-  "theme_color": "#0A0E1A",
+  "background_color": "#1652A0",
+  "theme_color": "#1652A0",
   "orientation": "portrait-primary",
   "icons": [
     {

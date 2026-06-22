@@ -31,7 +31,7 @@ export default function PortfolioPage() {
             flexShrink: 0,
           }}>
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
-              CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
+              CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>{t('page.submit.role')}</span>
@@ -48,7 +48,7 @@ export default function PortfolioPage() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ color: 'var(--navy)', fontWeight: 800, fontSize: 18, letterSpacing: '1px' }}>
-                CLA<span style={{ color: '#5B82BD', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
+                CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
               </span>
               <span style={{ width: 1, height: 18, background: 'var(--border)', display: 'inline-block' }} />
               <div>
