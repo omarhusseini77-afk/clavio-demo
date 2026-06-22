@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Clavio Investor',
   description: 'Investor portal — Clavio',
   manifest: '/manifest-lp.json',
-  icons: { icon: '/icon-lp-192.png', apple: '/icon-lp-192.png' },
+  icons: { icon: '/icon-lp-192.png', apple: '/apple-touch-icon-lp.png' },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
