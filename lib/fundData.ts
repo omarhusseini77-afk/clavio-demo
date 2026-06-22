@@ -28,14 +28,23 @@ export interface Company {
   trend: number[]
   data: CompanyYear[]
   commentary: Loc
+  investmentDate: string
+  ownership: number   // % of portfolio company equity
+  cost: number        // total invested (£/€)
+  irr: number         // gross IRR since entry
+  evEbitda: number    // current EV/EBITDA multiple
+  netDebt: number     // latest net debt
 }
 
 export const FUND = {
   name: 'Fund II', period: 'Q1 2026',
   date: { en: '31 March 2026', fr: '31 mars 2026' } as Loc,
-  nav: 5220000, tvpi: 1.68, dpi: 0.32,
+  nav: 5220000, tvpi: 1.68, dpi: 0.32, rvpi: 1.36,
+  irr: 18.4, grossIrr: 24.1,
   commitment: 5000000, called: 3850000, unfunded: 1150000,
   distributed: 1240000, shareOfFund: 14.8,
+  vintageYear: 2022,
+  totalInvested: 16900000, currentGrossValue: 23500000,
 }
 
 export const COMPANIES: Company[] = [
@@ -54,6 +63,7 @@ export const COMPANIES: Company[] = [
       en: 'Revenue grew 21.3% over three years with gross margin expanding from 41% to 43%, a structural gain rather than a one-off. EBITDA rose from £749k to £1.04M and cash more than doubled, with no debt drawn. The balance sheet now supports an add-on.',
       fr: 'Le chiffre d’affaires a progressé de 21,3 % sur trois ans, la marge brute passant de 41 % à 43 %, un gain structurel plutôt que ponctuel. L’EBITDA est passé de 749 k£ à 1,04 M£ et la trésorerie a plus que doublé, sans dette tirée. Le bilan permet désormais une acquisition de croissance externe.',
     },
+    investmentDate: 'Jun 2022', ownership: 68, cost: 4200000, irr: 32.4, evEbitda: 9.2, netDebt: 420000,
   },
   {
     id: 'df', name: 'Delacourt Frères',
@@ -70,6 +80,7 @@ export const COMPANIES: Company[] = [
       en: 'Revenue is growing but gross margin has compressed from 28% to 26% as input costs remain elevated. Working capital has tightened — receivables up 26% while cash declined. Management is executing a price-led recovery for H2.',
       fr: 'Le chiffre d’affaires croît mais la marge brute s’est contractée de 28 % à 26 %, les coûts des intrants restant élevés. Le besoin en fonds de roulement s’est tendu — créances en hausse de 26 % tandis que la trésorerie a reculé. La direction met en œuvre un redressement par les prix au S2.',
     },
+    investmentDate: 'Nov 2022', ownership: 55, cost: 5100000, irr: 18.7, evEbitda: 7.8, netDebt: 1840000,
   },
   {
     id: 'ats', name: 'Abington Technical Services',
@@ -86,6 +97,7 @@ export const COMPANIES: Company[] = [
       en: 'Strong performance across all metrics. Revenue up 37.8% over three years with consistent margin expansion. The B2B services model generates high cash conversion — cash has grown to £3.6M. Pipeline supports continued growth into FY26.',
       fr: 'Performance solide sur tous les indicateurs. Chiffre d’affaires en hausse de 37,8 % sur trois ans avec une expansion régulière des marges. Le modèle de services B2B génère une forte conversion en trésorerie — celle-ci a atteint 3,6 M£. Le carnet de commandes soutient la croissance jusqu’en EX26.',
     },
+    investmentDate: 'Apr 2023', ownership: 72, cost: 4400000, irr: 22.1, evEbitda: 8.9, netDebt: 310000,
   },
   {
     id: 'asp', name: 'Atelier Saint-Pierre',
@@ -102,6 +114,7 @@ export const COMPANIES: Company[] = [
       en: 'Revenue is growing modestly but profitability is declining as gross margins compress. Cash has fallen from €920k to €640k while receivables have grown. Working capital management is a priority and the team is reviewing pricing and operational costs.',
       fr: 'Le chiffre d’affaires croît modestement mais la rentabilité décline à mesure que les marges brutes se contractent. La trésorerie est passée de 920 k€ à 640 k€ tandis que les créances ont augmenté. La gestion du besoin en fonds de roulement est une priorité et l’équipe revoit la tarification et les coûts opérationnels.',
     },
+    investmentDate: 'Sep 2023', ownership: 61, cost: 3200000, irr: 4.8, evEbitda: 6.4, netDebt: 890000,
   },
 ]
 

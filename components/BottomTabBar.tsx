@@ -46,7 +46,7 @@ export default function BottomTabBar({ tabs, activeTab, onTabChange }: Props) {
           >
             <span style={{
               marginBottom: 3,
-              color: active ? '#5B82BD' : '#9CA3AF',
+              color: active ? '#1652A0' : '#9CA3AF',
               transition: 'color 0.15s',
             }}>
               {tab.icon}
@@ -63,7 +63,7 @@ export default function BottomTabBar({ tabs, activeTab, onTabChange }: Props) {
                 position: 'absolute',
                 bottom: 'calc(env(safe-area-inset-bottom) + 58px)',
                 width: 20, height: 2,
-                background: '#5B82BD', borderRadius: 2,
+                background: '#1652A0', borderRadius: 2,
               }} />
             )}
           </button>

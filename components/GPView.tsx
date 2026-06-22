@@ -32,11 +32,44 @@ const SIGNALS: Signal[] = [
   { company: 'Sentinel Security NW', detail: { en: 'Miss next target', fr: 'Objectif suivant manqué' }, level: 'amber' },
 ]
 
-interface Anomaly { company: string; title: Loc; detail: Loc; level: 'red' | 'amber' }
+interface Anomaly { company: string; title: Loc; detail: Loc; level: 'red' | 'amber'; actions: Loc[] }
 const ANOMALIES: Anomaly[] = [
-  { company: 'HALCYON TEXTILES', title: { en: 'EBITDA margin contracted 4.2pp month-over-month', fr: 'Marge d’EBITDA en baisse de 4,2 pts sur un mois' }, detail: { en: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', fr: 'Hors de l’intervalle de confiance à 95 % des 6 derniers mois. Créances douteuses également en hausse de 14 %.' }, level: 'red' },
-  { company: 'SENTINEL SECURITY NW', title: { en: 'Reported EBITDA inconsistent with prior pattern', fr: 'EBITDA déclaré incohérent avec la tendance passée' }, detail: { en: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', fr: 'L’écart par rapport à la moyenne mobile sur 6 mois dépasse 2σ. Signalé pour revue des associés.' }, level: 'amber' },
-  { company: 'HALCYON TEXTILES', title: { en: 'Receivables aging — 18% in 30+ day bucket', fr: 'Vieillissement des créances — 18 % à plus de 30 jours' }, detail: { en: 'Up from 9% three months ago. Trend warrants follow-up with management.', fr: 'Contre 9 % il y a trois mois. La tendance justifie un suivi avec la direction.' }, level: 'amber' },
+  {
+    company: 'HALCYON TEXTILES',
+    title: { en: 'EBITDA margin contracted 4.2pp month-over-month', fr: "Marge d'EBITDA en baisse de 4,2 pts sur un mois" },
+    detail: { en: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', fr: "Hors de l'intervalle de confiance à 95 % des 6 derniers mois. Créances douteuses également en hausse de 14 %." },
+    level: 'red',
+    actions: [
+      { en: "Request management's written explanation for the 4.2pp EBITDA margin contraction — isolate cost vs. revenue driver", fr: "Demander à la direction une explication écrite sur la contraction de 4,2 pts de la marge EBITDA — isoler l'origine (coûts vs. CA)" },
+      { en: 'Run an EBITDA bridge vs. the prior quarter to identify the specific line items driving the move', fr: 'Établir un pont EBITDA par rapport au trimestre précédent pour identifier les postes en cause' },
+      { en: 'Investigate the 14% receivables increase — request a full aged debtors schedule and top-10 debtor breakdown', fr: 'Analyser la hausse de 14 % des créances — demander un échéancier complet des débiteurs et les 10 principaux clients' },
+      { en: 'Place Halcyon Textiles on the formal watch-list; schedule a partner call within 10 business days', fr: 'Inscrire Halcyon Textiles sur la liste de surveillance formelle ; planifier un appel associé sous 10 jours ouvrés' },
+    ],
+  },
+  {
+    company: 'SENTINEL SECURITY NW',
+    title: { en: 'Reported EBITDA inconsistent with prior pattern', fr: 'EBITDA déclaré incohérent avec la tendance passée' },
+    detail: { en: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', fr: "L'écart par rapport à la moyenne mobile sur 6 mois dépasse 2σ. Signalé pour revue des associés." },
+    level: 'amber',
+    actions: [
+      { en: 'Request management accounts for the last 3 months to independently validate the reported EBITDA figure', fr: "Demander les comptes de gestion des 3 derniers mois pour valider indépendamment le chiffre d'EBITDA déclaré" },
+      { en: 'Cross-reference with the most recent board pack — check for restatements, reclassifications, or one-off items', fr: 'Croiser avec le dernier board pack — vérifier tout redressement, reclassification ou élément exceptionnel' },
+      { en: 'Ask management to confirm the absence of accounting adjustments that may have suppressed the reported number', fr: "Demander à la direction de confirmer l'absence d'ajustements comptables ayant pu minorer le chiffre déclaré" },
+      { en: 'Suspend pending drawdown approvals until a satisfactory written explanation is received', fr: "Suspendre les approbations de tirage en attente jusqu'à réception d'une explication écrite satisfaisante" },
+    ],
+  },
+  {
+    company: 'HALCYON TEXTILES',
+    title: { en: 'Receivables aging — 18% in 30+ day bucket', fr: 'Vieillissement des créances — 18 % à plus de 30 jours' },
+    detail: { en: 'Up from 9% three months ago. Trend warrants follow-up with management.', fr: 'Contre 9 % il y a trois mois. La tendance justifie un suivi avec la direction.' },
+    level: 'amber',
+    actions: [
+      { en: "Request a full aged debtors schedule — identify the top-5 overdue accounts by value and days outstanding", fr: "Demander l'échéancier complet des débiteurs — identifier les 5 principaux comptes en retard par montant et ancienneté" },
+      { en: 'Assess whether the overdue receivables are concentrated in the recently lost client (>5% of revenue)', fr: 'Évaluer si les créances en retard sont concentrées sur le client récemment perdu (>5 % du CA)' },
+      { en: 'Review credit terms and collections procedures with the CFO — set a 30-day remediation target', fr: 'Examiner les conditions de crédit et procédures de recouvrement avec le DG financier — fixer un objectif de remédiation à 30 jours' },
+      { en: 'Evaluate whether a specific bad debt provision is required and model the downside P&L impact if the bucket does not normalise', fr: "Évaluer si une provision pour créances douteuses est nécessaire et modéliser l'impact négatif sur le résultat si le solde ne se normalise pas" },
+    ],
+  },
 ]
 
 type Props = {
@@ -444,10 +477,9 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('gp.recommendedActions')}</div>
             <ul style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: 18 }}>
-              <li>{t('gp.action1')}</li>
-              <li>{t('gp.action2')}</li>
-              <li>{t('gp.action3')}</li>
-              <li>{t('gp.action4')}</li>
+              {investigateAnomaly.actions.map((action, i) => (
+                <li key={i}>{loc(action, lang)}</li>
+              ))}
             </ul>
           </div>
           <button onClick={() => setInvestigateAnomaly(null)} style={styles.submitBtn}>{t('gp.close')}</button>

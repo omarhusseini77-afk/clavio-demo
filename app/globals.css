@@ -6,7 +6,7 @@
 
 :root {
   --navy: #0A0E1A;
-  --accent: #5B82BD;
+  --accent: #1652A0;
   --accent-light: #EEF3FA;
   --text: #1A1F2E;
   --text-muted: #6B7280;
@@ -56,12 +56,12 @@ input, select, textarea {
 
 /* Consistent accent focus ring across every view */
 input:focus, select:focus, textarea:focus {
-  box-shadow: 0 0 0 3px rgba(91, 130, 189, 0.18);
+  box-shadow: 0 0 0 3px rgba(22, 82, 160, 0.18);
   border-color: var(--accent) !important;
 }
 
 ::selection {
-  background: rgba(91, 130, 189, 0.22);
+  background: rgba(22, 82, 160, 0.22);
 }
 
 /* Refined thin scrollbars */
@@ -93,8 +93,8 @@ main {
 }
 
 @keyframes clavio-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Subtle hover lift for clickable cards / chips */

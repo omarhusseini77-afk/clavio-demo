@@ -129,16 +129,17 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
           <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtM(navCount, currency)}</div>
           <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {t('lp.netSuffix', { x: FUND.tvpi })}</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, position: 'relative' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0, position: 'relative' }}>
           {[
             { label: t('lp.tvpi'), value: `${tvpiCount.toFixed(2)}x` },
             { label: t('lp.dpi'), value: `${dpiCount.toFixed(2)}x` },
+            { label: 'NET IRR', value: `${FUND.irr}%` },
             { label: t('lp.fundShare'), value: `${FUND.shareOfFund}%` },
           ].map((s, i) => (
             <div key={s.label} style={{
-              paddingRight: i < 2 ? 16 : 0,
-              borderRight: i < 2 ? '1px solid rgba(255,255,255,0.12)' : 'none',
-              paddingLeft: i > 0 ? 16 : 0,
+              paddingRight: i < 3 ? 12 : 0,
+              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.12)' : 'none',
+              paddingLeft: i > 0 ? 12 : 0,
             }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{s.value}</div>
@@ -362,12 +363,16 @@ function PerformanceTab() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
         {[
+          { label: t('lp.stat.netIrr'), value: `${FUND.irr}%`, color: 'var(--accent)' },
+          { label: t('lp.stat.grossIrr'), value: `${FUND.grossIrr}%`, color: 'var(--accent)' },
+          { label: t('lp.stat.rvpi'), value: `${FUND.rvpi}x`, color: 'var(--text)' },
           { label: t('lp.stat.revGrowth'), value: '+8.1%', color: 'var(--green)' },
           { label: t('lp.stat.gmargin'), value: '35.4%', color: 'var(--text)' },
           { label: t('lp.stat.ebitdaGrowth'), value: '+11.2%', color: 'var(--green)' },
           { label: t('lp.stat.abovePlan'), value: t('lp.stat.of4', { n: 2 }), color: 'var(--green)' },
           { label: t('lp.stat.onWatch'), value: t('lp.stat.of4', { n: 2 }), color: '#F59E0B' },
           { label: t('lp.stat.cashCover'), value: t('lp.stat.months', { n: '14.2' }), color: 'var(--green)' },
+          { label: t('lp.stat.lossRatio'), value: t('lp.stat.of4', { n: 0 }), color: 'var(--green)' },
         ].map(s => (
           <div key={s.label} style={styles.card}>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{s.label}</div>
@@ -415,15 +420,28 @@ function PerformanceTab() {
               </div>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: co.status === 'green' ? '#10B981' : '#F59E0B', marginTop: 4, flexShrink: 0 }} />
             </div>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
+              {[
+                { label: t('lp.moic'), value: `${co.moic}x` },
+                { label: t('lp.co.irr'), value: `${co.irr}%` },
+                { label: t('lp.co.ownership'), value: `${co.ownership}%` },
+                { label: t('lp.co.evEbitda'), value: `${co.evEbitda}x` },
+              ].map(m => (
+                <div key={m.label}>
+                  <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>{m.label}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700 }}>{m.value}</div>
+                </div>
+              ))}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div style={{ display: 'flex', gap: 24 }}>
+              <div style={{ display: 'flex', gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.moic')}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{co.moic}x</div>
+                  <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>{t('lp.revenue')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.revenue')}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
+                  <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>{t('lp.co.investmentDate')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>{co.investmentDate}</div>
                 </div>
               </div>
               <Sparkline
@@ -470,20 +488,31 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
       </div>
 
       {/* Company header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700 }}>{co.name}</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{loc(co.sector, lang)} · {loc(co.country, lang)}</p>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700 }}>{co.name}</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{loc(co.sector, lang)} · {loc(co.country, lang)}</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: co.status === 'green' ? '#10B981' : '#F59E0B' }} />
+            <span style={{ fontSize: 12, color: co.status === 'green' ? '#10B981' : '#F59E0B', fontWeight: 600 }}>{co.status === 'green' ? 'On plan' : 'On watch'}</span>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 28, textAlign: 'right' }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.moic')}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>{co.moic}x</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.revenue')}</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{co.sym}{(co.revenue / 1_000_000).toFixed(2)}M</div>
-          </div>
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          {[
+            { label: t('lp.moic'), value: `${co.moic}x`, accent: true },
+            { label: t('lp.co.irr'), value: `${co.irr}%`, accent: false },
+            { label: t('lp.co.evEbitda'), value: `${co.evEbitda}x`, accent: false },
+            { label: t('lp.co.ownership'), value: `${co.ownership}%`, accent: false },
+            { label: t('lp.co.cost'), value: `${co.sym} ${(co.cost / 1_000_000).toFixed(1)}M`, accent: false },
+            { label: t('lp.co.investmentDate'), value: co.investmentDate, accent: false },
+          ].map(m => (
+            <div key={m.label}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{m.label}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: m.accent ? 'var(--accent)' : 'var(--text)' }}>{m.value}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -502,13 +531,16 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
             </thead>
             <tbody>
               {[
-                { label: t('lp.m.revenue'), values: co.data.map(d => `${co.sym}${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
+                { label: t('lp.m.revenue'), values: co.data.map(d => `${co.sym} ${(d.revenue / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.revenue), color: '#10B981' },
+                { label: t('lp.m.revenueGrowth'), values: co.data.map((d, i) => i === 0 ? '—' : `${(((d.revenue - co.data[i-1].revenue) / co.data[i-1].revenue) * 100).toFixed(1)}%`), trend: co.data.map((d, i) => i === 0 ? 0 : ((d.revenue - co.data[i-1].revenue) / co.data[i-1].revenue) * 100), color: '#10B981' },
                 { label: t('lp.m.gmargin'), values: co.data.map(d => `${d.grossMargin}%`), trend: co.data.map(d => d.grossMargin), color: '#10B981' },
-                { label: t('lp.m.ebitda'), values: co.data.map(d => `${co.sym}${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
-                { label: t('lp.m.netProfit'), values: co.data.map(d => `${co.sym}${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
-                { label: t('lp.m.cash'), values: co.data.map(d => `${co.sym}${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
-                { label: t('lp.m.receivables'), values: co.data.map(d => `${co.sym}${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
-                { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym}${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
+                { label: t('lp.m.ebitda'), values: co.data.map(d => `${co.sym} ${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
+                { label: t('lp.m.ebitdaMargin'), values: co.data.map(d => `${((d.ebitda / d.revenue) * 100).toFixed(1)}%`), trend: co.data.map(d => (d.ebitda / d.revenue) * 100), color: '#10B981' },
+                { label: t('lp.m.netProfit'), values: co.data.map(d => `${co.sym} ${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
+                { label: t('lp.m.cash'), values: co.data.map(d => `${co.sym} ${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
+                { label: t('lp.m.netDebt'), values: co.data.map(d => `${co.sym} ${((d.receivables - d.cash) / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables - d.cash), color: '#F59E0B' },
+                { label: t('lp.m.receivables'), values: co.data.map(d => `${co.sym} ${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
+                { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym} ${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
               ].map((row, i) => (
                 <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
                   <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{row.label}</td>
