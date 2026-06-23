@@ -387,6 +387,7 @@
       <div class="section-number">1</div>
       <div class="section-title">Purpose of this document</div>
     </div>
+    <p>Clavio is a <strong>data standardisation and intelligence layer</strong>. Its core purpose is to connect to a portfolio company's accounting system, standardise the financial data, and make that clean data available for two things: <strong>generated reporting</strong> and <strong>AI-powered natural language query</strong>. Both the GP and the LPs use the AI query feature — each scoped to what they are permitted to see. Reporting is one output of the layer; AI query is an equally important second output.</p>
     <p>This plan outlines the phased path from Clavio's current working demo to a fully deployable, real-data pilot suitable for live LP, GP, and Portfolio Company users. It defines what is built with AI assistance, what requires direct human involvement, how security concerns are addressed, and how the codebase is structured for a clean handoff to a developer when needed.</p>
     <p>The goal is to maximise what is built before a developer is engaged, reducing that developer's scope (and cost) to the minimum that legally and practically requires a named human — principally: account ownership, secret management, and the QuickBooks integration.</p>
   </div>
@@ -400,10 +401,10 @@
     <p>As of this document, the Clavio demo is a live, deployed application with the following capabilities:</p>
     <ul class="phase-bullets" style="margin-top:8px;">
       <li>Three isolated progressive web apps (Submit / Partner / Investor), each installable to a phone home screen with a distinct icon and URL.</li>
-      <li>Portfolio company submission form with AI-powered document extraction (Claude).</li>
-      <li>GP / Partner dashboard: revenue trends, balance-sheet signals, anomaly detection, per-company drill-down, Ask Clavio AI assistant.</li>
-      <li>LP / Investor portal: account overview, value bridge & J-curve, portfolio allocation, document library with AI summaries, Ask Clavio assistant.</li>
-      <li>Full bilingual support (English / French) across all three views, including AI replies.</li>
+      <li><strong>Submit app:</strong> portfolio company submission form with AI-powered document extraction (Claude) — the ingestion layer where raw accounting data enters Clavio and is standardised.</li>
+      <li><strong>Partner/GP app:</strong> revenue trends, balance-sheet signals, anomaly detection, per-company drill-down, and an AI query assistant ("Ask Clavio") that answers natural-language questions against the full standardised dataset — e.g. "why did receivables grow faster than revenue at Tecniq this quarter?"</li>
+      <li><strong>Investor/LP app:</strong> capital account overview, fund performance (IRR, MOIC, TVPI, DPI), portfolio allocation, document library, and an AI query assistant scoped to fund-level and portfolio-summary data — the same intelligence layer as the GP, narrowed to LP-appropriate permissions.</li>
+      <li>Full bilingual support (English / French) across all three apps, including AI replies.</li>
       <li>Deployed on Vercel with auto-deploy on every code commit; Supabase (hosted Postgres) for live quarter data.</li>
       <li>All data currently synthetic (hardcoded demo data), no real user authentication.</li>
     </ul>
@@ -640,12 +641,13 @@
           <span class="phase-subtitle">Human ownership required; AI builds the code</span>
         </div>
         <div class="phase-body">
-          <p>This is Clavio's headline selling point — connecting directly to a portfolio company's accounting system so figures flow in automatically. The integration code is built by AI, but the Intuit developer application must be owned and registered by a human.</p>
+          <p>QuickBooks integration is the primary ingestion path — and ingestion quality is what makes everything else work. The AI query features (for both the GP and the LPs) are only as accurate as the underlying data. Clean, structured, automatically-synced accounting data is what turns "Ask Clavio" from a demo into a trusted tool. The chain is: <strong>QuickBooks → Clavio's standardised data model → reporting and AI query for GP and LP</strong>. QuickBooks is the source; Clavio's database is what everyone actually queries.</p>
+          <p>The integration code is built by AI, but the Intuit developer application must be owned and registered by a human.</p>
           <ul class="phase-bullets">
             <li><strong>Human action:</strong> register a developer application on the Intuit Developer Portal (developer.intuit.com) under the company account. This creates the OAuth Client ID and Secret.</li>
             <li><strong>Human action:</strong> pass Intuit's app review process (required before accessing real company data in production).</li>
-            <li>AI builds: OAuth 2.0 connection flow, token storage, periodic sync, mapping QuickBooks chart-of-accounts to Clavio's financial schema.</li>
-            <li>Result: a "Connect QuickBooks" button in the Submit app; once connected, quarterly figures populate automatically — no manual upload needed.</li>
+            <li>AI builds: OAuth 2.0 connection flow, token storage, periodic sync, mapping QuickBooks chart-of-accounts to Clavio's standardised financial schema.</li>
+            <li>Result: a "Connect QuickBooks" button in the Submit app; once connected, quarterly figures are pulled automatically into Clavio's data model — no manual upload needed, and both GP and LP AI query features immediately reflect the latest data.</li>
           </ul>
         </div>
       </div>
