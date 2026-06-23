@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clavio — Pilot Development Plan</title>
+<title>Clavio - Pilot Development Plan</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -377,7 +377,7 @@
     <div class="header-right">
       <div class="doc-title">Pilot Development Plan</div>
       <div class="doc-meta">Prepared June 2026 &nbsp;·&nbsp; Confidential</div>
-      <div><span class="confidential">Confidential — Internal Use Only</span></div>
+      <div><span class="confidential">Confidential - Internal Use Only</span></div>
     </div>
   </div>
 
@@ -387,9 +387,9 @@
       <div class="section-number">1</div>
       <div class="section-title">Purpose of this document</div>
     </div>
-    <p>Clavio is a <strong>data standardisation and intelligence layer</strong>. Its core purpose is to connect to a portfolio company's accounting system, standardise the financial data, and make that clean data available for two things: <strong>generated reporting</strong> and <strong>AI-powered natural language query</strong>. Both the GP and the LPs use the AI query feature — each scoped to what they are permitted to see. Reporting is one output of the layer; AI query is an equally important second output.</p>
+    <p>Clavio is a <strong>data standardisation and intelligence layer</strong>. Its core purpose is to connect to a portfolio company's accounting system, standardise the financial data, and make that clean data available for two things: <strong>generated reporting</strong> and <strong>AI-powered natural language query</strong>. Both the GP and the LPs use the AI query feature - each scoped to what they are permitted to see. Reporting is one output of the layer; AI query is an equally important second output.</p>
     <p>This plan outlines the phased path from Clavio's current working demo to a fully deployable, real-data pilot suitable for live LP, GP, and Portfolio Company users. It defines what is built with AI assistance, what requires direct human involvement, how security concerns are addressed, and how the codebase is structured for a clean handoff to a developer when needed.</p>
-    <p>The goal is to maximise what is built before a developer is engaged, reducing that developer's scope (and cost) to the minimum that legally and practically requires a named human — principally: account ownership, secret management, and the QuickBooks integration.</p>
+    <p>The goal is to maximise what is built before a developer is engaged, reducing that developer's scope (and cost) to the minimum that legally and practically requires a named human - principally: account ownership, secret management, and the QuickBooks integration.</p>
   </div>
 
   <!-- 2. CURRENT STATE -->
@@ -401,9 +401,9 @@
     <p>As of this document, the Clavio demo is a live, deployed application with the following capabilities:</p>
     <ul class="phase-bullets" style="margin-top:8px;">
       <li>Three isolated progressive web apps (Submit / Partner / Investor), each installable to a phone home screen with a distinct icon and URL.</li>
-      <li><strong>Submit app:</strong> portfolio company submission form with AI-powered document extraction (Claude) — the ingestion layer where raw accounting data enters Clavio and is standardised.</li>
-      <li><strong>Partner/GP app:</strong> revenue trends, balance-sheet signals, anomaly detection, per-company drill-down, and an AI query assistant ("Ask Clavio") that answers natural-language questions against the full standardised dataset — e.g. "why did receivables grow faster than revenue at Tecniq this quarter?"</li>
-      <li><strong>Investor/LP app:</strong> capital account overview, fund performance (IRR, MOIC, TVPI, DPI), portfolio allocation, document library, and an AI query assistant scoped to fund-level and portfolio-summary data — the same intelligence layer as the GP, narrowed to LP-appropriate permissions.</li>
+      <li><strong>Submit app:</strong> portfolio company submission form with AI-powered document extraction (Claude) - the ingestion layer where raw accounting data enters Clavio and is standardised.</li>
+      <li><strong>Partner/GP app:</strong> revenue trends, balance-sheet signals, anomaly detection, per-company drill-down, and an AI query assistant ("Ask Clavio") that answers natural-language questions against the full standardised dataset - e.g. "why did receivables grow faster than revenue at Tecniq this quarter?"</li>
+      <li><strong>Investor/LP app:</strong> capital account overview, fund performance (IRR, MOIC, TVPI, DPI), portfolio allocation, document library, and an AI query assistant scoped to fund-level and portfolio-summary data - the same intelligence layer as the GP, narrowed to LP-appropriate permissions.</li>
       <li>Full bilingual support (English / French) across all three apps, including AI replies.</li>
       <li>Deployed on Vercel with auto-deploy on every code commit; Supabase (hosted Postgres) for live quarter data.</li>
       <li>All data currently synthetic (hardcoded demo data), no real user authentication.</li>
@@ -416,7 +416,7 @@
       <div class="section-number">3</div>
       <div class="section-title">Technology stack</div>
     </div>
-    <p>The stack is intentionally conventional — any competent developer can read and extend it without onboarding time.</p>
+    <p>The stack is intentionally conventional - any competent developer can read and extend it without onboarding time.</p>
     <div class="stack-grid">
       <div class="stack-item">
         <div class="layer">Frontend</div>
@@ -455,7 +455,7 @@
   <div class="section">
     <div class="section-header">
       <div class="section-number">4</div>
-      <div class="section-title">Security concerns — what to worry about and what not to</div>
+      <div class="section-title">Security concerns - what to worry about and what not to</div>
     </div>
     <p>The questions below are commonly raised when financial data flows through a cloud AI system. They are addressed here so this document can be shared with counterparties (legal, investors, fund administrators).</p>
 
@@ -471,7 +471,7 @@
         <tr>
           <td><strong>Does Anthropic train on our data?</strong></td>
           <td><span class="resolved">✓ Not a concern</span></td>
-          <td>Under the Anthropic <strong>commercial API terms</strong> (which Clavio uses), data sent via the API is explicitly excluded from model training. This is the default — no special opt-out is needed. This is materially different from the consumer chatbot (claude.ai) terms.</td>
+          <td>Under the Anthropic <strong>commercial API terms</strong> (which Clavio uses), data sent via the API is explicitly excluded from model training. This is the default - no special opt-out is needed. This is materially different from the consumer chatbot (claude.ai) terms.</td>
         </tr>
         <tr>
           <td><strong>Does Anthropic retain our data?</strong></td>
@@ -506,7 +506,7 @@
         <tr>
           <td><strong>GDPR / data retention</strong></td>
           <td style="color:#C2410C; font-size:12px; font-weight:600;">⚠ Legal review required</td>
-          <td>The technical infrastructure supports GDPR compliance (data deletion, audit logs, regional storage), but the policies — retention periods, data subject rights, DPA with sub-processors — must be drafted and signed off by a human with legal accountability before real client data enters the system.</td>
+          <td>The technical infrastructure supports GDPR compliance (data deletion, audit logs, regional storage), but the policies - retention periods, data subject rights, DPA with sub-processors - must be drafted and signed off by a human with legal accountability before real client data enters the system.</td>
         </tr>
       </tbody>
     </table>
@@ -520,7 +520,7 @@
     </div>
 
     <div class="legend">
-      <div class="legend-item"><span class="phase-badge badge-me">AI-led</span> Built by Claude — no developer needed</div>
+      <div class="legend-item"><span class="phase-badge badge-me">AI-led</span> Built by Claude - no developer needed</div>
       <div class="legend-item"><span class="phase-badge badge-human">Human-led</span> Requires direct human action/ownership</div>
       <div class="legend-item"><span class="phase-badge badge-shared">Shared</span> AI builds; human reviews and signs off</div>
     </div>
@@ -530,7 +530,7 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-human">Human-led</span>
-          <span class="phase-title">Phase 0 — Accounts &amp; Ownership</span>
+          <span class="phase-title">Phase 0 - Accounts &amp; Ownership</span>
           <span class="phase-subtitle">~1–2 hours, done once</span>
         </div>
         <div class="phase-body">
@@ -539,7 +539,7 @@
             <li>Create a <strong>new</strong> Supabase project under the company account in the <strong>eu-west-2 (London)</strong> region. The current demo project is on ap-northeast-1 (Tokyo) and must not be used for real financial data.</li>
             <li>Set Vercel project to production org; add environment variables (Anthropic API key, Supabase keys).</li>
             <li>Register domain (e.g. app.clavio.io) and point DNS to Vercel.</li>
-            <li>Create Anthropic API org under company account; initiate DPA / ZDR request via Anthropic sales. <strong>Note: ZDR approval has a lead time of days to weeks — start this process before any other phase.</strong></li>
+            <li>Create Anthropic API org under company account; initiate DPA / ZDR request via Anthropic sales. <strong>Note: ZDR approval has a lead time of days to weeks - start this process before any other phase.</strong></li>
             <li>Enable Google OAuth in Supabase Auth (required for GP login); this needs a Google Cloud project registered under the company account.</li>
             <li>Enable GitHub repo security (branch protection, no secrets in code, Dependabot alerts).</li>
           </ul>
@@ -549,19 +549,19 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-me">AI-led</span>
-          <span class="phase-title">Phase 1 — Real Authentication</span>
+          <span class="phase-title">Phase 1 - Real Authentication</span>
           <span class="phase-subtitle">~1–2 days of build time</span>
         </div>
         <div class="phase-body">
           <p>Replace the open demo with real login. Every user must authenticate before seeing any data. There is one login page; after signing in, each user is automatically redirected to the correct app based on their role. A portfolio company user cannot access the GP or LP views, and vice versa.</p>
           <p>Login method is tailored to each user type:</p>
           <ul class="phase-bullets">
-            <li><strong>Submit (portfolio company):</strong> magic link — they log in once a quarter to submit financials; no password needed for infrequent access.</li>
-            <li><strong>Partner/GP (Cyril):</strong> Google OAuth ("Sign in with Google") or email + password — faster and more appropriate for regular use.</li>
-            <li><strong>Investor/LP:</strong> email + password with optional Google OAuth — feels institutional and secure, appropriate for a financial portal used by professional investors.</li>
+            <li><strong>Submit (portfolio company):</strong> magic link - they log in once a quarter to submit financials; no password needed for infrequent access.</li>
+            <li><strong>Partner/GP (Cyril):</strong> Google OAuth ("Sign in with Google") or email + password - faster and more appropriate for regular use.</li>
+            <li><strong>Investor/LP:</strong> email + password with optional Google OAuth - feels institutional and secure, appropriate for a financial portal used by professional investors.</li>
             <li>Session management, protected routes, automatic redirect to login if unauthenticated.</li>
             <li>Role system: user table with role field (portfolio_company / gp / lp); login redirects to correct app automatically.</li>
-            <li>Invite-only signup: only users explicitly invited by the GP can join — no open registration.</li>
+            <li>Invite-only signup: only users explicitly invited by the GP can join - no open registration.</li>
             <li>Password reset, session expiry, and "sign out" on all three apps.</li>
           </ul>
         </div>
@@ -570,11 +570,11 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-me">AI-led</span>
-          <span class="phase-title">Phase 2 — Real Database Schema</span>
+          <span class="phase-title">Phase 2 - Real Database Schema</span>
           <span class="phase-subtitle">~1 day of build time</span>
         </div>
         <div class="phase-body">
-          <p>Design and migrate to a production-grade schema that replaces all synthetic hardcoded data. All entities — funds, companies, users, capital events, documents — become live database records.</p>
+          <p>Design and migrate to a production-grade schema that replaces all synthetic hardcoded data. All entities - funds, companies, users, capital events, documents - become live database records.</p>
           <ul class="phase-bullets">
             <li>Tables: <code>funds</code>, <code>companies</code>, <code>users</code>, <code>memberships</code>, <code>quarters</code>, <code>capital_events</code>, <code>documents</code>, <code>ai_summaries</code>.</li>
             <li>Relationships: a user belongs to a fund in a role (lp / gp / company); a company belongs to a fund.</li>
@@ -587,7 +587,7 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-shared">Shared</span>
-          <span class="phase-title">Phase 3 — Per-User Data Isolation (RLS)</span>
+          <span class="phase-title">Phase 3 - Per-User Data Isolation (RLS)</span>
           <span class="phase-subtitle">~1–2 days build + human sign-off</span>
         </div>
         <div class="phase-body">
@@ -605,7 +605,7 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-me">AI-led</span>
-          <span class="phase-title">Phase 4 — File Storage</span>
+          <span class="phase-title">Phase 4 - File Storage</span>
           <span class="phase-subtitle">~0.5 days of build time</span>
         </div>
         <div class="phase-body">
@@ -615,7 +615,7 @@
             <li>Portfolio company upload: replaces the current demo upload zone with real file persistence.</li>
             <li>GP document library: view all documents submitted by portfolio companies in the fund.</li>
             <li>LP document library: view only fund reports addressed to LPs.</li>
-            <li>Presigned URLs (short-lived) for document download — no permanent public links.</li>
+            <li>Presigned URLs (short-lived) for document download - no permanent public links.</li>
           </ul>
         </div>
       </div>
@@ -623,7 +623,7 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-me">AI-led</span>
-          <span class="phase-title">Phase 5 — AI on Real Data</span>
+          <span class="phase-title">Phase 5 - AI on Real Data</span>
           <span class="phase-subtitle">~1 day of build time</span>
         </div>
         <div class="phase-body">
@@ -633,7 +633,7 @@
             <li>Ask Clavio (LP): queries answered from the user's real capital account and fund data.</li>
             <li>Ask Clavio (GP): queries answered from real portfolio company financials for that fund.</li>
             <li>Document summaries: live documents summarised on demand and cached in <code>ai_summaries</code>.</li>
-            <li>Data minimisation: only the specific figures needed to answer a question are sent to the AI — not the raw document with names and totals attached.</li>
+            <li>Data minimisation: only the specific figures needed to answer a question are sent to the AI - not the raw document with names and totals attached.</li>
           </ul>
         </div>
       </div>
@@ -641,17 +641,17 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-human">Human-led</span>
-          <span class="phase-title">Phase 6 — QuickBooks Integration</span>
+          <span class="phase-title">Phase 6 - QuickBooks Integration</span>
           <span class="phase-subtitle">Human ownership required; AI builds the code</span>
         </div>
         <div class="phase-body">
-          <p>QuickBooks integration is the primary ingestion path — and ingestion quality is what makes everything else work. The AI query features (for both the GP and the LPs) are only as accurate as the underlying data. Clean, structured, automatically-synced accounting data is what turns "Ask Clavio" from a demo into a trusted tool. The chain is: <strong>QuickBooks → Clavio's standardised data model → reporting and AI query for GP and LP</strong>. QuickBooks is the source; Clavio's database is what everyone actually queries.</p>
+          <p>QuickBooks integration is the primary ingestion path - and ingestion quality is what makes everything else work. The AI query features (for both the GP and the LPs) are only as accurate as the underlying data. Clean, structured, automatically-synced accounting data is what turns "Ask Clavio" from a demo into a trusted tool. The chain is: <strong>QuickBooks → Clavio's standardised data model → reporting and AI query for GP and LP</strong>. QuickBooks is the source; Clavio's database is what everyone actually queries.</p>
           <p>The integration code is built by AI, but the Intuit developer application must be owned and registered by a human.</p>
           <ul class="phase-bullets">
             <li><strong>Human action:</strong> register a developer application on the Intuit Developer Portal (developer.intuit.com) under the company account. This creates the OAuth Client ID and Secret.</li>
             <li><strong>Human action:</strong> pass Intuit's app review process (required before accessing real company data in production).</li>
             <li>AI builds: OAuth 2.0 connection flow, token storage, periodic sync, mapping QuickBooks chart-of-accounts to Clavio's standardised financial schema.</li>
-            <li>Result: a "Connect QuickBooks" button in the Submit app; once connected, quarterly figures are pulled automatically into Clavio's data model — no manual upload needed, and both GP and LP AI query features immediately reflect the latest data.</li>
+            <li>Result: a "Connect QuickBooks" button in the Submit app; once connected, quarterly figures are pulled automatically into Clavio's data model - no manual upload needed, and both GP and LP AI query features immediately reflect the latest data.</li>
           </ul>
         </div>
       </div>
@@ -659,7 +659,7 @@
       <div class="phase-card">
         <div class="phase-header">
           <span class="phase-badge badge-me">AI-led</span>
-          <span class="phase-title">Phase 7 — Pilot Polish</span>
+          <span class="phase-title">Phase 7 - Pilot Polish</span>
           <span class="phase-subtitle">~1–2 days of build time</span>
         </div>
         <div class="phase-body">
@@ -669,7 +669,7 @@
             <li>PDF report export: GPs can generate a formatted quarterly report PDF for each portfolio company.</li>
             <li>Admin panel: invite users, assign to funds, set roles, view submission status.</li>
             <li>Error handling and loading states for all user-facing actions.</li>
-            <li>Basic usage logging: which features are used, how often (no personal data — for product feedback only).</li>
+            <li>Basic usage logging: which features are used, how often (no personal data - for product feedback only).</li>
           </ul>
         </div>
       </div>
@@ -683,7 +683,7 @@
       <div class="section-number">6</div>
       <div class="section-title">Developer handoff scope</div>
     </div>
-    <p>When a developer is engaged, their scope should be tightly defined to avoid paying for work that has already been done. The natural handoff point is after Phase 5 — the application is complete, real-auth, and running on real data. The developer's specific scope is:</p>
+    <p>When a developer is engaged, their scope should be tightly defined to avoid paying for work that has already been done. The natural handoff point is after Phase 5 - the application is complete, real-auth, and running on real data. The developer's specific scope is:</p>
 
     <div class="callout">
       <div class="callout-title">Recommended developer scope</div>
@@ -695,7 +695,7 @@
 
     <div class="callout callout-warn">
       <div class="callout-title">What the developer should NOT need to build</div>
-      <p>The entire application front-end, database schema, auth system, AI integration, file storage, and deployment pipeline will already exist and be tested. The developer is hardening and owning, not building. A competent developer should be able to read the codebase in a day — it uses standard, well-documented tools (Next.js, Supabase, Vercel).</p>
+      <p>The entire application front-end, database schema, auth system, AI integration, file storage, and deployment pipeline will already exist and be tested. The developer is hardening and owning, not building. A competent developer should be able to read the codebase in a day - it uses standard, well-documented tools (Next.js, Supabase, Vercel).</p>
     </div>
   </div>
 
@@ -709,15 +709,15 @@
       <h3>PILOT READINESS OVERVIEW</h3>
       <div class="summary-row">
         <span class="label">Current state</span>
-        <span class="value amber">Working demo — synthetic data, no auth</span>
+        <span class="value amber">Working demo - synthetic data, no auth</span>
       </div>
       <div class="summary-row">
         <span class="label">Phases 1–5 output</span>
-        <span class="value green">Live pilot — real auth, real data, AI features</span>
+        <span class="value green">Live pilot - real auth, real data, AI features</span>
       </div>
       <div class="summary-row">
         <span class="label">Phase 6 output</span>
-        <span class="value green">QuickBooks-connected — headline feature live</span>
+        <span class="value green">QuickBooks-connected - headline feature live</span>
       </div>
       <div class="summary-row">
         <span class="label">Phases built by AI</span>
