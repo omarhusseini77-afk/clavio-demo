@@ -536,10 +536,11 @@
         <div class="phase-body">
           <p>All production accounts must be registered under the company's identity (not a personal account), and production secrets must be set and held by a named individual. Claude guides every step; a human clicks and owns the result.</p>
           <ul class="phase-bullets">
-            <li>Create or transfer Supabase organisation to company account; select eu-west-2 (London) region.</li>
+            <li>Create a <strong>new</strong> Supabase project under the company account in the <strong>eu-west-2 (London)</strong> region. The current demo project is on ap-northeast-1 (Tokyo) and must not be used for real financial data.</li>
             <li>Set Vercel project to production org; add environment variables (Anthropic API key, Supabase keys).</li>
             <li>Register domain (e.g. app.clavio.io) and point DNS to Vercel.</li>
-            <li>Create Anthropic API org under company account; initiate DPA / ZDR request via Anthropic sales.</li>
+            <li>Create Anthropic API org under company account; initiate DPA / ZDR request via Anthropic sales. <strong>Note: ZDR approval has a lead time of days to weeks — start this process before any other phase.</strong></li>
+            <li>Enable Google OAuth in Supabase Auth (required for GP login); this needs a Google Cloud project registered under the company account.</li>
             <li>Enable GitHub repo security (branch protection, no secrets in code, Dependabot alerts).</li>
           </ul>
         </div>
@@ -552,13 +553,16 @@
           <span class="phase-subtitle">~1–2 days of build time</span>
         </div>
         <div class="phase-body">
-          <p>Replace the open demo with real login. Every user must authenticate before seeing any data. The three apps become role-gated: portfolio company users, GP partners, and LP investors each log into their own view with their own credentials.</p>
+          <p>Replace the open demo with real login. Every user must authenticate before seeing any data. There is one login page; after signing in, each user is automatically redirected to the correct app based on their role. A portfolio company user cannot access the GP or LP views, and vice versa.</p>
+          <p>Login method is tailored to each user type:</p>
           <ul class="phase-bullets">
-            <li>Supabase Auth integration: magic-link email login (simplest for a pilot), with optional Google OAuth.</li>
+            <li><strong>Submit (portfolio company):</strong> magic link — they log in once a quarter to submit financials; no password needed for infrequent access.</li>
+            <li><strong>Partner/GP (Cyril):</strong> Google OAuth ("Sign in with Google") or email + password — faster and more appropriate for regular use.</li>
+            <li><strong>Investor/LP:</strong> email + password with optional Google OAuth — feels institutional and secure, appropriate for a financial portal used by professional investors.</li>
             <li>Session management, protected routes, automatic redirect to login if unauthenticated.</li>
-            <li>Role system: user table with role field (portfolio_company / gp / lp); login redirects to correct app.</li>
-            <li>Signup invite flow: only invited users can join (prevents open signups on a private pilot).</li>
-            <li>Password reset, session expiry, "sign out" on all three apps.</li>
+            <li>Role system: user table with role field (portfolio_company / gp / lp); login redirects to correct app automatically.</li>
+            <li>Invite-only signup: only users explicitly invited by the GP can join — no open registration.</li>
+            <li>Password reset, session expiry, and "sign out" on all three apps.</li>
           </ul>
         </div>
       </div>
