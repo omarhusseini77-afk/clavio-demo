@@ -40,6 +40,27 @@ export function DesktopLangToggle() {
   )
 }
 
+// Compact currency pill for the mobile top bar.
+export function MobileCurrencyToggle({ currency, setCurrency }: { currency: Currency; setCurrency: (c: Currency) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 7, padding: 2 }}>
+      {CURRENCIES.map(c => (
+        <button
+          key={c}
+          onClick={() => setCurrency(c)}
+          style={{
+            padding: '4px 7px', borderRadius: 5, fontSize: 10, fontWeight: 700, border: 'none', cursor: 'pointer',
+            background: currency === c ? 'var(--accent)' : 'transparent',
+            color: currency === c ? 'white' : 'rgba(255,255,255,0.55)',
+          }}
+        >
+          {c}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // Compact language pill for the mobile top bar.
 export function MobileLangToggle() {
   const { lang, setLang } = useLang()

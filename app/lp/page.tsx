@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import LPView from '@/components/LPView'
-import { DesktopControls, MobileLangToggle } from '@/components/TopControls'
+import { DesktopControls, MobileLangToggle, MobileCurrencyToggle } from '@/components/TopControls'
 import type { Currency } from '@/lib/currency'
 import { useLang } from '@/lib/i18n'
 
@@ -33,8 +33,8 @@ export default function LPPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>{t('page.lp.role')}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MobileCurrencyToggle currency={currency} setCurrency={setCurrency} />
               <MobileLangToggle />
             </div>
           </div>
