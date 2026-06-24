@@ -43,6 +43,11 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
   void quarters // kept for future real-data integration
   const fundDate = loc(FUND.date, lang)
 
+  const changeTab = (t: Tab) => {
+    setTab(t)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: isMobile ? 'calc(72px + env(safe-area-inset-bottom))' : 0 }}>
       {/* Page header — hide on mobile since bottom bar shows context */}
@@ -62,7 +67,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
             return (
               <button
                 key={id}
-                onClick={() => setTab(id)}
+                onClick={() => changeTab(id)}
                 style={{
                   padding: '8px 16px', fontSize: 13, fontWeight: active || isAsk ? 600 : 400,
                   border: 'none', cursor: 'pointer', borderRadius: '8px 8px 0 0',
@@ -87,7 +92,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
         </div>
       )}
 
-      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => setTab('performance')} goToAsk={() => setTab('ask')} />}
+      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => changeTab('performance')} goToAsk={() => changeTab('ask')} />}
       {tab === 'ask' && <AskTab isMobile={isMobile} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
@@ -98,7 +103,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
         <BottomTabBar
           tabs={LP_TABS.map(tab => ({ ...tab, label: t(`lp.mtab.${tab.id}`) }))}
           activeTab={tab}
-          onTabChange={id => setTab(id as Tab)}
+          onTabChange={id => changeTab(id as Tab)}
         />
       )}
     </div>
@@ -336,8 +341,96 @@ function CapitalActivity({ currency }: { currency: Currency }) {
 
 // ── Fund Performance tab ─────────────────────────────────────────────────────
 
+function CompanyModal({ co, onClose }: { co: typeof COMPANIES[0]; onClose: () => void }) {
+  const { t, lang } = useLang()
+  const [notes, setNotes] = useState('')
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(10,14,26,0.55)', zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'white', borderRadius: 16, width: '100%', maxWidth: 560,
+          maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(10,14,26,0.3)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 2 }}>{co.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{loc(co.sector, lang)} · {loc(co.country, lang)}</div>
+          </div>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text-muted)', lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ padding: '20px 24px' }}>
+          {/* Key metrics */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
+            {[
+              { label: 'MOIC', value: `${co.moic}x`, accent: true },
+              { label: t('lp.co.irr'), value: `${co.irr}%`, accent: false },
+              { label: t('lp.co.ownership'), value: `${co.ownership}%`, accent: false },
+              { label: 'EV/EBITDA', value: `${co.evEbitda}x`, accent: false },
+            ].map(m => (
+              <div key={m.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{m.label}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: m.accent ? 'var(--accent)' : 'var(--text)' }}>{m.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Signals */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Signals</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { label: 'Revenue trend', value: '+8.1% YoY', positive: true },
+                { label: 'EBITDA margin', value: `${((co.data[co.data.length-1].ebitda / co.data[co.data.length-1].revenue) * 100).toFixed(1)}%`, positive: true },
+                { label: 'Cash cover', value: '14.2 months', positive: true },
+                { label: 'Status', value: co.status === 'green' ? 'On plan' : 'On watch', positive: co.status === 'green' },
+              ].map(s => (
+                <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#F8F9FC', borderRadius: 8 }}>
+                  <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{s.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: s.positive ? '#10B981' : '#F59E0B' }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI commentary */}
+          <div style={{ marginBottom: 16, background: '#F0F5FF', border: '1px solid #BFDBFE', borderLeft: '3px solid var(--accent)', borderRadius: 10, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>AI Analysis</div>
+            <p style={{ fontSize: 13, lineHeight: 1.7, color: '#1E3A5F', margin: 0 }}>{loc(co.commentary, lang)}</p>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Notes</div>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Add your own notes on this company..."
+              style={{
+                width: '100%', minHeight: 80, padding: '10px 12px', borderRadius: 8,
+                border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit',
+                resize: 'vertical', outline: 'none', color: 'var(--text)', background: 'white',
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PerformanceTab() {
   const { t, lang } = useLang()
+  const [activeCompany, setActiveCompany] = useState<typeof COMPANIES[0] | null>(null)
   return (
     <div>
       {/* Header metrics */}
@@ -412,7 +505,7 @@ function PerformanceTab() {
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>{t('lp.portfolioCompanies')}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12, marginBottom: 40 }}>
         {COMPANIES.map(co => (
-          <div key={co.id} style={styles.card}>
+          <div key={co.id} style={{ ...styles.card, cursor: 'pointer' }} onClick={() => setActiveCompany(co)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{co.name}</div>
@@ -451,10 +544,12 @@ function PerformanceTab() {
                 endLabel={`${co.sym}${(co.trend[co.trend.length - 1] / 1_000_000).toFixed(1)}M`}
                 width={100} height={48}
               />
+              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)', textAlign: 'right' }}>Tap for details →</div>
             </div>
           </div>
         ))}
       </div>
+      {activeCompany && <CompanyModal co={activeCompany} onClose={() => setActiveCompany(null)} />}
     </div>
   )
 }
@@ -519,14 +614,14 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
       {/* Metrics table */}
       <div style={{ ...styles.card, marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', minWidth: 420, borderCollapse: 'collapse', fontSize: 14 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.metric')}</th>
+                <th style={{ textAlign: 'left', padding: '9px 12px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.metric')}</th>
                 {co.data.map(d => (
-                  <th key={d.fy} style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{d.fy}</th>
+                  <th key={d.fy} style={{ textAlign: 'right', padding: '9px 12px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{d.fy}</th>
                 ))}
-                <th className="hide-mobile" style={{ textAlign: 'right', padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.trend')}</th>
+                <th className="hide-mobile" style={{ textAlign: 'right', padding: '9px 12px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.trend')}</th>
               </tr>
             </thead>
             <tbody>
@@ -543,12 +638,12 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
                 { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym} ${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
               ].map((row, i) => (
                 <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
-                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{row.label}</td>
+                  <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{row.label}</td>
                   {row.values.map((v, j) => (
-                    <td key={j} style={{ padding: '12px 16px', textAlign: 'right', fontWeight: j === row.values.length - 1 ? 600 : 400, whiteSpace: 'nowrap' }}>{v}</td>
+                    <td key={j} style={{ padding: '9px 12px', textAlign: 'right', fontWeight: j === row.values.length - 1 ? 600 : 400, whiteSpace: 'nowrap', fontSize: 12 }}>{v}</td>
                   ))}
-                  <td className="hide-mobile" style={{ padding: '8px 16px', textAlign: 'right' }}>
-                    <Sparkline data={row.trend} color={row.color} width={72} height={36} />
+                  <td className="hide-mobile" style={{ padding: '6px 12px', textAlign: 'right' }}>
+                    <Sparkline data={row.trend} color={row.color} width={64} height={32} />
                   </td>
                 </tr>
               ))}
