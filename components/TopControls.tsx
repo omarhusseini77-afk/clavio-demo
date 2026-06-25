@@ -4,7 +4,7 @@ import { useLang } from '@/lib/i18n'
 import type { Lang } from '@/lib/loc'
 
 const LANGS: Lang[] = ['en', 'fr']
-const CURRENCIES: Currency[] = ['GBP', 'USD', 'EUR']
+const CURRENCIES: Currency[] = ['GBP', 'EUR', 'USD']
 
 // Desktop header cluster: language + currency switchers.
 export function DesktopControls({ currency, setCurrency }: { currency: Currency; setCurrency: (c: Currency) => void }) {
