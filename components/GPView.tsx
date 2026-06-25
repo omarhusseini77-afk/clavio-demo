@@ -368,8 +368,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
         {/* Objective Signals */}
         <div style={styles.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <h3 style={styles.sectionTitle}>{t('gp.signals')}</h3>
+          <div style={{ marginBottom: 14 }}>
+            <h3 style={{ ...styles.sectionTitle, marginBottom: 2 }}>{t('gp.signals')}</h3>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.flaggedMonth')}</span>
           </div>
           {SIGNALS.map((s, i) => (
