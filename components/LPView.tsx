@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
@@ -694,12 +694,12 @@ type SettingsView = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'ter
 function SettingsBackBar({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-      <button onClick={onBack} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>
+      <button onClick={onBack} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 15, fontWeight: 600 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Settings
       </button>
       <span style={{ color: 'var(--border)', fontSize: 16 }}>·</span>
-      <span style={{ fontSize: 15, fontWeight: 700 }}>{title}</span>
+      <span style={{ fontSize: 16, fontWeight: 700 }}>{title}</span>
     </div>
   )
 }
@@ -707,6 +707,8 @@ function SettingsBackBar({ title, onBack }: { title: string; onBack: () => void 
 function SettingsTab() {
   const { lang, setLang } = useLang()
   const [view, setView] = useState<SettingsView>('main')
+
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }, [view])
   const [notifs, setNotifs] = useState({ calls: true, distributions: true, reports: true })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwSaved, setPwSaved] = useState(false)
@@ -876,10 +878,10 @@ function SettingsTab() {
 
   // Main settings view
   const row = (label: string, hint: string | null, onPress: () => void, danger = false) => (
-    <div key={label} onClick={onPress} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: '1px solid #F3F4F6', cursor: 'pointer' }}>
+    <div key={label} onClick={onPress} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderTop: '1px solid #F3F4F6', cursor: 'pointer' }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: danger ? '#EF4444' : 'var(--text)' }}>{label}</div>
-        {hint && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{hint}</div>}
+        <div style={{ fontSize: 15, fontWeight: 500, color: danger ? '#EF4444' : 'var(--text)' }}>{label}</div>
+        {hint && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{hint}</div>}
       </div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={danger ? '#EF4444' : 'var(--text-muted)'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
@@ -889,7 +891,7 @@ function SettingsTab() {
     <div>
       {/* Profile */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Profile</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Profile</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>LP</div>
           <div>
@@ -902,25 +904,25 @@ function SettingsTab() {
           { label: 'Investor since', value: 'June 2022' },
           { label: 'Commitment', value: '£5.00m' },
         ].map(r => (
-          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #F3F4F6' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{r.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>{r.value}</span>
+          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '11px 0', borderTop: '1px solid #F3F4F6' }}>
+            <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{r.label}</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>{r.value}</span>
           </div>
         ))}
       </div>
 
       {/* Notifications */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Notifications</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Notifications</div>
         {([
           { key: 'calls' as const, label: 'Capital calls', hint: 'Email me when a new call is issued' },
           { key: 'distributions' as const, label: 'Distributions', hint: 'Email me when a distribution is made' },
           { key: 'reports' as const, label: 'Quarterly reports', hint: 'Email me when a new report is available' },
         ]).map((item, i) => (
-          <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
+          <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{item.label}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{item.hint}</div>
+              <div style={{ fontSize: 15, fontWeight: 500 }}>{item.label}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{item.hint}</div>
             </div>
             <div
               onClick={() => setNotifs(n => ({ ...n, [item.key]: !n[item.key] }))}
@@ -934,7 +936,7 @@ function SettingsTab() {
 
       {/* Language */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Language</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Language</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['en', 'fr'] as const).map(l => (
             <button key={l} onClick={() => setLang(l)} style={{ flex: 1, padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: lang === l ? '1.5px solid var(--accent)' : '1px solid var(--border)', background: lang === l ? '#EFF6FF' : 'white', color: lang === l ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer' }}>
@@ -946,14 +948,14 @@ function SettingsTab() {
 
       {/* Security */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Security</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Security</div>
         {row('Change password', 'Update your login password', () => setView('change-password'))}
         {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => setView('two-factor'))}
       </div>
 
       {/* Data & Privacy */}
       <div style={{ ...styles.card, marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Data &amp; Privacy</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Data &amp; Privacy</div>
         {row('Privacy policy', null, () => setView('privacy'))}
         {row('Terms of service', null, () => setView('terms'))}
         {row('Download my data', 'Export a copy of your account data', () => setView('download'))}
