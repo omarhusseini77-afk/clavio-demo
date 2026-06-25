@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
@@ -86,6 +86,33 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [investigateAnomaly, setInvestigateAnomaly] = useState<typeof ANOMALIES[0] | null>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { section, highlight } = (e as CustomEvent).detail as { section?: string; highlight?: string }
+      if (section) {
+        setTimeout(() => {
+          const el = document.getElementById(section)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            el.classList.add('clavio-highlight')
+            setTimeout(() => el.classList.remove('clavio-highlight'), 2200)
+          }
+          if (highlight) {
+            const hEl = document.getElementById(highlight)
+            if (hEl) {
+              setTimeout(() => {
+                hEl.classList.add('clavio-highlight')
+                setTimeout(() => hEl.classList.remove('clavio-highlight'), 2200)
+              }, 400)
+            }
+          }
+        }, 120)
+      }
+    }
+    window.addEventListener('clavio:gp-navigate', handler)
+    return () => window.removeEventListener('clavio:gp-navigate', handler)
+  }, [])
 
   const latest = quarters[quarters.length - 1]
   const prev = quarters[quarters.length - 2]
@@ -331,7 +358,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       </div>
 
       {/* Anomaly Detection */}
-      <div style={{ ...styles.card, marginBottom: 16 }}>
+      <div id="gp-anomalies" style={{ ...styles.card, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
           <h3 style={styles.sectionTitle}>{t('gp.anomalies')}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -339,7 +366,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           </div>
         </div>
         {ANOMALIES.map((a, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
+          <div key={i} id={`gp-anomaly-${a.company.toLowerCase().replace(/\s+/g, '-')}`} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0,
               background: a.level === 'red' ? '#FEF2F2' : '#FEF3C7',

@@ -48,6 +48,26 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { tab: targetTab, section } = (e as CustomEvent).detail as { tab: Tab; section?: string }
+      setTab(targetTab)
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+      if (section) {
+        setTimeout(() => {
+          const el = document.getElementById(section)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            el.classList.add('clavio-highlight')
+            setTimeout(() => el.classList.remove('clavio-highlight'), 2200)
+          }
+        }, 120)
+      }
+    }
+    window.addEventListener('clavio:lp-navigate', handler)
+    return () => window.removeEventListener('clavio:lp-navigate', handler)
+  }, [])
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: isMobile ? 'calc(72px + env(safe-area-inset-bottom))' : 0 }}>
       {/* Page header — hide on mobile since bottom bar shows context */}
@@ -173,7 +193,7 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       </button>
 
       {/* Capital called progress */}
-      <div style={{ ...styles.card, marginBottom: 10 }}>
+      <div id="lp-capital-called" style={{ ...styles.card, marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{t('lp.capitalCalled')}</span>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.ofCommitment', { pct: calledPct.toFixed(0) })}</span>
@@ -230,7 +250,7 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       </button>
 
       {/* Documents — compact list */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Documents</div>
+      <div id="lp-documents" style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Documents</div>
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
         {DOCUMENTS.slice(0, 5).map((doc, i) => (
           <div key={doc.title.en} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < 4 ? '1px solid #F3F4F6' : 'none' }}>
@@ -321,7 +341,7 @@ function CapitalActivity({ currency }: { currency: Currency }) {
   // Most recent first
   const events = [...CAPITAL_EVENTS].reverse()
   return (
-    <div style={{ ...styles.card, marginBottom: 10 }}>
+    <div id="lp-activity" style={{ ...styles.card, marginBottom: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, flexWrap: 'wrap', gap: 6 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.activity')}</span>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>

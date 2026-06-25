@@ -51,10 +51,12 @@ export default function NotificationsPanel({
   notifications,
   onClose,
   onMarkRead,
+  onNavigate,
 }: {
   notifications: AppNotification[]
   onClose: () => void
   onMarkRead: (id: string) => void
+  onNavigate?: (id: string) => void
 }) {
   const unread = notifications.filter(n => !n.read).length
 
@@ -99,7 +101,7 @@ export default function NotificationsPanel({
           ) : notifications.map((n, i) => (
             <div
               key={n.id}
-              onClick={() => onMarkRead(n.id)}
+              onClick={() => { onMarkRead(n.id); if (onNavigate) { onClose(); onNavigate(n.id) } }}
               style={{
                 display: 'flex', gap: 12, padding: '13px 18px',
                 borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',

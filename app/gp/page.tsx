@@ -98,6 +98,21 @@ export default function GPPage() {
   const markRead = (id: string) =>
     setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
 
+  const handleNavigate = (id: string) => {
+    const routes: Record<string, { gpSection: GpSection; section?: string; highlight?: string }> = {
+      'gp-1': { gpSection: 'data' },
+      'gp-2': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-halcyon-textiles' },
+      'gp-3': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-atelier-saint-pierre' },
+    }
+    const route = routes[id]
+    if (!route) return
+    setGpSection(route.gpSection)
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    if (route.section) {
+      window.dispatchEvent(new CustomEvent('clavio:gp-navigate', { detail: { section: route.section, highlight: route.highlight } }))
+    }
+  }
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
@@ -199,6 +214,7 @@ export default function GPPage() {
           notifications={notifications}
           onClose={() => setShowNotifs(false)}
           onMarkRead={markRead}
+          onNavigate={handleNavigate}
         />
       )}
     </div>

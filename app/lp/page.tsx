@@ -45,6 +45,16 @@ export default function LPPage() {
   const markRead = (id: string) =>
     setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
 
+  const handleNavigate = (id: string) => {
+    const routes: Record<string, { tab: string; section?: string }> = {
+      'lp-1': { tab: 'account', section: 'lp-capital-called' },
+      'lp-2': { tab: 'account', section: 'lp-documents' },
+      'lp-3': { tab: 'account', section: 'lp-activity' },
+    }
+    const route = routes[id]
+    if (route) window.dispatchEvent(new CustomEvent('clavio:lp-navigate', { detail: route }))
+  }
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
@@ -122,6 +132,7 @@ export default function LPPage() {
           notifications={notifications}
           onClose={() => setShowNotifs(false)}
           onMarkRead={markRead}
+          onNavigate={handleNavigate}
         />
       )}
     </div>
