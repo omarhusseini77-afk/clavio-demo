@@ -336,7 +336,6 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           <h3 style={styles.sectionTitle}>{t('gp.anomalies')}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
-            <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--accent)', color: 'white', padding: '2px 7px', borderRadius: 20 }}>V2</span>
           </div>
         </div>
         {ANOMALIES.map((a, i) => (

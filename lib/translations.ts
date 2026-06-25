@@ -35,7 +35,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'ask.lp.q4': 'What is my remaining unfunded commitment?',
     'ask.gp.sub': 'QuickBooks · {n} quarters · latest {period}',
     'gp.mtab.settings': 'Settings',
-    'ask.gp.introTitle': 'Ask Clavio about this company',
+    'ask.gp.introTitle': 'Ask Clavio about your portfolio',
     'ask.gp.introBody': 'Clavio reads the standardised quarterly accounts directly. Ask in plain English and it pulls the exact figures — no digging through the table.',
     'ask.gp.placeholder': 'Ask about turnover, margins, PBT, cash…',
     'ask.gp.q1': 'How has turnover trended over the last {n} quarters?',

@@ -709,7 +709,7 @@ function SettingsTab() {
   const [view, setView] = useState<SettingsView>('main')
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }, [view])
-  const [notifs, setNotifs] = useState({ calls: true, distributions: true, reports: true })
+  const [notifs, setNotifs] = useState({ calls: true, distributions: true, reports: true, documents: true, events: false })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwSaved, setPwSaved] = useState(false)
   const [signoutConfirm, setSignoutConfirm] = useState(false)
@@ -918,6 +918,8 @@ function SettingsTab() {
           { key: 'calls' as const, label: 'Capital calls', hint: 'Email me when a new call is issued' },
           { key: 'distributions' as const, label: 'Distributions', hint: 'Email me when a distribution is made' },
           { key: 'reports' as const, label: 'Quarterly reports', hint: 'Email me when a new report is available' },
+          { key: 'documents' as const, label: 'New documents', hint: 'Notify me when a document is added to the portal' },
+          { key: 'events' as const, label: 'Portfolio events', hint: 'Notify me of exits, add-ons, or material write-downs' },
         ]).map((item, i) => (
           <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
             <div>

@@ -28,7 +28,7 @@ const card: React.CSSProperties = {
 export default function GPSettingsTab() {
   const { lang, setLang } = useLang()
   const [view, setView] = useState<View>('main')
-  const [notifs, setNotifs] = useState({ submissions: true, anomalies: true, reports: true })
+  const [notifs, setNotifs] = useState({ submissions: true, anomalies: true, reports: true, late: true, watchlist: true })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwSaved, setPwSaved] = useState(false)
   const [twoFAEnabled, setTwoFAEnabled] = useState(false)
@@ -237,6 +237,8 @@ export default function GPSettingsTab() {
         {([
           { key: 'submissions' as const, label: 'New submissions', hint: 'Alert when a portfolio co. submits financials' },
           { key: 'anomalies' as const, label: 'Anomaly alerts', hint: 'Alert when a new anomaly is detected' },
+          { key: 'late' as const, label: 'Late submissions', hint: 'Alert when a company misses its submission deadline' },
+          { key: 'watchlist' as const, label: 'Watch-list flags', hint: 'Alert when a company is flagged by the anomaly engine' },
           { key: 'reports' as const, label: 'Quarterly summaries', hint: 'Email me the quarterly GP digest' },
         ]).map((item, i) => (
           <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
