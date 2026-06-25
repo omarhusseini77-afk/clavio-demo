@@ -3,23 +3,23 @@ import { useRef, useState } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import { useLang } from '@/lib/i18n'
 
-const FIELDS: { key: keyof Omit<Quarter, 'id' | 'period' | 'created_at'>; section: 'pl' | 'bs' }[] = [
-  { key: 'turnover', section: 'pl' },
-  { key: 'cos', section: 'pl' },
-  { key: 'gross', section: 'pl' },
-  { key: 'admin', section: 'pl' },
-  { key: 'op', section: 'pl' },
-  { key: 'interest', section: 'pl' },
-  { key: 'pbt', section: 'pl' },
-  { key: 'tax', section: 'pl' },
-  { key: 'retained', section: 'pl' },
-  { key: 'fixed', section: 'bs' },
-  { key: 'stock', section: 'bs' },
-  { key: 'debtors', section: 'bs' },
-  { key: 'cash', section: 'bs' },
-  { key: 'creditors', section: 'bs' },
-  { key: 'net_assets', section: 'bs' },
-  { key: 'funds', section: 'bs' },
+const FIELDS: { key: keyof Omit<Quarter, 'id' | 'period' | 'created_at'>; section: 'pl' | 'bs'; group?: string }[] = [
+  { key: 'turnover', section: 'pl', group: 'Revenue' },
+  { key: 'cos', section: 'pl', group: 'Costs' },
+  { key: 'gross', section: 'pl', group: 'Costs' },
+  { key: 'admin', section: 'pl', group: 'Costs' },
+  { key: 'op', section: 'pl', group: 'Profit' },
+  { key: 'interest', section: 'pl', group: 'Profit' },
+  { key: 'pbt', section: 'pl', group: 'Profit' },
+  { key: 'tax', section: 'pl', group: 'Profit' },
+  { key: 'retained', section: 'pl', group: 'Profit' },
+  { key: 'fixed', section: 'bs', group: 'Assets' },
+  { key: 'stock', section: 'bs', group: 'Assets' },
+  { key: 'debtors', section: 'bs', group: 'Assets' },
+  { key: 'cash', section: 'bs', group: 'Assets' },
+  { key: 'creditors', section: 'bs', group: 'Liabilities' },
+  { key: 'net_assets', section: 'bs', group: 'Liabilities' },
+  { key: 'funds', section: 'bs', group: 'Liabilities' },
 ]
 
 const EMPTY = Object.fromEntries(FIELDS.map(f => [f.key, ''])) as Record<string, string>
@@ -126,7 +126,11 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
             transition: 'all 0.15s',
           }}
         >
-          <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </div>
           <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>
             {t('submit.drop')} <span style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{t('submit.browse')}</span>
           </div>
@@ -158,16 +162,29 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
       </div>
 
       {status === 'success' && (
-        <div style={{ ...styles.alert, background: '#ECFDF5', borderColor: '#10B981', color: '#065F46' }}>
-          {t('submit.success')}
+        <div style={{ ...styles.card, textAlign: 'center', padding: '36px 24px', marginBottom: 16 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Submission received</div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
+            Your financials have been submitted to Clavio. The GP dashboard has been updated and your fund manager has been notified.
+          </div>
+          <button onClick={() => setStatus('idle')} style={{ ...styles.submitBtn, marginBottom: 0, background: 'var(--navy)', padding: '10px 28px', width: 'auto', display: 'inline-block' }}>
+            Submit another quarter
+          </button>
         </div>
       )}
+
       {status === 'error' && (
         <div style={{ ...styles.alert, background: '#FEF2F2', borderColor: '#EF4444', color: '#991B1B' }}>
           {t('submit.error')}
         </div>
       )}
 
+      {status !== 'success' && (
       <form onSubmit={handleSubmit}>
         <div style={styles.card}>
           <label style={styles.label}>{t('submit.period')}</label>
@@ -180,29 +197,40 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
           />
         </div>
 
-        {sections.map(section => (
-          <div key={section} style={styles.card}>
-            <h3 style={styles.sectionTitle}>{t(`submit.${section}`)}</h3>
-            <div style={styles.grid}>
-              {FIELDS.filter(f => f.section === section).map(f => (
-                <div key={f.key}>
-                  <label style={styles.label}>{t(`field.${f.key}`)}</label>
-                  <div style={styles.inputWrap}>
-                    <span style={styles.prefix}>£</span>
-                    <input
-                      style={{ ...styles.input, paddingLeft: 28 }}
-                      type="number"
-                      value={values[f.key]}
-                      onChange={e => setValues(v => ({ ...v, [f.key]: e.target.value }))}
-                      placeholder="0"
-                      required
-                    />
+        {sections.map(section => {
+          const sectionFields = FIELDS.filter(f => f.section === section)
+          const groups = Array.from(new Set(sectionFields.map(f => f.group).filter(Boolean))) as string[]
+          return (
+            <div key={section} style={styles.card}>
+              <h3 style={styles.sectionTitle}>{t(`submit.${section}`)}</h3>
+              {groups.map((group, gi) => (
+                <div key={group}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, marginTop: gi > 0 ? 20 : 0, paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>
+                    {group}
+                  </div>
+                  <div style={styles.grid}>
+                    {sectionFields.filter(f => f.group === group).map(f => (
+                      <div key={f.key}>
+                        <label style={styles.label}>{t(`field.${f.key}`)}</label>
+                        <div style={styles.inputWrap}>
+                          <span style={styles.prefix}>£</span>
+                          <input
+                            style={{ ...styles.input, paddingLeft: 28 }}
+                            type="number"
+                            value={values[f.key]}
+                            onChange={e => setValues(v => ({ ...v, [f.key]: e.target.value }))}
+                            placeholder="0"
+                            required
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         <button
           type="submit"
@@ -212,6 +240,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
           {status === 'submitting' ? t('submit.submitting') : t('submit.submit')}
         </button>
       </form>
+      )}
     </div>
   )
 }

@@ -206,9 +206,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     // ── Submit view ──
     'submit.hero.kicker': 'Portfolio Co. · Quarterly submission',
     'submit.hero.title': 'Submit Quarterly Financials',
-    'submit.hero.body': "Upload your management accounts and Clavio's AI fills the form for you — or enter figures manually. All values stored in GBP.",
+    'submit.hero.body': "Upload your management accounts and Clavio's AI fills the form for you — or enter figures manually. All values in GBP.",
     'submit.extract': 'Extract with AI',
-    'submit.extractBody': 'Attach your management accounts (PDF or Excel) and Claude will read and fill the form automatically.',
+    'submit.extractBody': "Attach your management accounts (PDF or Excel) and Clavio's AI will read and fill the form automatically.",
     'submit.drop': 'Drop a file here or',
     'submit.browse': 'browse',
     'submit.fileTypes': 'PDF, XLSX, XLS, or CSV',
