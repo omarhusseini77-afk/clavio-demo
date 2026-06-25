@@ -32,6 +32,8 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
   const [extracting, setExtracting] = useState(false)
   const [extractError, setExtractError] = useState('')
   const [extractSuccess, setExtractSuccess] = useState(false)
+  const [currency, setCurrency] = useState<'GBP' | 'EUR' | 'USD'>('GBP')
+  const sym = currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : '$'
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -187,6 +189,25 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
       {status !== 'success' && (
       <form onSubmit={handleSubmit}>
         <div style={styles.card}>
+          <label style={styles.label}>Currency</label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 0 }}>
+            {(['GBP', 'EUR', 'USD'] as const).map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCurrency(c)}
+                style={{
+                  padding: '7px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '1px solid',
+                  background: currency === c ? 'var(--navy)' : 'transparent',
+                  color: currency === c ? 'white' : 'var(--text-muted)',
+                  borderColor: currency === c ? 'var(--navy)' : 'var(--border)',
+                  transition: 'all 0.15s',
+                }}
+              >{c}</button>
+            ))}
+          </div>
+        </div>
+        <div style={styles.card}>
           <label style={styles.label}>{t('submit.period')}</label>
           <input
             style={styles.input}
@@ -213,7 +234,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
                       <div key={f.key}>
                         <label style={styles.label}>{t(`field.${f.key}`)}</label>
                         <div style={styles.inputWrap}>
-                          <span style={styles.prefix}>£</span>
+                          <span style={styles.prefix}>{sym}</span>
                           <input
                             style={{ ...styles.input, paddingLeft: 28 }}
                             type="number"
