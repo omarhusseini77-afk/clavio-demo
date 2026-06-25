@@ -11,7 +11,7 @@ import BottomTabBar from './BottomTabBar'
 
 const LP_TABS = [
   {
-    id: 'account', label: 'Account',
+    id: 'account', label: 'Overview',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
   },
   {
@@ -87,8 +87,40 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Mobile section header */}
       {isMobile && (
         <div style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
+          {/* Notification banner */}
+          {tab === 'account' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+              background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10,
+              marginBottom: 14, cursor: 'pointer',
+            }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1D4ED8' }}>New notice · Capital Call 7</span>
+                <span style={{ fontSize: 12, color: '#3B82F6', marginLeft: 8 }}>02 Apr 2026</span>
+              </div>
+              <span style={{ fontSize: 12, color: '#93C5FD' }}>→</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
+            </div>
+            <button
+              style={{
+                width: 34, height: 34, borderRadius: '50%', border: '1.5px solid var(--border)',
+                background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', flexShrink: 0,
+              }}
+              title="Account settings"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
