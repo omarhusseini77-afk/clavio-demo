@@ -346,8 +346,8 @@ function CapitalActivity({ currency }: { currency: Currency }) {
   const events = [...CAPITAL_EVENTS].reverse()
   return (
     <div id="lp-activity" style={{ ...styles.card, marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, flexWrap: 'wrap', gap: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.activity')}</span>
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>{t('lp.activity')}</span>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
           {t('lp.activitySummary', { called: fmtM(FUND.called, currency), distributed: fmtM(FUND.distributed, currency) })}
         </span>
@@ -524,8 +524,8 @@ function PerformanceTab() {
 
       {/* Value creation bridge */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.bridge')}</div>
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{t('lp.bridge')}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.bridgeSub')}</div>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
