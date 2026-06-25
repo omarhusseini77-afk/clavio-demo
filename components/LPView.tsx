@@ -27,14 +27,14 @@ const LP_TABS = [
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
   },
   {
-    id: 'documents', label: 'Docs',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
+    id: 'settings', label: 'Settings',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   },
 ]
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'documents'
+type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'settings'
 
 export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
   const { t, lang } = useLang()
@@ -61,7 +61,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Desktop tabs */}
       {!isMobile && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
-          {(['account', 'ask', 'performance', 'portfolio', 'documents'] as Tab[]).map(id => {
+          {(['account', 'ask', 'performance', 'portfolio', 'settings'] as Tab[]).map(id => {
             const isAsk = id === 'ask'
             const active = tab === id
             return (
@@ -87,40 +87,8 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Mobile section header */}
       {isMobile && (
         <div style={{ marginBottom: 20 }}>
-          {/* Notification banner */}
-          {tab === 'account' && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-              background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10,
-              marginBottom: 14, cursor: 'pointer',
-            }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1D4ED8' }}>New notice · Capital Call 7</span>
-                <span style={{ fontSize: 12, color: '#3B82F6', marginLeft: 8 }}>02 Apr 2026</span>
-              </div>
-              <span style={{ fontSize: 12, color: '#93C5FD' }}>→</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
-            </div>
-            <button
-              style={{
-                width: 34, height: 34, borderRadius: '50%', border: '1.5px solid var(--border)',
-                background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', flexShrink: 0,
-              }}
-              title="Account settings"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-              </svg>
-            </button>
-          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
         </div>
       )}
 
@@ -128,7 +96,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {tab === 'ask' && <AskTab isMobile={isMobile} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
-      {tab === 'documents' && <DocumentsTab />}
+      {tab === 'settings' && <SettingsTab />}
 
       {/* Mobile bottom tab bar */}
       {isMobile && (
@@ -145,7 +113,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 // ── My Account tab ───────────────────────────────────────────────────────────
 
 function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const calledPct = (FUND.called / FUND.commitment) * 100
   const navCount = useCountUp(FUND.nav)
   const tvpiCount = useCountUp(FUND.tvpi)
@@ -256,10 +224,34 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
 
       <button
         onClick={goToPerformance}
-        style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}
+        style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: 24 }}
       >
         {t('lp.viewPerformance')}
       </button>
+
+      {/* Documents — compact list */}
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Documents</div>
+      <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
+        {DOCUMENTS.slice(0, 5).map((doc, i) => (
+          <div key={doc.title.en} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < 4 ? '1px solid #F3F4F6' : 'none' }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+              background: doc.typeKey === 'Notice' ? '#FEF3C7' : '#F3F4F6',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+            }}>
+              {doc.typeKey === 'Notice' ? '!' : '≡'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{loc(doc.title, lang)}</span>
+                {doc.isNew && <span style={{ fontSize: 9, fontWeight: 700, background: '#ECFDF5', color: '#065F46', padding: '2px 6px', borderRadius: 20 }}>NEW</span>}
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{loc(doc.type, lang)} · {doc.date}</div>
+            </div>
+            <span style={{ fontSize: 18, color: '#D1D5DB', cursor: 'pointer' }}>↓</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -694,6 +686,83 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 }
 
 // ── Documents tab ────────────────────────────────────────────────────────────
+
+// ── Settings tab ─────────────────────────────────────────────────────────────
+
+function SettingsTab() {
+  const { t } = useLang()
+  return (
+    <div>
+      {/* Profile */}
+      <div style={{ ...styles.card, marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Profile</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>C</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>Cyril Aboujaoude</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>cyril@tiopoo.com</div>
+          </div>
+        </div>
+        {[
+          { label: 'Fund', value: 'Fund II' },
+          { label: 'Investor since', value: 'June 2022' },
+          { label: 'Commitment', value: '£5.00m' },
+        ].map(row => (
+          <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #F3F4F6' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{row.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{row.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Notifications */}
+      <div style={{ ...styles.card, marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Notifications</div>
+        {[
+          { label: 'Capital calls', hint: 'Email me when a new call is issued' },
+          { label: 'Distributions', hint: 'Email me when a distribution is made' },
+          { label: 'Quarterly reports', hint: 'Email me when a new report is available' },
+        ].map((item, i, arr) => (
+          <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{item.label}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{item.hint}</div>
+            </div>
+            <div style={{ width: 40, height: 22, borderRadius: 11, background: 'var(--accent)', position: 'relative', flexShrink: 0, cursor: 'pointer' }}>
+              <div style={{ position: 'absolute', right: 3, top: 3, width: 16, height: 16, borderRadius: '50%', background: 'white' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Security */}
+      <div style={{ ...styles.card, marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Security</div>
+        {['Change password', 'Two-factor authentication'].map((label, i) => (
+          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6', cursor: 'pointer' }}>
+            <span style={{ fontSize: 13 }}>{label}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>›</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Data & Privacy */}
+      <div style={{ ...styles.card, marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Data &amp; Privacy</div>
+        {['Privacy policy', 'Terms of service', 'Download my data'].map((label, i) => (
+          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6', cursor: 'pointer' }}>
+            <span style={{ fontSize: 13 }}>{label}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>›</span>
+          </div>
+        ))}
+      </div>
+
+      <button style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid #E5E7EB', background: 'white', color: '#EF4444', cursor: 'pointer', marginBottom: 40 }}>
+        Sign out
+      </button>
+    </div>
+  )
+}
 
 function DocumentsTab() {
   const { t, lang } = useLang()
