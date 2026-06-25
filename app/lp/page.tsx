@@ -75,7 +75,7 @@ export default function LPPage() {
             background: 'var(--navy)',
             flexShrink: 0,
           }}>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: 22, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -109,7 +109,7 @@ export default function LPPage() {
             flexShrink: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ color: 'var(--navy)', fontWeight: 800, fontSize: 18, letterSpacing: '1px' }}>
+              <span style={{ color: 'var(--navy)', fontWeight: 800, fontSize: 24, letterSpacing: '1px' }}>
                 CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
               </span>
               <span style={{ width: 1, height: 18, background: 'var(--border)', display: 'inline-block' }} />
