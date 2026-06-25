@@ -9,18 +9,42 @@ export type AppNotification = {
   read: boolean
 }
 
+const ICON_DEFS: Record<AppNotification['type'], { bg: string; stroke: string; path: React.ReactNode }> = {
+  call: {
+    bg: '#FEF9EC', stroke: '#D97706',
+    path: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></>,
+  },
+  distribution: {
+    bg: '#ECFDF5', stroke: '#059669',
+    path: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+  },
+  document: {
+    bg: '#EFF6FF', stroke: '#2563EB',
+    path: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
+  },
+  anomaly: {
+    bg: '#FEF2F2', stroke: '#DC2626',
+    path: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
+  },
+  submission: {
+    bg: '#ECFDF5', stroke: '#059669',
+    path: <><polyline points="20 6 9 17 4 12"/></>,
+  },
+  watchlist: {
+    bg: '#FEF2F2', stroke: '#DC2626',
+    path: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+  },
+}
+
 const iconFor = (type: AppNotification['type']) => {
-  const base = { width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
-  const icons: Record<AppNotification['type'], { bg: string; el: React.ReactNode }> = {
-    call: { bg: '#FEF3C7', el: <span style={{ fontSize: 16 }}>📋</span> },
-    distribution: { bg: '#D1FAE5', el: <span style={{ fontSize: 16 }}>💸</span> },
-    document: { bg: '#EFF6FF', el: <span style={{ fontSize: 16 }}>📄</span> },
-    anomaly: { bg: '#FEE2E2', el: <span style={{ fontSize: 16 }}>⚠️</span> },
-    submission: { bg: '#D1FAE5', el: <span style={{ fontSize: 16 }}>✅</span> },
-    watchlist: { bg: '#FEE2E2', el: <span style={{ fontSize: 16 }}>🔴</span> },
-  }
-  const { bg, el } = icons[type]
-  return <div style={{ ...base, background: bg }}>{el}</div>
+  const { bg, stroke, path } = ICON_DEFS[type]
+  return (
+    <div style={{ width: 36, height: 36, borderRadius: '50%', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {path}
+      </svg>
+    </div>
+  )
 }
 
 export default function NotificationsPanel({
