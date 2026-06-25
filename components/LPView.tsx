@@ -690,17 +690,17 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 // ── Settings tab ─────────────────────────────────────────────────────────────
 
 function SettingsTab() {
-  const { t } = useLang()
+  const { t, lang, setLang } = useLang()
   return (
     <div>
       {/* Profile */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Profile</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>C</div>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>LP</div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>Cyril Aboujaoude</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>cyril@tiopoo.com</div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>Investor</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>investor@example.com</div>
           </div>
         </div>
         {[
@@ -733,6 +733,26 @@ function SettingsTab() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Language */}
+      <div style={{ ...styles.card, marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Language</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['en', 'fr'] as const).map(l => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: lang === l ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                background: lang === l ? '#EFF6FF' : 'white',
+                color: lang === l ? 'var(--accent)' : 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+            >{l === 'en' ? 'English' : 'Français'}</button>
+          ))}
+        </div>
       </div>
 
       {/* Security */}

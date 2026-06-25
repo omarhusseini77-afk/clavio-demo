@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import LPView from '@/components/LPView'
-import { DesktopControls, MobileLangToggle, MobileCurrencyToggle } from '@/components/TopControls'
+import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import type { Currency } from '@/lib/currency'
 import { useLang } from '@/lib/i18n'
 
@@ -33,21 +33,20 @@ export default function LPPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <MobileCurrencyToggle currency={currency} setCurrency={setCurrency} />
-              <MobileLangToggle />
               {/* Bell notification icon */}
-              <div style={{ position: 'relative', cursor: 'pointer' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                   <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
                 <div style={{
-                  position: 'absolute', top: -4, right: -4,
-                  width: 16, height: 16, borderRadius: '50%',
+                  position: 'absolute', top: -3, right: -5,
+                  width: 15, height: 15, borderRadius: '50%',
                   background: '#EF4444', border: '1.5px solid var(--navy)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 9, fontWeight: 700, color: 'white',
+                  fontSize: 9, fontWeight: 700, color: 'white', lineHeight: 1,
                 }}>1</div>
               </div>
             </div>
