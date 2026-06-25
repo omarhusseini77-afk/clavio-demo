@@ -206,8 +206,8 @@ export default function GPSettingsTab() {
           { key: 'watchlist' as const, label: t('settings.gp.notif.watchlist'), hint: t('settings.gp.notif.watchlistHint') },
           { key: 'reports' as const, label: t('settings.gp.notif.reports'), hint: t('settings.gp.notif.reportsHint') },
         ]).map((item, i) => (
-          <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
-            <div>
+          <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 500 }}>{item.label}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{item.hint}</div>
             </div>
