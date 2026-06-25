@@ -34,7 +34,7 @@ const LP_TABS = [
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'settings'
+type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'documents' | 'settings'
 
 export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
   const { t, lang } = useLang()
@@ -112,10 +112,11 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
         </div>
       )}
 
-      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => changeTab('performance')} goToAsk={() => changeTab('ask')} />}
+      {tab === 'account' && <AccountTab currency={currency} goToPerformance={() => changeTab('performance')} goToAsk={() => changeTab('ask')} goToDocuments={() => changeTab('documents')} />}
       {tab === 'ask' && <AskTab isMobile={isMobile} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
+      {tab === 'documents' && <DocumentsTab />}
       {tab === 'settings' && <SettingsTab />}
 
       {/* Mobile bottom tab bar */}
@@ -132,7 +133,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 
 // ── My Account tab ───────────────────────────────────────────────────────────
 
-function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void }) {
+function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void; goToDocuments: () => void }) {
   const { t, lang } = useLang()
   const calledPct = (FUND.called / FUND.commitment) * 100
   const navCount = useCountUp(FUND.nav)
@@ -253,13 +254,16 @@ function AccountTab({ currency, goToPerformance, goToAsk }: { currency: Currency
       <div id="lp-documents" style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Documents</div>
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
         {DOCUMENTS.slice(0, 5).map((doc, i) => (
-          <div key={doc.title.en} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < 4 ? '1px solid #F3F4F6' : 'none' }}>
+          <div key={doc.title.en} onClick={goToDocuments} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < 4 ? '1px solid #F3F4F6' : 'none', cursor: 'pointer' }}>
             <div style={{
               width: 30, height: 30, borderRadius: 7, flexShrink: 0,
-              background: doc.typeKey === 'Notice' ? '#FEF3C7' : '#F3F4F6',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+              background: doc.typeKey === 'Notice' ? '#FEF3C7' : '#EFF6FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              {doc.typeKey === 'Notice' ? '!' : '≡'}
+              {doc.typeKey === 'Notice'
+                ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -414,16 +418,16 @@ function CompanyModal({ co, onClose }: { co: typeof COMPANIES[0]; onClose: () =>
 
         <div style={{ padding: '20px 24px' }}>
           {/* Key metrics */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
             {[
               { label: 'MOIC', value: `${co.moic}x`, accent: true },
               { label: t('lp.co.irr'), value: `${co.irr}%`, accent: false },
               { label: t('lp.co.ownership'), value: `${co.ownership}%`, accent: false },
               { label: 'EV/EBITDA', value: `${co.evEbitda}x`, accent: false },
             ].map(m => (
-              <div key={m.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-                <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{m.label}</div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: m.accent ? 'var(--accent)' : 'var(--text)' }}>{m.value}</div>
+              <div key={m.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>{m.label}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: m.accent ? 'var(--accent)' : 'var(--text)' }}>{m.value}</div>
               </div>
             ))}
           </div>
@@ -521,7 +525,7 @@ function PerformanceTab() {
       {/* Value creation bridge */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp.bridge')}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.bridge')}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.bridgeSub')}</div>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
@@ -533,14 +537,14 @@ function PerformanceTab() {
       {/* J-curve + allocation row */}
       <div className="gp-trend-grid" style={{ marginBottom: 24 }}>
         <div style={styles.card}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.jcurve')}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.jcurve')}</div>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
             {t('lp.jcurveDesc')}
           </p>
           <JCurve />
         </div>
         <div style={styles.card}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>{t('lp.allocation')}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>{t('lp.allocation')}</div>
           <AllocationDonut />
         </div>
       </div>
@@ -950,7 +954,7 @@ function SettingsTab() {
               onClick={() => setNotifs(n => ({ ...n, [item.key]: !n[item.key] }))}
               style={{ width: 40, height: 22, borderRadius: 11, background: notifs[item.key] ? 'var(--accent)' : '#D1D5DB', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background 0.2s' }}
             >
-              <div style={{ position: 'absolute', top: 3, left: notifs[item.key] ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+              <div style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'transform 0.2s ease', transform: notifs[item.key] ? 'translateX(18px)' : 'translateX(0)' }} />
             </div>
           </div>
         ))}
