@@ -961,8 +961,9 @@ function SettingsTab() {
         {row('Download my data', 'Export a copy of your account data', () => setView('download'))}
       </div>
 
-      {row('Sign out', null, () => setView('signout'), true)}
-      <div style={{ marginBottom: 40 }} />
+      <div style={{ ...styles.card, marginBottom: 40 }}>
+        {row('Sign out', null, () => setView('signout'), true)}
+      </div>
     </div>
   )
 }
