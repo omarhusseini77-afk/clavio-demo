@@ -335,7 +335,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
               <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
               <YAxis tickFormatter={v => `${sym}${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={64} />
-              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} />
+              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} position={{ x: 10, y: 10 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="Turnover" stroke="#1652A0" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="Gross Profit" stroke="#10B981" strokeWidth={2} dot={false} />
