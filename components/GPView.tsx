@@ -391,11 +391,9 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
       {/* Anomaly Detection */}
       <div id="gp-anomalies" style={{ ...styles.card, marginBottom: 16, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-          <h3 style={styles.sectionTitle}>{t('gp.anomalies')}</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
-          </div>
+        <div style={{ marginBottom: 16 }}>
+          <h3 style={{ ...styles.sectionTitle, marginBottom: 2 }}>{t('gp.anomalies')}</h3>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
         </div>
         {ANOMALIES.map((a, i) => (
           <div key={i} id={`gp-anomaly-${a.company.toLowerCase().replace(/\s+/g, '-')}`} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
