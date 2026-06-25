@@ -5,6 +5,7 @@ export interface BottomTab {
   id: string
   label: string
   icon: React.ReactNode
+  activeIcon?: React.ReactNode
 }
 
 interface Props {
@@ -47,9 +48,11 @@ export default function BottomTabBar({ tabs, activeTab, onTabChange }: Props) {
             <span style={{
               marginBottom: 3,
               color: active ? '#1652A0' : '#9CA3AF',
-              transition: 'color 0.15s',
+              transform: active ? 'scale(1.18)' : 'scale(1)',
+              transition: 'transform 0.15s ease, color 0.15s',
+              display: 'block',
             }}>
-              {tab.icon}
+              {active && tab.activeIcon ? tab.activeIcon : tab.icon}
             </span>
             <span style={{
               fontSize: 10, fontWeight: active ? 700 : 500,
@@ -58,14 +61,6 @@ export default function BottomTabBar({ tabs, activeTab, onTabChange }: Props) {
             }}>
               {tab.label}
             </span>
-            {active && (
-              <span style={{
-                position: 'absolute',
-                bottom: 'calc(env(safe-area-inset-bottom) + 58px)',
-                width: 20, height: 2,
-                background: '#1652A0', borderRadius: 2,
-              }} />
-            )}
           </button>
         )
       })}
