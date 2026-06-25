@@ -101,8 +101,8 @@ export default function GPPage() {
   const handleNavigate = (id: string) => {
     const routes: Record<string, { gpSection: GpSection; section?: string; highlight?: string }> = {
       'gp-1': { gpSection: 'data' },
-      'gp-2': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-halcyon-textiles' },
-      'gp-3': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-atelier-saint-pierre' },
+      'gp-2': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomalies' },
+      'gp-3': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomalies' },
     }
     const route = routes[id]
     if (!route) return
