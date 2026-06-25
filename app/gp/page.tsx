@@ -4,9 +4,37 @@ import GPView from '@/components/GPView'
 import GPSettingsTab from '@/components/GPSettingsTab'
 import BottomTabBar from '@/components/BottomTabBar'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
+import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
 import type { Currency } from '@/lib/currency'
 import { useQuarters } from '@/lib/useQuarters'
 import { useLang } from '@/lib/i18n'
+
+const GP_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'gp-1',
+    type: 'submission',
+    title: 'New submission — Marlow & Reed',
+    body: 'Marlow & Reed Joinery submitted Q1 FY22 financials. Review now.',
+    time: '2 hours ago',
+    read: false,
+  },
+  {
+    id: 'gp-2',
+    type: 'anomaly',
+    title: 'Anomaly detected — Halcyon Textiles',
+    body: 'EBITDA margin contracted 4.2pp month-over-month, outside the 95% confidence band.',
+    time: '1 day ago',
+    read: false,
+  },
+  {
+    id: 'gp-3',
+    type: 'watchlist',
+    title: 'Watch-list flag — Atelier Saint-Pierre',
+    body: 'Working capital tightened for the second consecutive quarter. Flagged for partner review.',
+    time: '3 days ago',
+    read: true,
+  },
+]
 
 type GpSection = 'overview' | 'ask' | 'data' | 'settings'
 
@@ -62,7 +90,13 @@ export default function GPPage() {
   const [currency, setCurrency] = useState<Currency>('GBP')
   const [isMobile, setIsMobile] = useState(false)
   const [gpSection, setGpSection] = useState<GpSection>('overview')
+  const [showNotifs, setShowNotifs] = useState(false)
+  const [notifications, setNotifications] = useState<AppNotification[]>(GP_NOTIFICATIONS)
   const { quarters, loading, onDelete, onUpdate } = useQuarters()
+
+  const unreadCount = notifications.filter(n => !n.read).length
+  const markRead = (id: string) =>
+    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -89,18 +123,20 @@ export default function GPPage() {
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <MobileCurrencyToggle currency={currency} setCurrency={setCurrency} />
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <div onClick={() => setShowNotifs(true)} style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                   <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
-                <div style={{
-                  position: 'absolute', top: -3, right: -5,
-                  width: 15, height: 15, borderRadius: '50%',
-                  background: '#EF4444', border: '1.5px solid var(--navy)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 9, fontWeight: 700, color: 'white', lineHeight: 1,
-                }}>2</div>
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: 'absolute', top: -3, right: -5,
+                    width: 15, height: 15, borderRadius: '50%',
+                    background: '#EF4444', border: '1.5px solid var(--navy)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 9, fontWeight: 700, color: 'white', lineHeight: 1,
+                  }}>{unreadCount}</div>
+                )}
               </div>
             </div>
           </div>
@@ -155,6 +191,14 @@ export default function GPPage() {
           tabs={GP_TABS}
           activeTab={gpSection}
           onTabChange={id => setGpSection(id as GpSection)}
+        />
+      )}
+
+      {showNotifs && (
+        <NotificationsPanel
+          notifications={notifications}
+          onClose={() => setShowNotifs(false)}
+          onMarkRead={markRead}
         />
       )}
     </div>
