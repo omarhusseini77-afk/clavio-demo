@@ -144,6 +144,5 @@ main {
   100% { background-color: transparent; }
 }
 .clavio-highlight {
-  border-radius: 12px;
   animation: clavio-highlight-fade 2.2s ease forwards;
 }

@@ -370,7 +370,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       </div>
 
       {/* Anomaly Detection */}
-      <div id="gp-anomalies" style={{ ...styles.card, marginBottom: 16 }}>
+      <div id="gp-anomalies" style={{ ...styles.card, marginBottom: 16, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
           <h3 style={styles.sectionTitle}>{t('gp.anomalies')}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
