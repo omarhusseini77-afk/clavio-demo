@@ -1,13 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import GPView from '@/components/GPView'
+import GPSettingsTab from '@/components/GPSettingsTab'
 import BottomTabBar from '@/components/BottomTabBar'
-import { DesktopControls, MobileLangToggle, MobileCurrencyToggle } from '@/components/TopControls'
+import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import type { Currency } from '@/lib/currency'
 import { useQuarters } from '@/lib/useQuarters'
 import { useLang } from '@/lib/i18n'
 
-type GpSection = 'overview' | 'ask' | 'data'
+type GpSection = 'overview' | 'ask' | 'data' | 'settings'
 
 const GP_TABS = [
   {
@@ -22,7 +23,7 @@ const GP_TABS = [
   },
   {
     id: 'ask',
-    label: 'Ask AI',
+    label: 'Ask Clavio',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z" />
@@ -41,6 +42,16 @@ const GP_TABS = [
         <line x1="3" y1="6" x2="3.01" y2="6" />
         <line x1="3" y1="12" x2="3.01" y2="12" />
         <line x1="3" y1="18" x2="3.01" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     ),
   },
@@ -76,9 +87,21 @@ export default function GPPage() {
             <span style={{ color: 'white', fontWeight: 800, fontSize: 17, letterSpacing: '1px' }}>
               CLA<span style={{ color: '#1652A0', marginLeft: '-5px', marginRight: '-3px', display: 'inline-block' }}>V</span>IO
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <MobileCurrencyToggle currency={currency} setCurrency={setCurrency} />
-              <MobileLangToggle />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <div style={{
+                  position: 'absolute', top: -3, right: -5,
+                  width: 15, height: 15, borderRadius: '50%',
+                  background: '#EF4444', border: '1.5px solid var(--navy)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 9, fontWeight: 700, color: 'white', lineHeight: 1,
+                }}>2</div>
+              </div>
             </div>
           </div>
         ) : (
@@ -109,7 +132,9 @@ export default function GPPage() {
           maxWidth: 960, width: '100%', margin: '0 auto',
           paddingBottom: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : undefined,
         }}>
-          {loading ? (
+          {gpSection === 'settings' ? (
+            <GPSettingsTab />
+          ) : loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
               <Spinner /> {t('chrome.loading')}
             </div>
@@ -127,7 +152,7 @@ export default function GPPage() {
 
       {isMobile && (
         <BottomTabBar
-          tabs={GP_TABS.map(tab => ({ ...tab, label: t(`gp.mtab.${tab.id}`) }))}
+          tabs={GP_TABS}
           activeTab={gpSection}
           onTabChange={id => setGpSection(id as GpSection)}
         />

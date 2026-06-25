@@ -226,6 +226,24 @@
     "creditors": 549157,
     "net_assets": 3349228,
     "funds": 3349228
+  },
+  {
+    "period": "Q1 FY22",
+    "turnover": 1024500,
+    "cos": 589200,
+    "gross": 435300,
+    "admin": 198800,
+    "op": 236500,
+    "interest": 11280,
+    "pbt": 247780,
+    "tax": 47028,
+    "retained": 200752,
+    "fixed": 348200,
+    "stock": 337138,
+    "debtors": 811814,
+    "cash": 2702344,
+    "creditors": 609016,
+    "net_assets": 3549980,
+    "funds": 3549980
   }
 ]
-
