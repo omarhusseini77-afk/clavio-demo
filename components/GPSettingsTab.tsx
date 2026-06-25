@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLang } from '@/lib/i18n'
 
 type View = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'terms' | 'download' | 'signout'
@@ -28,6 +28,9 @@ const card: React.CSSProperties = {
 export default function GPSettingsTab() {
   const { lang, setLang } = useLang()
   const [view, setView] = useState<View>('main')
+  const savedScroll = useRef(0)
+  const goTo = (v: View) => { savedScroll.current = window.scrollY; setView(v); window.scrollTo(0, 0) }
+  const goBack = (fn?: () => void) => { if (fn) fn(); setView('main'); requestAnimationFrame(() => window.scrollTo(0, savedScroll.current)) }
   const [notifs, setNotifs] = useState({ submissions: true, anomalies: true, reports: true, late: true, watchlist: true })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwSaved, setPwSaved] = useState(false)
@@ -39,7 +42,7 @@ export default function GPSettingsTab() {
 
   if (view === 'change-password') return (
     <div>
-      <BackBar title="Change Password" onBack={() => { setView('main'); setPwSaved(false) }} />
+      <BackBar title="Change Password" onBack={() => goBack(() => setPwSaved(false))} />
       <div style={{ ...card, marginBottom: 16 }}>
         {pwSaved ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -80,7 +83,7 @@ export default function GPSettingsTab() {
 
   if (view === 'two-factor') return (
     <div>
-      <BackBar title="Two-Factor Authentication" onBack={() => setView('main')} />
+      <BackBar title="Two-Factor Authentication" onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
           Two-factor authentication adds an extra layer of security. Each time you sign in, you will need your password and a code from your authenticator app.
@@ -116,7 +119,7 @@ export default function GPSettingsTab() {
 
   if (view === 'privacy') return (
     <div>
-      <BackBar title="Privacy Policy" onBack={() => setView('main')} />
+      <BackBar title="Privacy Policy" onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 40 }}>
         {[
           { heading: 'What data we collect', body: 'We collect the information your firm provides when your account is set up: your name, email address, and partner role. We also collect usage data such as pages visited and features used, to improve the product.' },
@@ -139,7 +142,7 @@ export default function GPSettingsTab() {
 
   if (view === 'terms') return (
     <div>
-      <BackBar title="Terms of Service" onBack={() => setView('main')} />
+      <BackBar title="Terms of Service" onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 40 }}>
         {[
           { heading: '1. Acceptance', body: 'By accessing the Clavio partner portal, you agree to these terms. If you do not agree, you must not use the portal. Your access is granted by your firm administrator and is personal to you.' },
@@ -161,7 +164,7 @@ export default function GPSettingsTab() {
 
   if (view === 'download') return (
     <div>
-      <BackBar title="Download My Data" onBack={() => setView('main')} />
+      <BackBar title="Download My Data" onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
           You can request a copy of all personal data we hold about you. This includes your profile information and account activity. The file will be prepared and sent to your registered email address within 48 hours.
@@ -182,7 +185,7 @@ export default function GPSettingsTab() {
 
   if (view === 'signout') return (
     <div>
-      <BackBar title="Sign Out" onBack={() => setView('main')} />
+      <BackBar title="Sign Out" onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16, textAlign: 'center', padding: '32px 24px' }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
           Are you sure you want to sign out? You will need to sign in again to access the partner portal.
@@ -190,7 +193,7 @@ export default function GPSettingsTab() {
         <button onClick={() => setSignoutConfirm(true)} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: 'pointer', marginBottom: 10 }}>
           {signoutConfirm ? 'Signing out…' : 'Sign out'}
         </button>
-        <button onClick={() => setView('main')} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
+        <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
           Cancel
         </button>
       </div>
@@ -271,20 +274,20 @@ export default function GPSettingsTab() {
       {/* Security */}
       <div style={{ ...card, marginBottom: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Security</div>
-        {row('Change password', 'Update your login password', () => setView('change-password'))}
-        {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => setView('two-factor'))}
+        {row('Change password', 'Update your login password', () => goTo('change-password'))}
+        {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => goTo('two-factor'))}
       </div>
 
       {/* Data & Privacy */}
       <div style={{ ...card, marginBottom: 24 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Data &amp; Privacy</div>
-        {row('Privacy policy', null, () => setView('privacy'))}
-        {row('Terms of service', null, () => setView('terms'))}
-        {row('Download my data', 'Export a copy of your account data', () => setView('download'))}
+        {row('Privacy policy', null, () => goTo('privacy'))}
+        {row('Terms of service', null, () => goTo('terms'))}
+        {row('Download my data', 'Export a copy of your account data', () => goTo('download'))}
       </div>
 
       <div style={{ ...card, marginBottom: 40 }}>
-        {row('Sign out', null, () => setView('signout'), true)}
+        {row('Sign out', null, () => goTo('signout'), true)}
       </div>
     </div>
   )

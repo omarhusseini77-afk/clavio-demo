@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
@@ -731,8 +731,9 @@ function SettingsBackBar({ title, onBack }: { title: string; onBack: () => void 
 function SettingsTab() {
   const { lang, setLang } = useLang()
   const [view, setView] = useState<SettingsView>('main')
-
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }, [view])
+  const savedScroll = useRef(0)
+  const goTo = (v: SettingsView) => { savedScroll.current = window.scrollY; setView(v); window.scrollTo(0, 0) }
+  const goBack = (fn?: () => void) => { if (fn) fn(); setView('main'); requestAnimationFrame(() => window.scrollTo(0, savedScroll.current)) }
   const [notifs, setNotifs] = useState({ calls: true, distributions: true, reports: true, documents: true, events: false })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwSaved, setPwSaved] = useState(false)
@@ -742,7 +743,7 @@ function SettingsTab() {
 
   if (view === 'change-password') return (
     <div>
-      <SettingsBackBar title="Change Password" onBack={() => { setView('main'); setPwSaved(false) }} />
+      <SettingsBackBar title="Change Password" onBack={() => goBack(() => setPwSaved(false))} />
       <div style={{ ...styles.card, marginBottom: 16 }}>
         {pwSaved ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -783,7 +784,7 @@ function SettingsTab() {
 
   if (view === 'two-factor') return (
     <div>
-      <SettingsBackBar title="Two-Factor Authentication" onBack={() => setView('main')} />
+      <SettingsBackBar title="Two-Factor Authentication" onBack={() => goBack()} />
       <div style={{ ...styles.card, marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
           Two-factor authentication adds an extra layer of security. Each time you sign in, you will need your password and a code from your authenticator app.
@@ -819,7 +820,7 @@ function SettingsTab() {
 
   if (view === 'privacy') return (
     <div>
-      <SettingsBackBar title="Privacy Policy" onBack={() => setView('main')} />
+      <SettingsBackBar title="Privacy Policy" onBack={() => goBack()} />
       <div style={{ ...styles.card, marginBottom: 40 }}>
         {[
           { heading: 'What data we collect', body: 'We collect the information you provide when your fund manager sets up your investor account: your name, email address, and fund membership details. We also collect usage data such as pages visited and features used, to improve the product.' },
@@ -842,7 +843,7 @@ function SettingsTab() {
 
   if (view === 'terms') return (
     <div>
-      <SettingsBackBar title="Terms of Service" onBack={() => setView('main')} />
+      <SettingsBackBar title="Terms of Service" onBack={() => goBack()} />
       <div style={{ ...styles.card, marginBottom: 40 }}>
         {[
           { heading: '1. Acceptance', body: 'By accessing the Clavio investor portal, you agree to these terms. If you do not agree, you must not use the portal. Your access is granted by your fund manager and is personal to you.' },
@@ -864,7 +865,7 @@ function SettingsTab() {
 
   if (view === 'download') return (
     <div>
-      <SettingsBackBar title="Download My Data" onBack={() => setView('main')} />
+      <SettingsBackBar title="Download My Data" onBack={() => goBack()} />
       <div style={{ ...styles.card, marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
           You can request a copy of all personal data we hold about you. This includes your profile information, account activity, and notification preferences. The file will be prepared and sent to your registered email address within 48 hours.
@@ -885,7 +886,7 @@ function SettingsTab() {
 
   if (view === 'signout') return (
     <div>
-      <SettingsBackBar title="Sign Out" onBack={() => setView('main')} />
+      <SettingsBackBar title="Sign Out" onBack={() => goBack()} />
       <div style={{ ...styles.card, marginBottom: 16, textAlign: 'center', padding: '32px 24px' }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
           Are you sure you want to sign out? You will need to sign in again to access your fund portal.
@@ -893,7 +894,7 @@ function SettingsTab() {
         <button onClick={() => setSignoutConfirm(true)} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: 'pointer', marginBottom: 10 }}>
           {signoutConfirm ? 'Signing out…' : 'Sign out'}
         </button>
-        <button onClick={() => setView('main')} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
+        <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
           Cancel
         </button>
       </div>
@@ -975,20 +976,20 @@ function SettingsTab() {
       {/* Security */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Security</div>
-        {row('Change password', 'Update your login password', () => setView('change-password'))}
-        {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => setView('two-factor'))}
+        {row('Change password', 'Update your login password', () => goTo('change-password'))}
+        {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => goTo('two-factor'))}
       </div>
 
       {/* Data & Privacy */}
       <div style={{ ...styles.card, marginBottom: 24 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Data &amp; Privacy</div>
-        {row('Privacy policy', null, () => setView('privacy'))}
-        {row('Terms of service', null, () => setView('terms'))}
-        {row('Download my data', 'Export a copy of your account data', () => setView('download'))}
+        {row('Privacy policy', null, () => goTo('privacy'))}
+        {row('Terms of service', null, () => goTo('terms'))}
+        {row('Download my data', 'Export a copy of your account data', () => goTo('download'))}
       </div>
 
       <div style={{ ...styles.card, marginBottom: 40 }}>
-        {row('Sign out', null, () => setView('signout'), true)}
+        {row('Sign out', null, () => goTo('signout'), true)}
       </div>
     </div>
   )
