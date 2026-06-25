@@ -253,6 +253,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     // Portfolio tab
     // Documents
 
+    'chrome.currency': 'Devise',
     // ── Submit view ──
     'page.submit.title': 'Soumettre les finances',
     'page.submit.subtitle': 'Société du portefeuille · Soumission trimestrielle',

@@ -189,7 +189,7 @@ export default function PortfolioView({ onSubmit }: { onSubmit: (q: Omit<Quarter
       {status !== 'success' && (
       <form onSubmit={handleSubmit}>
         <div style={styles.card}>
-          <label style={styles.label}>Currency</label>
+          <label style={styles.label}>{t('chrome.currency')}</label>
           <div style={{ display: 'flex', gap: 8, marginBottom: 0 }}>
             {(['GBP', 'EUR', 'USD'] as const).map(c => (
               <button
