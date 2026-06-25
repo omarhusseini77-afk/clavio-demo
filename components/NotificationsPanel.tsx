@@ -60,43 +60,40 @@ export default function NotificationsPanel({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — tap to dismiss */}
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)',
           zIndex: 100, animation: 'fadeIn 0.15s ease',
         }}
       />
-      {/* Panel */}
+      {/* Dropdown panel — falls from top bar */}
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'white', borderRadius: '20px 20px 0 0',
-        zIndex: 101, maxHeight: '75vh', display: 'flex', flexDirection: 'column',
-        animation: 'slideUp 0.22s ease',
-        boxShadow: '0 -4px 32px rgba(0,0,0,0.15)',
+        position: 'fixed', top: 'calc(52px + env(safe-area-inset-top))', left: 0, right: 0,
+        background: 'white',
+        zIndex: 101, maxHeight: '70vh', display: 'flex', flexDirection: 'column',
+        animation: 'dropDown 0.2s ease',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
+        borderBottom: '1px solid var(--border)',
       }}>
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: '#E5E7EB' }} />
-        </div>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px 12px', borderBottom: '1px solid #F3F4F6' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 17, fontWeight: 700 }}>Notifications</span>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>Notifications</span>
             {unread > 0 && (
-              <span style={{ background: '#EF4444', color: 'white', fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20 }}>{unread} new</span>
+              <span style={{ background: '#EF4444', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>{unread} new</span>
             )}
           </div>
           <button
             onClick={onClose}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 22, lineHeight: 1, padding: 4 }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '2px 4px' }}
           >×</button>
         </div>
         {/* List */}
-        <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 32 }}>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
           {notifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
+            <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
               No notifications
             </div>
           ) : notifications.map((n, i) => (
@@ -104,8 +101,8 @@ export default function NotificationsPanel({
               key={n.id}
               onClick={() => onMarkRead(n.id)}
               style={{
-                display: 'flex', gap: 14, padding: '14px 20px',
-                borderTop: i === 0 ? '1px solid #F3F4F6' : '1px solid #F3F4F6',
+                display: 'flex', gap: 12, padding: '13px 18px',
+                borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
                 background: n.read ? 'white' : '#F8FAFF',
                 cursor: 'pointer',
               }}
@@ -113,11 +110,11 @@ export default function NotificationsPanel({
               {iconFor(n.type)}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: n.read ? 500 : 700, color: 'var(--text)' }}>{n.title}</span>
-                  {!n.read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, marginTop: 4 }} />}
+                  <span style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, color: 'var(--text)' }}>{n.title}</span>
+                  {!n.read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, marginTop: 4 }} />}
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>{n.body}</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>{n.time}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>{n.body}</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{n.time}</div>
               </div>
             </div>
           ))}
@@ -125,7 +122,7 @@ export default function NotificationsPanel({
       </div>
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+        @keyframes dropDown { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: translateY(0) } }
       `}</style>
     </>
   )
