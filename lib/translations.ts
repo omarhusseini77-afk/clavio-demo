@@ -240,6 +240,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'field.funds': "Shareholders' Funds",
 
     // ── Settings (shared LP + GP) ──
+    'settings.section': 'Settings',
     'settings.profile': 'Profile',
     'settings.notifications': 'Notifications',
     'settings.language': 'Language',
@@ -377,6 +378,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
   fr: {
     // ── Settings ──
+    'settings.section': 'Réglages',
     'settings.profile': 'Profil',
     'settings.notifications': 'Notifications',
     'settings.language': 'Langue',

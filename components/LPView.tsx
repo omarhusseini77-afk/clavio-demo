@@ -721,11 +721,12 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
 type SettingsView = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'terms' | 'download' | 'signout'
 
 function SettingsBackBar({ title, onBack }: { title: string; onBack: () => void }) {
+  const { t } = useLang()
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
       <button onClick={onBack} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 15, fontWeight: 600 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Settings
+        {t('settings.section')}
       </button>
       <span style={{ color: 'var(--border)', fontSize: 16 }}>·</span>
       <span style={{ fontSize: 16, fontWeight: 700 }}>{title}</span>
@@ -737,7 +738,7 @@ function SettingsTab() {
   const { lang, setLang, t } = useLang()
   const [view, setView] = useState<SettingsView>('main')
   const savedScroll = useRef(0)
-  const goTo = (v: SettingsView) => { savedScroll.current = window.scrollY; setView(v); window.scrollTo(0, 0) }
+  const goTo = (v: SettingsView) => { savedScroll.current = window.scrollY; setView(v); requestAnimationFrame(() => window.scrollTo(0, 0)) }
   const goBack = (fn?: () => void) => { if (fn) fn(); setView('main'); requestAnimationFrame(() => window.scrollTo(0, savedScroll.current)) }
   const [notifs, setNotifs] = useState({ calls: true, distributions: true, reports: true, documents: true, events: false })
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
