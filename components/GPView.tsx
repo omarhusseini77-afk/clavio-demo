@@ -98,6 +98,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [investigateAnomaly, setInvestigateAnomaly] = useState<typeof ANOMALIES[0] | null>(null)
+  const [hoveredPoint, setHoveredPoint] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -315,14 +316,37 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       {/* Signals + Trend row */}
       <div className="gp-trend-grid">
         <div style={styles.card}>
-          <h3 style={styles.sectionTitle}>{t('gp.perfTrend')}</h3>
-        <div style={{ height: 260 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+            <h3 style={styles.sectionTitle}>{t('gp.perfTrend')}</h3>
+            {hoveredPoint && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{String(hoveredPoint.period)}</span>
+            )}
+          </div>
+          {hoveredPoint && (
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 10, padding: '8px 10px', background: '#F8FAFF', borderRadius: 8 }}>
+              {[
+                { label: 'Turnover', color: '#1652A0', key: 'Turnover' },
+                { label: 'Gross Profit', color: '#10B981', key: 'Gross Profit' },
+                { label: 'Op. Profit', color: '#F59E0B', key: 'Op. Profit' },
+                { label: 'PBT', color: '#8B5CF6', key: 'PBT' },
+              ].map(({ label, color, key }) => (
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <span style={{ fontSize: 10, color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtFull(Number(hoveredPoint[key]), currency)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        <div style={{ height: 240 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+              onMouseMove={(state) => { if (state.activePayload) setHoveredPoint(state.activePayload[0]?.payload ?? null) }}
+              onMouseLeave={() => setHoveredPoint(null)}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
               <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#6B7280' }} />
               <YAxis tickFormatter={v => `${sym}${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#6B7280' }} width={64} />
-              <Tooltip formatter={(v: number) => fmtFull(v, currency)} contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }} position={{ x: 10, y: 10 }} />
+              <Tooltip content={() => null} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="Turnover" stroke="#1652A0" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="Gross Profit" stroke="#10B981" strokeWidth={2} dot={false} />
