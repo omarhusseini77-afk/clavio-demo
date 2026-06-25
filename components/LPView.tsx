@@ -454,7 +454,7 @@ function PerformanceTab() {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
         {[
           { label: t('lp.stat.netIrr'), value: `${FUND.irr}%`, color: 'var(--accent)' },
           { label: t('lp.stat.grossIrr'), value: `${FUND.grossIrr}%`, color: 'var(--accent)' },
@@ -467,9 +467,9 @@ function PerformanceTab() {
           { label: t('lp.stat.cashCover'), value: t('lp.stat.months', { n: '14.2' }), color: 'var(--green)' },
           { label: t('lp.stat.lossRatio'), value: t('lp.stat.of4', { n: 0 }), color: 'var(--green)' },
         ].map(s => (
-          <div key={s.label} style={styles.card}>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{s.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: s.color }}>{s.value}</div>
+          <div key={s.label} style={{ ...styles.card, padding: '14px 16px' }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>{s.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
       </div>
