@@ -70,6 +70,18 @@ const ANOMALIES: Anomaly[] = [
       { en: 'Evaluate whether a specific bad debt provision is required and model the downside P&L impact if the bucket does not normalise', fr: "Évaluer si une provision pour créances douteuses est nécessaire et modéliser l'impact négatif sur le résultat si le solde ne se normalise pas" },
     ],
   },
+  {
+    company: 'ATELIER SAINT-PIERRE',
+    title: { en: 'Working capital tightened for second consecutive quarter', fr: 'Besoin en fonds de roulement en tension pour le deuxième trimestre consécutif' },
+    detail: { en: 'Cash conversion cycle extended by 18 days vs. the same period last year. Trade creditors are being stretched to fund operations.', fr: "Le cycle de conversion de trésorerie s'est allongé de 18 jours par rapport à la même période l'année dernière. Les fournisseurs sont sollicités pour financer l'exploitation." },
+    level: 'amber',
+    actions: [
+      { en: 'Review the cash flow statement line by line with the CFO — identify the primary driver of the working capital build', fr: 'Examiner le tableau de flux de trésorerie ligne par ligne avec le DG financier — identifier le principal facteur de tension du BFR' },
+      { en: 'Assess current headroom on the revolving credit facility and model cash requirements for the next two quarters', fr: 'Évaluer la disponibilité de la ligne de crédit revolving et modéliser les besoins de trésorerie pour les deux prochains trimestres' },
+      { en: 'Request a 13-week cash flow forecast from management to assess near-term liquidity risk', fr: 'Demander à la direction une prévision de trésorerie sur 13 semaines pour évaluer le risque de liquidité à court terme' },
+      { en: "Consider whether a short-term shareholder loan is warranted as a bridging measure pending a working capital improvement plan", fr: "Envisager si un prêt d'actionnaire à court terme est justifié comme mesure de transition dans l'attente d'un plan d'amélioration du BFR" },
+    ],
+  },
 ]
 
 type Props = {
