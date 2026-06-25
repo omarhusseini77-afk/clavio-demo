@@ -26,7 +26,7 @@ const card: React.CSSProperties = {
 }
 
 export default function GPSettingsTab() {
-  const { lang, setLang } = useLang()
+  const { t, lang, setLang } = useLang()
   const [view, setView] = useState<View>('main')
   const savedScroll = useRef(0)
   const goTo = (v: View) => { savedScroll.current = window.scrollY; setView(v); window.scrollTo(0, 0) }
@@ -42,40 +42,32 @@ export default function GPSettingsTab() {
 
   if (view === 'change-password') return (
     <div>
-      <BackBar title="Change Password" onBack={() => goBack(() => setPwSaved(false))} />
+      <BackBar title={t('settings.changePwTitle')} onBack={() => goBack(() => setPwSaved(false))} />
       <div style={{ ...card, marginBottom: 16 }}>
         {pwSaved ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <div style={{ fontSize: 36, marginBottom: 10 }}>✓</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#10B981' }}>Password updated</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>You can now sign in with your new password.</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#10B981' }}>{t('settings.pwUpdated')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{t('settings.pwUpdatedSub')}</div>
           </div>
         ) : (
           <>
             {[
-              { label: 'Current password', key: 'current' as const },
-              { label: 'New password', key: 'next' as const },
-              { label: 'Confirm new password', key: 'confirm' as const },
+              { label: t('settings.currentPw'), key: 'current' as const },
+              { label: t('settings.newPw'), key: 'next' as const },
+              { label: t('settings.confirmPw'), key: 'confirm' as const },
             ].map((f, i) => (
               <div key={f.key} style={{ marginBottom: i < 2 ? 14 : 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>{f.label}</div>
-                <input
-                  type="password"
-                  value={pwForm[f.key]}
-                  onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, outline: 'none', background: 'white' }}
-                />
+                <input type="password" value={pwForm[f.key]} onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))} style={{ width: '100%', padding: '11px 14px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, outline: 'none', background: 'white' }} />
               </div>
             ))}
           </>
         )}
       </div>
       {!pwSaved && (
-        <button
-          onClick={() => { if (pwForm.next && pwForm.next === pwForm.confirm) setPwSaved(true) }}
-          style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', marginBottom: 40 }}
-        >
-          Update password
+        <button onClick={() => { if (pwForm.next && pwForm.next === pwForm.confirm) setPwSaved(true) }} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', marginBottom: 40 }}>
+          {t('settings.updatePw')}
         </button>
       )}
     </div>
@@ -83,20 +75,16 @@ export default function GPSettingsTab() {
 
   if (view === 'two-factor') return (
     <div>
-      <BackBar title="Two-Factor Authentication" onBack={() => goBack()} />
+      <BackBar title={t('settings.twoFaTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16 }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
-          Two-factor authentication adds an extra layer of security. Each time you sign in, you will need your password and a code from your authenticator app.
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>{t('settings.twoFaDesc')}</div>
         {twoFAEnabled ? (
           <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#ECFDF5', border: '1px solid #6EE7B7', borderRadius: 8, padding: '10px 16px', marginBottom: 20 }}>
               <span style={{ fontSize: 16 }}>✓</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#065F46' }}>Two-factor authentication is active</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#065F46' }}>{t('settings.twoFaIsActive')}</span>
             </div>
-            <button onClick={() => setTwoFAEnabled(false)} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid #E5E7EB', background: 'white', color: '#EF4444', cursor: 'pointer' }}>
-              Disable 2FA
-            </button>
+            <button onClick={() => setTwoFAEnabled(false)} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid #E5E7EB', background: 'white', color: '#EF4444', cursor: 'pointer' }}>{t('settings.twoFaDisable')}</button>
           </div>
         ) : (
           <>
@@ -107,10 +95,8 @@ export default function GPSettingsTab() {
                 ))}
               </div>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 20 }}>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</div>
-            <button onClick={() => setTwoFAEnabled(true)} style={{ width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>
-              I have scanned the code — Enable 2FA
-            </button>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 20 }}>{t('settings.twoFaScan')}</div>
+            <button onClick={() => setTwoFAEnabled(true)} style={{ width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>{t('settings.twoFaEnable')}</button>
           </>
         )}
       </div>
@@ -119,65 +105,46 @@ export default function GPSettingsTab() {
 
   if (view === 'privacy') return (
     <div>
-      <BackBar title="Privacy Policy" onBack={() => goBack()} />
+      <BackBar title={t('settings.gp.privacyTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 40 }}>
-        {[
-          { heading: 'What data we collect', body: 'We collect the information your firm provides when your account is set up: your name, email address, and partner role. We also collect usage data such as pages visited and features used, to improve the product.' },
-          { heading: 'How we use your data', body: 'Your data is used solely to provide you with access to portfolio company reporting and fund management tools. We do not sell, share, or disclose your personal data to any third party except where required by law or where you have given explicit consent.' },
-          { heading: 'Data storage and security', body: 'All data is stored in encrypted form in our EU-based infrastructure (London region). Portfolio company financial data is isolated per firm using row-level security. Access is protected by your chosen authentication method.' },
-          { heading: 'AI processing', body: 'When you use the Ask Clavio feature, your questions are processed by our AI provider under a Zero Data Retention agreement, meaning your queries and the underlying financial data are never stored or used for model training.' },
-          { heading: 'Your rights', body: 'You have the right to access, correct, or delete your personal data at any time. You may also request a copy of all data held about you using the Download my data option in these settings. To exercise any of these rights, write to privacy@clavio.io.' },
-          { heading: 'Retention', body: 'We retain your data for as long as your partner account is active. If your account is closed, your personal data is deleted within 30 days, except where retention is required by applicable financial regulation.' },
-          { heading: 'Updates', body: 'We may update this policy from time to time. We will notify you by email of any material changes.' },
-        ].map((s, i) => (
-          <div key={s.heading} style={{ marginBottom: i < 6 ? 20 : 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{s.heading}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.7 }}>{s.body}</div>
+        {([1,2,3,4,5,6,7] as const).map((n, i) => (
+          <div key={n} style={{ marginBottom: i < 6 ? 20 : 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{t(`settings.gp.privacy.h${n}`)}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.7 }}>{t(`settings.gp.privacy.b${n}`)}</div>
           </div>
         ))}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F3F4F6', fontSize: 12, color: 'var(--text-muted)' }}>Last updated: June 2026 · Clavio Technologies Ltd</div>
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F3F4F6', fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.updated')}</div>
       </div>
     </div>
   )
 
   if (view === 'terms') return (
     <div>
-      <BackBar title="Terms of Service" onBack={() => goBack()} />
+      <BackBar title={t('settings.gp.termsTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 40 }}>
-        {[
-          { heading: '1. Acceptance', body: 'By accessing the Clavio partner portal, you agree to these terms. If you do not agree, you must not use the portal. Your access is granted by your firm administrator and is personal to you.' },
-          { heading: '2. Access and credentials', body: 'You are responsible for maintaining the confidentiality of your login credentials. You must not share access with any other person. You must notify your firm administrator immediately if you believe your account has been compromised.' },
-          { heading: '3. Permitted use', body: 'The portal is provided for the sole purpose of managing and reviewing portfolio company financial reporting. You may not use any data obtained through the portal for any purpose outside of your authorised fund management activities.' },
-          { heading: '4. Accuracy of information', body: 'The figures displayed in the portal are sourced from portfolio company accounting systems submitted by the companies themselves. Clavio makes reasonable efforts to standardise and validate this data but does not warrant that all information is complete or error-free. AI-generated analysis is indicative only and does not constitute investment advice.' },
-          { heading: '5. Limitation of liability', body: 'To the fullest extent permitted by law, Clavio Technologies Ltd accepts no liability for any loss or damage arising from your use of or reliance on any information in the portal.' },
-          { heading: '6. Governing law', body: 'These terms are governed by English law. Any dispute shall be subject to the exclusive jurisdiction of the courts of England and Wales.' },
-        ].map((s, i) => (
-          <div key={s.heading} style={{ marginBottom: i < 5 ? 20 : 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{s.heading}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.7 }}>{s.body}</div>
+        {([1,2,3,4,5,6] as const).map((n, i) => (
+          <div key={n} style={{ marginBottom: i < 5 ? 20 : 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{t(`settings.gp.terms.h${n}`)}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.7 }}>{t(`settings.gp.terms.b${n}`)}</div>
           </div>
         ))}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F3F4F6', fontSize: 12, color: 'var(--text-muted)' }}>Last updated: June 2026 · Clavio Technologies Ltd</div>
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F3F4F6', fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.updated')}</div>
       </div>
     </div>
   )
 
   if (view === 'download') return (
     <div>
-      <BackBar title="Download My Data" onBack={() => goBack()} />
+      <BackBar title={t('settings.downloadTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16 }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
-          You can request a copy of all personal data we hold about you. This includes your profile information and account activity. The file will be prepared and sent to your registered email address within 48 hours.
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>{t('settings.downloadDesc')}</div>
         {downloaded ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#10B981', marginBottom: 4 }}>Request received</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Your data export will be sent to partner@example.com within 48 hours.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#10B981', marginBottom: 4 }}>{t('settings.downloadDone')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('settings.downloadDoneSub')}</div>
           </div>
         ) : (
-          <button onClick={() => setDownloaded(true)} style={{ width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>
-            Request data export
-          </button>
+          <button onClick={() => setDownloaded(true)} style={{ width: '100%', padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>{t('settings.downloadBtn')}</button>
         )}
       </div>
     </div>
@@ -185,17 +152,13 @@ export default function GPSettingsTab() {
 
   if (view === 'signout') return (
     <div>
-      <BackBar title="Sign Out" onBack={() => goBack()} />
+      <BackBar title={t('settings.signOutTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16, textAlign: 'center', padding: '32px 24px' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
-          Are you sure you want to sign out? You will need to sign in again to access the partner portal.
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>{t('settings.signOutConfirm')}</div>
         <button onClick={() => setSignoutConfirm(true)} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: 'pointer', marginBottom: 10 }}>
-          {signoutConfirm ? 'Signing out…' : 'Sign out'}
+          {signoutConfirm ? t('settings.signingOut') : t('settings.signOutBtn')}
         </button>
-        <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
-          Cancel
-        </button>
+        <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>{t('settings.cancel')}</button>
       </div>
     </div>
   )
@@ -212,9 +175,8 @@ export default function GPSettingsTab() {
 
   return (
     <div>
-      {/* Profile */}
       <div style={{ ...card, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Profile</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>{t('settings.profile')}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>GP</div>
           <div>
@@ -223,9 +185,9 @@ export default function GPSettingsTab() {
           </div>
         </div>
         {[
-          { label: 'Firm', value: 'Clavio Capital' },
-          { label: 'Role', value: 'General Partner' },
-          { label: 'Portfolio companies', value: '4' },
+          { label: t('settings.gp.firm'), value: 'Tiopoo Capital' },
+          { label: t('settings.gp.role'), value: 'General Partner' },
+          { label: t('settings.gp.access'), value: 'Full access' },
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '11px 0', borderTop: '1px solid #F3F4F6' }}>
             <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{r.label}</span>
@@ -234,34 +196,29 @@ export default function GPSettingsTab() {
         ))}
       </div>
 
-      {/* Notifications */}
       <div style={{ ...card, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Notifications</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>{t('settings.notifications')}</div>
         {([
-          { key: 'submissions' as const, label: 'New submissions', hint: 'Alert when a portfolio co. submits financials' },
-          { key: 'anomalies' as const, label: 'Anomaly alerts', hint: 'Alert when a new anomaly is detected' },
-          { key: 'late' as const, label: 'Late submissions', hint: 'Alert when a company misses its submission deadline' },
-          { key: 'watchlist' as const, label: 'Watch-list flags', hint: 'Alert when a company is flagged by the anomaly engine' },
-          { key: 'reports' as const, label: 'Quarterly summaries', hint: 'Email me the quarterly GP digest' },
+          { key: 'submissions' as const, label: t('settings.gp.notif.submissions'), hint: t('settings.gp.notif.submissionsHint') },
+          { key: 'anomalies' as const, label: t('settings.gp.notif.anomalies'), hint: t('settings.gp.notif.anomaliesHint') },
+          { key: 'late' as const, label: t('settings.gp.notif.late'), hint: t('settings.gp.notif.lateHint') },
+          { key: 'watchlist' as const, label: t('settings.gp.notif.watchlist'), hint: t('settings.gp.notif.watchlistHint') },
+          { key: 'reports' as const, label: t('settings.gp.notif.reports'), hint: t('settings.gp.notif.reportsHint') },
         ]).map((item, i) => (
           <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6' }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 500 }}>{item.label}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{item.hint}</div>
             </div>
-            <div
-              onClick={() => setNotifs(n => ({ ...n, [item.key]: !n[item.key] }))}
-              style={{ width: 40, height: 22, borderRadius: 11, background: notifs[item.key] ? 'var(--accent)' : '#D1D5DB', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background 0.2s' }}
-            >
-              <div style={{ position: 'absolute', top: 3, left: notifs[item.key] ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+            <div onClick={() => setNotifs(n => ({ ...n, [item.key]: !n[item.key] }))} style={{ width: 40, height: 22, borderRadius: 11, background: notifs[item.key] ? 'var(--accent)' : '#D1D5DB', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background 0.2s' }}>
+              <div style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'transform 0.2s ease', transform: notifs[item.key] ? 'translateX(18px)' : 'translateX(0)' }} />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Language */}
       <div style={{ ...card, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Language</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>{t('settings.language')}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['en', 'fr'] as const).map(l => (
             <button key={l} onClick={() => setLang(l)} style={{ flex: 1, padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: lang === l ? '1.5px solid var(--accent)' : '1px solid var(--border)', background: lang === l ? '#EFF6FF' : 'white', color: lang === l ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer' }}>
@@ -271,23 +228,21 @@ export default function GPSettingsTab() {
         </div>
       </div>
 
-      {/* Security */}
       <div style={{ ...card, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Security</div>
-        {row('Change password', 'Update your login password', () => goTo('change-password'))}
-        {row('Two-factor authentication', twoFAEnabled ? 'Active' : 'Not enabled', () => goTo('two-factor'))}
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{t('settings.security')}</div>
+        {row(t('settings.changePw'), t('settings.changePwHint'), () => goTo('change-password'))}
+        {row(t('settings.twoFa'), twoFAEnabled ? t('settings.twoFaActive') : t('settings.twoFaOff'), () => goTo('two-factor'))}
       </div>
 
-      {/* Data & Privacy */}
       <div style={{ ...card, marginBottom: 24 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Data &amp; Privacy</div>
-        {row('Privacy policy', null, () => goTo('privacy'))}
-        {row('Terms of service', null, () => goTo('terms'))}
-        {row('Download my data', 'Export a copy of your account data', () => goTo('download'))}
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{t('settings.dataPrivacy')}</div>
+        {row(t('settings.privacy'), null, () => goTo('privacy'))}
+        {row(t('settings.terms'), null, () => goTo('terms'))}
+        {row(t('settings.downloadData'), t('settings.downloadDataHint'), () => goTo('download'))}
       </div>
 
       <div style={{ ...card, marginBottom: 40 }}>
-        {row('Sign out', null, () => goTo('signout'), true)}
+        {row(t('settings.signOut'), null, () => goTo('signout'), true)}
       </div>
     </div>
   )
