@@ -101,24 +101,11 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const { section, highlight } = (e as CustomEvent).detail as { section?: string; highlight?: string }
+      const { section } = (e as CustomEvent).detail as { section?: string; highlight?: string }
       if (section) {
         setTimeout(() => {
           const el = document.getElementById(section)
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            el.classList.add('clavio-highlight')
-            setTimeout(() => el.classList.remove('clavio-highlight'), 2200)
-          }
-          if (highlight) {
-            const hEl = document.getElementById(highlight)
-            if (hEl) {
-              setTimeout(() => {
-                hEl.classList.add('clavio-highlight')
-                setTimeout(() => hEl.classList.remove('clavio-highlight'), 2200)
-              }, 400)
-            }
-          }
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 120)
       }
     }
