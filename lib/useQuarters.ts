@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { useEffect, useMemo, useState } from 'react'
+import { createClient } from './supabase/client'
 import type { Quarter } from './supabase'
 
 const sortQuarters = (data: Quarter[]) =>
@@ -15,6 +15,10 @@ const sortQuarters = (data: Quarter[]) =>
 export function useQuarters() {
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
+  // Cookie-backed client, so the realtime socket carries the user's session.
+  // Realtime honours RLS: without this the subscription is anonymous and stops
+  // receiving anything once policies are on.
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchQuarters = async () => {
     const res = await fetch('/api/quarters')
@@ -34,7 +38,7 @@ export function useQuarters() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quarters' }, fetchQuarters)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [supabase])
 
   const onSubmit = async (q: Omit<Quarter, 'id' | 'created_at'>) => {
     const res = await fetch('/api/quarters', {
