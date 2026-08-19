@@ -20,6 +20,16 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'page.submit.subtitle': 'Portfolio Co. · Quarterly submission',
     'page.submit.role': 'Submit',
 
+    // ── Login ──
+    'login.subtitle': 'Sign in to your account',
+    'login.email': 'Email',
+    'login.password': 'Password',
+    'login.signIn': 'Sign in',
+    'login.signingIn': 'Signing in…',
+    'login.error': 'Incorrect email or password.',
+    'login.noRole': 'This account has no role assigned. Contact your administrator.',
+    'login.invite': 'Access is by invitation only.',
+
     // ── Shared / Ask panel ──
     'ask.connected': 'Connected to live accounting data',
     'ask.ask': 'Ask',
@@ -711,6 +721,17 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'page.submit.title': 'Soumettre les finances',
     'page.submit.subtitle': 'Société du portefeuille · Soumission trimestrielle',
     'page.submit.role': 'Soumettre',
+
+    // ── Connexion ──
+    'login.subtitle': 'Connectez-vous à votre compte',
+    'login.email': 'E-mail',
+    'login.password': 'Mot de passe',
+    'login.signIn': 'Se connecter',
+    'login.signingIn': 'Connexion…',
+    'login.error': 'E-mail ou mot de passe incorrect.',
+    'login.noRole': "Aucun rôle n'est attribué à ce compte. Contactez votre administrateur.",
+    'login.invite': 'Accès sur invitation uniquement.',
+
     'submit.hero.kicker': 'Société du portefeuille · Soumission trimestrielle',
     'submit.hero.title': 'Soumettre les finances trimestrielles',
     'submit.hero.body': "Téléchargez vos comptes de gestion et l'IA de Clavio remplit le formulaire pour vous — ou saisissez les chiffres manuellement.",
