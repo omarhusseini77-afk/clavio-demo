@@ -6,6 +6,7 @@ import { fmtM, fmtFull } from '@/lib/currency'
 import { FUND, COMPANIES, DOCUMENTS, CAPITAL_EVENTS, FORECAST } from '@/lib/fundData'
 import { useCountUp } from '@/lib/useCountUp'
 import { useLang, loc } from '@/lib/i18n'
+import { useAuth } from '@/lib/auth'
 import AskPanel from './AskPanel'
 import BottomTabBar from './BottomTabBar'
 
@@ -736,6 +737,7 @@ function SettingsBackBar({ title, onBack }: { title: string; onBack: () => void 
 
 function SettingsTab() {
   const { lang, setLang, t } = useLang()
+  const { user, fullName, signOut } = useAuth()
   const [view, setView] = useState<SettingsView>('main')
   const savedScroll = useRef(0)
   const goTo = (v: SettingsView) => { savedScroll.current = window.scrollY; setView(v); requestAnimationFrame(() => window.scrollTo(0, 0)) }
@@ -882,7 +884,7 @@ function SettingsTab() {
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
           {t('settings.signOutConfirm')}
         </div>
-        <button onClick={() => setSignoutConfirm(true)} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: 'pointer', marginBottom: 10 }}>
+        <button onClick={() => { setSignoutConfirm(true); signOut() }} disabled={signoutConfirm} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: signoutConfirm ? 'default' : 'pointer', marginBottom: 10 }}>
           {signoutConfirm ? t('settings.signingOut') : t('settings.signOutBtn')}
         </button>
         <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>
@@ -911,8 +913,8 @@ function SettingsTab() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>LP</div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>Investor</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>investor@example.com</div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>{fullName ?? t('page.lp.role')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{user?.email ?? ''}</div>
           </div>
         </div>
         {[

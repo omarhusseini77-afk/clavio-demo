@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useLang } from '@/lib/i18n'
+import { useAuth } from '@/lib/auth'
 
 type View = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'terms' | 'download' | 'signout'
 
@@ -28,6 +29,7 @@ const card: React.CSSProperties = {
 
 export default function GPSettingsTab() {
   const { t, lang, setLang } = useLang()
+  const { user, fullName, signOut } = useAuth()
   const [view, setView] = useState<View>('main')
   const savedScroll = useRef(0)
   const goTo = (v: View) => { savedScroll.current = window.scrollY; setView(v); requestAnimationFrame(() => window.scrollTo(0, 0)) }
@@ -156,7 +158,7 @@ export default function GPSettingsTab() {
       <BackBar title={t('settings.signOutTitle')} onBack={() => goBack()} />
       <div style={{ ...card, marginBottom: 16, textAlign: 'center', padding: '32px 24px' }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>{t('settings.signOutConfirm')}</div>
-        <button onClick={() => setSignoutConfirm(true)} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: 'pointer', marginBottom: 10 }}>
+        <button onClick={() => { setSignoutConfirm(true); signOut() }} disabled={signoutConfirm} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: '#EF4444', color: 'white', cursor: signoutConfirm ? 'default' : 'pointer', marginBottom: 10 }}>
           {signoutConfirm ? t('settings.signingOut') : t('settings.signOutBtn')}
         </button>
         <button onClick={() => goBack()} style={{ width: '100%', padding: '13px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid var(--border)', background: 'white', color: 'var(--text)', cursor: 'pointer' }}>{t('settings.cancel')}</button>
@@ -181,8 +183,8 @@ export default function GPSettingsTab() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>GP</div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>Partner</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>partner@example.com</div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>{fullName ?? t('page.gp.role')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{user?.email ?? ''}</div>
           </div>
         </div>
         {[
