@@ -13,10 +13,16 @@
 create extension if not exists pgcrypto with schema extensions;
 
 -- 1. Auth users. Pre-confirmed, since no mail is delivered for these.
+-- The empty-string token columns are NOT optional. GoTrue scans them into
+-- non-nullable Go strings, so leaving them NULL makes every sign-in fail with
+-- a 500 "Database error querying schema" even though the row looks correct.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
   email_confirmed_at, created_at, updated_at,
-  raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change,
+  email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token, reauthentication_token
 )
 select
   '00000000-0000-0000-0000-000000000000',
@@ -28,7 +34,8 @@ select
   now(), now(), now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
   '{}'::jsonb,
-  false, false
+  false, false,
+  '', '', '', '', '', '', '', ''
 from (values
   ('gp@clavio.app'),
   ('lp@clavio.app'),
