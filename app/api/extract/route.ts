@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -27,6 +28,28 @@ Extract the following fields and return ONLY a valid JSON object with these exac
 Period should be in format "Q1 2024". If a value is not found, use 0. Return ONLY the JSON object, no other text.`
 
 export async function POST(req: Request) {
+  // Outside the middleware matcher, so this is the route's only gate. An open
+  // upload endpoint that calls a paid model is an abuse and billing surface as
+  // much as a data one. Checked before the API-key guard so a misconfigured
+  // deploy still refuses anonymous callers.
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  // Extraction belongs to the filing flow. LPs have no upload UI and no reason
+  // to run documents through the model.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'submit' && profile?.role !== 'gp') {
+    return NextResponse.json({ error: 'Not permitted' }, { status: 403 })
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
   }

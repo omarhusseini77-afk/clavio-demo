@@ -160,27 +160,80 @@ export const FORECAST = {
   through: { en: 'Through 2027', fr: 'Jusqu’en 2027' } as Loc,
 }
 
-// Compact JSON-ish context block the AI assistant reasons over (English source;
-// the assistant is instructed to reply in the requested language).
-export function fundContext(): string {
-  const companies = COMPANIES.map(c => ({
+const currencyOf = (sym: string) => (sym === '£' ? 'GBP' : sym === '€' ? 'EUR' : 'USD')
+const statusOf = (s: Company['status']) => (s === 'green' ? 'on plan' : 'on watch')
+
+// Everything a GP is entitled to: the full ledger-level picture.
+function companyFull(c: Company) {
+  return {
     name: c.name, sector: c.sector.en, country: c.country.en,
-    currency: c.sym === '£' ? 'GBP' : c.sym === '€' ? 'EUR' : 'USD',
-    moic: c.moic, status: c.status === 'green' ? 'on plan' : 'on watch',
+    currency: currencyOf(c.sym),
+    moic: c.moic, status: statusOf(c.status),
+    investmentDate: c.investmentDate, ownership: c.ownership, cost: c.cost,
+    irr: c.irr, evEbitda: c.evEbitda, netDebt: c.netDebt,
     annualAccounts: c.data,
     note: c.commentary.en,
-  }))
+  }
+}
+
+// What an LP is entitled to: the shape of a real quarterly investor report.
+// Deliberately omits cash, receivables, payables and netDebt — working-capital
+// internals from the company's own books, not investor reporting. Anything
+// added to CompanyYear later is excluded here by default rather than leaking,
+// because each field is named explicitly instead of spreading the record.
+function companyHeadline(c: Company) {
+  return {
+    name: c.name, sector: c.sector.en, country: c.country.en,
+    currency: currencyOf(c.sym),
+    moic: c.moic, status: statusOf(c.status),
+    investmentDate: c.investmentDate, ownership: c.ownership, cost: c.cost,
+    irr: c.irr, evEbitda: c.evEbitda,
+    annualAccounts: c.data.map(y => ({
+      fy: y.fy,
+      revenue: y.revenue,
+      grossMargin: y.grossMargin,
+      ebitda: y.ebitda,
+      netProfit: y.netProfit,
+    })),
+    note: c.commentary.en,
+  }
+}
+
+const capitalAccount = () => ({
+  events: CAPITAL_EVENTS.map(e => ({ date: e.date.en, type: e.type, label: e.label.en, amount: e.amount })),
+  forecast: {
+    nextCall: { period: FORECAST.nextCall.period.en, amount: FORECAST.nextCall.amount, note: FORECAST.nextCall.note.en },
+    nextDistribution: { period: FORECAST.nextDistribution.period.en, amount: FORECAST.nextDistribution.amount, note: FORECAST.nextDistribution.note.en },
+    projectedDistributions18m: FORECAST.projectedDistributions18m,
+  },
+})
+
+export type AskRole = 'gp' | 'lp' | 'submit'
+
+// The single place that decides what the assistant is allowed to know about the
+// caller. Built server-side from the session's role — never from the request
+// body, which the client controls.
+//
+// `quarters` is whatever RLS let the caller read, so a submit user gets their
+// own filed figures and nothing fund-wide.
+export function contextForRole(role: AskRole, quarters: unknown[] = []): string {
+  if (role === 'submit') {
+    // The portfolio company sees only what it has filed. No fund, no siblings.
+    return JSON.stringify({ standardisedQuarters: quarters }, null, 2)
+  }
+
+  if (role === 'lp') {
+    return JSON.stringify({
+      fund: { ...FUND, date: FUND.date.en },
+      portfolioCompanies: COMPANIES.map(companyHeadline),
+      yourCapitalAccount: capitalAccount(),
+    }, null, 2)
+  }
+
   return JSON.stringify({
     fund: { ...FUND, date: FUND.date.en },
-    portfolioCompanies: companies,
-    yourCapitalAccount: {
-      events: CAPITAL_EVENTS.map(e => ({ date: e.date.en, type: e.type, label: e.label.en, amount: e.amount })),
-      forecast: {
-        nextCall: { period: FORECAST.nextCall.period.en, amount: FORECAST.nextCall.amount, note: FORECAST.nextCall.note.en },
-        nextDistribution: { period: FORECAST.nextDistribution.period.en, amount: FORECAST.nextDistribution.amount, note: FORECAST.nextDistribution.note.en },
-        projectedDistributions18m: FORECAST.projectedDistributions18m,
-      },
-    },
+    portfolioCompanies: COMPANIES.map(companyFull),
+    standardisedQuarters: quarters,
   }, null, 2)
 }
 
