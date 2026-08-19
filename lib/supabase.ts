@@ -1,9 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Shared row type only.
+//
+// This module used to export a bare anon-key client with no session attached.
+// Everything that used it reached Postgres as an anonymous caller, which is why
+// the quarters table was readable without logging in. It is deliberately gone:
+// use lib/supabase/client.ts in the browser or lib/supabase/server.ts on the
+// server, both of which carry the user's session so RLS applies.
 
 export type Quarter = {
   id?: number
