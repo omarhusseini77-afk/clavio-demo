@@ -171,7 +171,18 @@ export async function POST(req: Request) {
       `cache_read=${u.cache_read_input_tokens ?? 0}`
     )
 
-    return NextResponse.json({ answer })
+    // Returned as well as logged so caching can be checked without Vercel log
+    // access. Counts describe the caller's own request and the route is
+    // authenticated, so there is nothing here they cannot already see.
+    return NextResponse.json({
+      answer,
+      usage: {
+        input: u.input_tokens,
+        output: u.output_tokens,
+        cacheWrite: u.cache_creation_input_tokens ?? 0,
+        cacheRead: u.cache_read_input_tokens ?? 0,
+      },
+    })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Request failed'
     return NextResponse.json({ error: msg }, { status: 500 })
