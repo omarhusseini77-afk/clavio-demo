@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { contextForRole, type AskRole } from '@/lib/fundData'
+import type { FundDataPayload } from '@/lib/fundTypes'
 import { createClient } from '@/lib/supabase/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -99,7 +100,18 @@ export async function POST(req: Request) {
       quarters = data ?? []
     }
 
-    const base = systemFor(role, contextForRole(role, quarters))
+    // Same session, same route the views use, so the assistant is limited to
+    // exactly the rows RLS would return to this caller.
+    const origin = new URL(req.url).origin
+    const fundRes = await fetch(`${origin}/api/fund-data`, {
+      headers: { cookie: req.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    })
+    const fundData: FundDataPayload = fundRes.ok
+      ? await fundRes.json()
+      : { fund: null, position: null, companies: [], capitalEvents: [], forecast: null, documents: [], anomalies: [] }
+
+    const base = systemFor(role, contextForRole(role, fundData, quarters))
     const system = lang === 'fr'
       ? `${base}\n\nIMPORTANT : réponds toujours en français, quelle que soit la langue de la question. Utilise les conventions de chiffres françaises (espace pour les milliers, virgule décimale) et les symboles de devise £/€.`
       : base

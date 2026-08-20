@@ -26,13 +26,23 @@ export async function POST() {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
+  // Seeded rows belong to the caller's company. company_id becomes NOT NULL in
+  // 006, so this must ship before that migration runs.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', user.id)
+    .single()
+
   // Delete all and re-insert
   if (existing && existing.length > 0) {
     for (const row of existing) {
       await supabase.from('quarters').delete().eq('id', row.id)
     }
   }
-  const { error } = await supabase.from('quarters').insert(seedData)
+  const { error } = await supabase
+    .from('quarters')
+    .insert(seedData.map(row => ({ ...row, company_id: profile?.company_id ?? null })))
   if (error) return NextResponse.json({ error: error.message }, { status: 403 })
   return NextResponse.json({ message: `Seeded ${seedData.length} quarters` })
 }

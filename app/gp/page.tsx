@@ -4,6 +4,7 @@ import GPView from '@/components/GPView'
 import GPSettingsTab from '@/components/GPSettingsTab'
 import BottomTabBar from '@/components/BottomTabBar'
 import AccountMenu from '@/components/AccountMenu'
+import { FundDataProvider } from '@/lib/useFundData'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
 import type { Currency } from '@/lib/currency'
@@ -98,6 +99,7 @@ export default function GPPage() {
   }, [])
 
   return (
+    <FundDataProvider>
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
         {/* Top bar */}
@@ -220,6 +222,7 @@ export default function GPPage() {
         />
       )}
     </div>
+    </FundDataProvider>
   )
 }
 
