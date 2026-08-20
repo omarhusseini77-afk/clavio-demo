@@ -266,6 +266,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'settings.downloadData': 'Download my data',
     'settings.downloadDataHint': 'Export a copy of your account data',
     'settings.signOut': 'Sign out',
+    // Account menu
+    'account.menu': 'Account',
+    'account.signedInAs': 'Signed in as',
+    'account.settings': 'Settings',
+    'account.backToDashboard': 'Back to dashboard',
     // Change password view
     'settings.changePwTitle': 'Change Password',
     'settings.currentPw': 'Current password',
@@ -404,6 +409,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'settings.downloadData': 'Télécharger mes données',
     'settings.downloadDataHint': 'Exporter une copie de vos données',
     'settings.signOut': 'Se déconnecter',
+    // Account menu
+    'account.menu': 'Compte',
+    'account.signedInAs': 'Connecté en tant que',
+    'account.settings': 'Réglages',
+    'account.backToDashboard': 'Retour au tableau de bord',
     'settings.changePwTitle': 'Changer le mot de passe',
     'settings.currentPw': 'Mot de passe actuel',
     'settings.newPw': 'Nouveau mot de passe',

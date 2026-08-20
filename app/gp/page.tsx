@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import GPView from '@/components/GPView'
 import GPSettingsTab from '@/components/GPSettingsTab'
 import BottomTabBar from '@/components/BottomTabBar'
+import AccountMenu from '@/components/AccountMenu'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
 import type { Currency } from '@/lib/currency'
@@ -149,7 +150,12 @@ export default function GPPage() {
                 <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{t('gp.liveData')}</span>
               </div>
             </div>
-            <DesktopControls currency={currency} setCurrency={setCurrency} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <DesktopControls currency={currency} setCurrency={setCurrency} />
+              {/* Desktop has no bottom tab bar, so this is the only route to
+                  settings and sign-out at this breakpoint. */}
+              <AccountMenu onOpenSettings={() => setGpSection('settings')} />
+            </div>
           </div>
         )}
 
@@ -160,7 +166,27 @@ export default function GPPage() {
           paddingBottom: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : undefined,
         }}>
           {gpSection === 'settings' ? (
-            <GPSettingsTab />
+            <>
+              {/* Mobile leaves settings via the tab bar; desktop needs its own
+                  way back or the section is a dead end. */}
+              {!isMobile && (
+                <button
+                  onClick={() => setGpSection('overview')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--accent)', fontSize: 13, fontWeight: 500,
+                    padding: 0, marginBottom: 18,
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  {t('account.backToDashboard')}
+                </button>
+              )}
+              <GPSettingsTab />
+            </>
           ) : loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
               <Spinner /> {t('chrome.loading')}

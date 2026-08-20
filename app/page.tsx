@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import PortfolioView from '@/components/PortfolioView'
 import { DesktopLangToggle, MobileLangToggle } from '@/components/TopControls'
+import AccountMenu from '@/components/AccountMenu'
 import { useQuarters } from '@/lib/useQuarters'
 import { useLang } from '@/lib/i18n'
 
@@ -36,6 +37,9 @@ export default function PortfolioPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 500 }}>{t('page.submit.role')}</span>
               <MobileLangToggle />
+              {/* This view has no settings section at either breakpoint, so the
+                  account menu is the only way to sign out. */}
+              <AccountMenu dark />
             </div>
           </div>
         ) : (
@@ -56,7 +60,10 @@ export default function PortfolioPage() {
                 <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{t('page.submit.subtitle')}</span>
               </div>
             </div>
-            <DesktopLangToggle />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <DesktopLangToggle />
+              <AccountMenu />
+            </div>
           </div>
         )}
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import LPView from '@/components/LPView'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
+import AccountMenu from '@/components/AccountMenu'
 import type { Currency } from '@/lib/currency'
 import { useLang } from '@/lib/i18n'
 
@@ -118,7 +119,10 @@ export default function LPPage() {
                 <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{t('page.lp.confidential')}</span>
               </div>
             </div>
-            <DesktopControls currency={currency} setCurrency={setCurrency} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <DesktopControls currency={currency} setCurrency={setCurrency} />
+              <AccountMenu />
+            </div>
           </div>
         )}
 
