@@ -267,6 +267,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'settings.downloadDataHint': 'Export a copy of your account data',
     'settings.signOut': 'Sign out',
     // Account menu
+    'lp.loadError': 'Could not load your fund data. Please refresh, or contact your fund administrator if this persists.',
     'account.menu': 'Account',
     'account.signedInAs': 'Signed in as',
     'account.settings': 'Settings',
@@ -410,6 +411,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'settings.downloadDataHint': 'Exporter une copie de vos données',
     'settings.signOut': 'Se déconnecter',
     // Account menu
+    'lp.loadError': 'Impossible de charger les données de votre fonds. Veuillez actualiser la page ou contacter l’administrateur du fonds si le problème persiste.',
     'account.menu': 'Compte',
     'account.signedInAs': 'Connecté en tant que',
     'account.settings': 'Réglages',

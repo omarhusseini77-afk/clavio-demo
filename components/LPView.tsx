@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { Quarter } from '@/lib/supabase'
 import type { Currency } from '@/lib/currency'
 import { fmtM, fmtFull } from '@/lib/currency'
-import { FUND, COMPANIES, DOCUMENTS, CAPITAL_EVENTS, FORECAST } from '@/lib/fundData'
+import { useFund } from '@/lib/useFundData'
+import type { Company } from '@/lib/fundTypes'
 import { useCountUp } from '@/lib/useCountUp'
 import { useLang, loc } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
@@ -43,11 +44,12 @@ const LP_TABS = [
 type Tab = 'account' | 'ask' | 'performance' | 'portfolio' | 'documents' | 'settings'
 
 export default function LPView({ quarters, currency, isMobile }: { quarters: Quarter[]; currency: Currency; isMobile?: boolean }) {
+  const { companies, fund } = useFund()
   const { t, lang } = useLang()
   const [tab, setTab] = useState<Tab>('account')
-  const [selectedCompany, setSelectedCompany] = useState(COMPANIES[0].id)
+  const [selectedCompany, setSelectedCompany] = useState(companies[0].id)
   void quarters // kept for future real-data integration
-  const fundDate = loc(FUND.date, lang)
+  const fundDate = loc(fund.date, lang)
 
   const changeTab = (t: Tab) => {
     setTab(t)
@@ -80,7 +82,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {!isMobile && (
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>{t('lp.section.account')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{t('lp.asAt', { name: FUND.name, date: fundDate })}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{t('lp.asAt', { name: fund.name, date: fundDate })}</p>
         </div>
       )}
 
@@ -114,7 +116,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {isMobile && (
         <div style={{ marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.2px' }}>{t(`lp.section.${tab}`)}</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: FUND.name, date: fundDate })}</p>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.nameDate', { name: fund.name, date: fundDate })}</p>
         </div>
       )}
 
@@ -140,11 +142,12 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
 // ── My Account tab ───────────────────────────────────────────────────────────
 
 function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { currency: Currency; goToPerformance: () => void; goToAsk: () => void; goToDocuments: () => void }) {
+  const { documents, fund, position } = useFund()
   const { t, lang } = useLang()
-  const calledPct = (FUND.called / FUND.commitment) * 100
-  const navCount = useCountUp(FUND.nav)
-  const tvpiCount = useCountUp(FUND.tvpi)
-  const dpiCount = useCountUp(FUND.dpi)
+  const calledPct = (position.called / position.commitment) * 100
+  const navCount = useCountUp(position.nav)
+  const tvpiCount = useCountUp(position.tvpi)
+  const dpiCount = useCountUp(position.dpi)
 
   return (
     <div>
@@ -156,17 +159,17 @@ function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { cur
         boxShadow: '0 14px 34px -16px rgba(10,14,26,0.6)',
       }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,130,189,0.35), transparent 70%)' }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.yourPosition', { name: FUND.name })}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{t('lp.yourPosition', { name: fund.name })}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18, position: 'relative' }}>
           <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.5px' }}>{fmtM(navCount, currency)}</div>
-          <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {t('lp.netSuffix', { x: FUND.tvpi })}</div>
+          <div style={{ fontSize: 13, color: '#7FE6B0', fontWeight: 600 }}>▲ {t('lp.netSuffix', { x: position.tvpi })}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0, position: 'relative' }}>
           {[
             { label: t('lp.tvpi'), value: `${tvpiCount.toFixed(2)}x` },
             { label: t('lp.dpi'), value: `${dpiCount.toFixed(2)}x` },
-            { label: 'NET IRR', value: `${FUND.irr}%` },
-            { label: t('lp.fundShare'), value: `${FUND.shareOfFund}%` },
+            { label: 'NET IRR', value: `${position.irr}%` },
+            { label: t('lp.fundShare'), value: `${position.shareOfFund}%` },
           ].map((s, i) => (
             <div key={s.label} style={{
               paddingRight: i < 3 ? 12 : 0,
@@ -209,8 +212,8 @@ function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { cur
           <div style={{ background: 'var(--accent)', borderRadius: 4, height: 6, width: `${calledPct}%` }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-          <span style={{ fontWeight: 500 }}>{t('lp.called', { amount: fmtM(FUND.called, currency) })}</span>
-          <span style={{ color: 'var(--text-muted)' }}>{t('lp.remaining', { amount: fmtM(FUND.unfunded, currency) })}</span>
+          <span style={{ fontWeight: 500 }}>{t('lp.called', { amount: fmtM(position.called, currency) })}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{t('lp.remaining', { amount: fmtM(position.unfunded, currency) })}</span>
         </div>
       </div>
 
@@ -218,12 +221,12 @@ function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { cur
       <div style={{ ...styles.card, marginBottom: 10, padding: '14px 16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 12px' }}>
           {[
-            { label: t('lp.kpi.commitment'), value: fmtM(FUND.commitment, currency) },
-            { label: t('lp.kpi.called'), value: fmtM(FUND.called, currency) },
-            { label: t('lp.kpi.unfunded'), value: fmtM(FUND.unfunded, currency) },
-            { label: t('lp.kpi.distributed'), value: fmtM(FUND.distributed, currency) },
-            { label: t('lp.kpi.currentNav'), value: fmtM(FUND.nav, currency) },
-            { label: t('lp.kpi.fundShare'), value: `${FUND.shareOfFund}%` },
+            { label: t('lp.kpi.commitment'), value: fmtM(position.commitment, currency) },
+            { label: t('lp.kpi.called'), value: fmtM(position.called, currency) },
+            { label: t('lp.kpi.unfunded'), value: fmtM(position.unfunded, currency) },
+            { label: t('lp.kpi.distributed'), value: fmtM(position.distributed, currency) },
+            { label: t('lp.kpi.currentNav'), value: fmtM(position.nav, currency) },
+            { label: t('lp.kpi.fundShare'), value: `${position.shareOfFund}%` },
           ].map(k => (
             <div key={k.label}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>{k.label}</div>
@@ -259,7 +262,7 @@ function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { cur
       {/* Documents — compact list */}
       <div id="lp-documents" style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Documents</div>
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden', marginBottom: 40 }}>
-        {DOCUMENTS.slice(0, 5).map((doc, i) => (
+        {documents.slice(0, 5).map((doc, i) => (
           <div key={doc.title.en} onClick={goToDocuments} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < 4 ? '1px solid #F3F4F6' : 'none', cursor: 'pointer' }}>
             <div style={{
               width: 30, height: 30, borderRadius: 7, flexShrink: 0,
@@ -289,6 +292,7 @@ function AccountTab({ currency, goToPerformance, goToAsk, goToDocuments }: { cur
 // ── Cash-flow forecast strip ─────────────────────────────────────────────────
 
 function ForecastStrip({ currency }: { currency: Currency }) {
+  const { forecast } = useFund()
   const { t, lang } = useLang()
   return (
     <div style={{ ...styles.card, marginBottom: 10, borderLeft: '3px solid var(--accent)' }}>
@@ -300,22 +304,22 @@ function ForecastStrip({ currency }: { currency: Currency }) {
         <ForecastItem
           dir="out"
           label={t('lp.nextCall')}
-          amount={`~${fmtM(FORECAST.nextCall.amount, currency)}`}
-          period={loc(FORECAST.nextCall.period, lang)}
-          note={loc(FORECAST.nextCall.note, lang)}
+          amount={`~${fmtM(forecast.nextCall.amount, currency)}`}
+          period={loc(forecast.nextCall.period, lang)}
+          note={loc(forecast.nextCall.note, lang)}
         />
         <ForecastItem
           dir="in"
           label={t('lp.nextDist')}
-          amount={`~${fmtM(FORECAST.nextDistribution.amount, currency)}`}
-          period={loc(FORECAST.nextDistribution.period, lang)}
-          note={loc(FORECAST.nextDistribution.note, lang)}
+          amount={`~${fmtM(forecast.nextDistribution.amount, currency)}`}
+          period={loc(forecast.nextDistribution.period, lang)}
+          note={loc(forecast.nextDistribution.note, lang)}
         />
         <ForecastItem
           dir="in"
           label={t('lp.dist18m')}
-          amount={`~${fmtM(FORECAST.projectedDistributions18m, currency)}`}
-          period={loc(FORECAST.through, lang)}
+          amount={`~${fmtM(forecast.projectedDistributions18m, currency)}`}
+          period={loc(forecast.through, lang)}
           note={loc({ en: "Based on the fund's realisation plan", fr: 'Selon le plan de réalisation du fonds' }, lang)}
         />
       </div>
@@ -347,15 +351,16 @@ function ForecastItem({ dir, label, amount, period, note }: {
 // ── Capital account activity timeline ────────────────────────────────────────
 
 function CapitalActivity({ currency }: { currency: Currency }) {
+  const { capitalEvents, position } = useFund()
   const { t, lang } = useLang()
   // Most recent first
-  const events = [...CAPITAL_EVENTS].reverse()
+  const events = [...capitalEvents].reverse()
   return (
     <div id="lp-activity" style={{ ...styles.card, marginBottom: 10 }}>
       <div style={{ marginBottom: 16 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>{t('lp.activity')}</span>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          {t('lp.activitySummary', { called: fmtM(FUND.called, currency), distributed: fmtM(FUND.distributed, currency) })}
+          {t('lp.activitySummary', { called: fmtM(position.called, currency), distributed: fmtM(position.distributed, currency) })}
         </span>
       </div>
       <div style={{ position: 'relative' }}>
@@ -395,7 +400,7 @@ function CapitalActivity({ currency }: { currency: Currency }) {
 
 // ── Fund Performance tab ─────────────────────────────────────────────────────
 
-function CompanyModal({ co, onClose }: { co: typeof COMPANIES[0]; onClose: () => void }) {
+function CompanyModal({ co, onClose }: { co: Company; onClose: () => void }) {
   const { t, lang } = useLang()
   const [notes, setNotes] = useState('')
   return (
@@ -483,15 +488,16 @@ function CompanyModal({ co, onClose }: { co: typeof COMPANIES[0]; onClose: () =>
 }
 
 function PerformanceTab() {
+  const { companies, fund, position } = useFund()
   const { t, lang } = useLang()
-  const [activeCompany, setActiveCompany] = useState<typeof COMPANIES[0] | null>(null)
+  const [activeCompany, setActiveCompany] = useState<Company | null>(null)
   return (
     <div>
       {/* Header metrics */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div className="hide-mobile">
           <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('lp.section.performance')}</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{FUND.name} · {FUND.period}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{fund.name} · {fund.periodLabel}</p>
         </div>
         <div style={{ display: 'flex', gap: 28, textAlign: 'right' }}>
           {[
@@ -510,9 +516,9 @@ function PerformanceTab() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
         {[
-          { label: t('lp.stat.netIrr'), value: `${FUND.irr}%`, color: 'var(--accent)' },
-          { label: t('lp.stat.grossIrr'), value: `${FUND.grossIrr}%`, color: 'var(--accent)' },
-          { label: t('lp.stat.rvpi'), value: `${FUND.rvpi}x`, color: 'var(--text)' },
+          { label: t('lp.stat.netIrr'), value: `${position.irr}%`, color: 'var(--accent)' },
+          { label: t('lp.stat.grossIrr'), value: `${fund.grossIrr}%`, color: 'var(--accent)' },
+          { label: t('lp.stat.rvpi'), value: `${position.rvpi}x`, color: 'var(--text)' },
           { label: t('lp.stat.revGrowth'), value: '+8.1%', color: 'var(--green)' },
           { label: t('lp.stat.gmargin'), value: '35.4%', color: 'var(--text)' },
           { label: t('lp.stat.ebitdaGrowth'), value: '+11.2%', color: 'var(--green)' },
@@ -558,7 +564,7 @@ function PerformanceTab() {
       {/* Portfolio companies grid */}
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>{t('lp.portfolioCompanies')}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12, marginBottom: 40 }}>
-        {COMPANIES.map(co => (
+        {companies.map(co => (
           <div key={co.id} style={{ ...styles.card, cursor: 'pointer' }} onClick={() => setActiveCompany(co)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
               <div>
@@ -611,16 +617,20 @@ function PerformanceTab() {
 // ── Portfolio tab ────────────────────────────────────────────────────────────
 
 function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany: string; setSelectedCompany: (id: string) => void }) {
+  const { companies } = useFund()
   const { t, lang } = useLang()
-  const co = COMPANIES.find(c => c.id === selectedCompany)!
+  const co = companies.find(c => c.id === selectedCompany)!
   const latest = co.data[co.data.length - 1]
   void latest
+  // True only when the API returned working-capital figures, which happens
+  // solely for roles RLS permits. Investors get undefined here.
+  const hasWorkingCapital = co.data.every(d => d.cash !== undefined)
 
   return (
     <div>
       {/* Company selector */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-        {COMPANIES.map(c => (
+        {companies.map(c => (
           <button
             key={c.id}
             onClick={() => setSelectedCompany(c.id)}
@@ -686,10 +696,16 @@ function PortfolioTab({ selectedCompany, setSelectedCompany }: { selectedCompany
                 { label: t('lp.m.ebitda'), values: co.data.map(d => `${co.sym} ${(d.ebitda / 1000).toFixed(0)}k`), trend: co.data.map(d => d.ebitda), color: '#10B981' },
                 { label: t('lp.m.ebitdaMargin'), values: co.data.map(d => `${((d.ebitda / d.revenue) * 100).toFixed(1)}%`), trend: co.data.map(d => (d.ebitda / d.revenue) * 100), color: '#10B981' },
                 { label: t('lp.m.netProfit'), values: co.data.map(d => `${co.sym} ${(d.netProfit / 1000).toFixed(0)}k`), trend: co.data.map(d => d.netProfit), color: '#10B981' },
-                { label: t('lp.m.cash'), values: co.data.map(d => `${co.sym} ${(d.cash / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash), color: '#10B981' },
-                { label: t('lp.m.netDebt'), values: co.data.map(d => `${co.sym} ${((d.receivables - d.cash) / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables - d.cash), color: '#F59E0B' },
-                { label: t('lp.m.receivables'), values: co.data.map(d => `${co.sym} ${(d.receivables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables), color: '#F59E0B' },
-                { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym} ${(d.payables / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables), color: '#F59E0B' },
+                // Working capital reaches this table only for roles permitted to
+                // see it. RLS withholds company_year_internals from investors, so
+                // for an LP these fields are absent and the rows simply do not
+                // render — driven by what arrived, not by a role check here.
+                ...(hasWorkingCapital ? [
+                  { label: t('lp.m.cash'), values: co.data.map(d => `${co.sym} ${(d.cash! / 1_000_000).toFixed(2)}M`), trend: co.data.map(d => d.cash!), color: '#10B981' },
+                  { label: t('lp.m.netDebt'), values: co.data.map(d => `${co.sym} ${((d.receivables! - d.cash!) / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables! - d.cash!), color: '#F59E0B' },
+                  { label: t('lp.m.receivables'), values: co.data.map(d => `${co.sym} ${(d.receivables! / 1000).toFixed(0)}k`), trend: co.data.map(d => d.receivables!), color: '#F59E0B' },
+                  { label: t('lp.m.payables'), values: co.data.map(d => `${co.sym} ${(d.payables! / 1000).toFixed(0)}k`), trend: co.data.map(d => d.payables!), color: '#F59E0B' },
+                ] : []),
               ].map((row, i) => (
                 <tr key={row.label} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? 'transparent' : '#FAFAFA' }}>
                   <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: 12 }}>{row.label}</td>
@@ -989,6 +1005,7 @@ function SettingsTab() {
 }
 
 function DocumentsTab() {
+  const { documents, fund } = useFund()
   const { t, lang } = useLang()
   const [query, setQuery] = useState('')
   const [openDoc, setOpenDoc] = useState<string | null>(null)
@@ -997,7 +1014,7 @@ function DocumentsTab() {
   const [errorDoc, setErrorDoc] = useState<Record<string, string>>({})
 
   const q = query.trim().toLowerCase()
-  const filtered = DOCUMENTS.filter(d =>
+  const filtered = documents.filter(d =>
     !q || loc(d.title, lang).toLowerCase().includes(q) || loc(d.type, lang).toLowerCase().includes(q)
   )
 
@@ -1007,7 +1024,7 @@ function DocumentsTab() {
     setLoadingDoc(id)
     setErrorDoc(e => ({ ...e, [id]: '' }))
     try {
-      const question = `Summarise the "${titleEn}" (a ${typeEn.toLowerCase()} for ${FUND.name}) for an investor in exactly 3 short bullet points. Each bullet on its own line starting with "• ". Ground every bullet in the fund and portfolio figures you have. No preamble, just the 3 bullets.`
+      const question = `Summarise the "${titleEn}" (a ${typeEn.toLowerCase()} for ${fund.name}) for an investor in exactly 3 short bullet points. Each bullet on its own line starting with "• ". Ground every bullet in the fund and portfolio figures you have. No preamble, just the 3 bullets.`
       const res = await fetch('/api/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, lang }),
@@ -1026,7 +1043,7 @@ function DocumentsTab() {
     <div>
       <div className="hide-mobile" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('lp.section.documents')}</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.documentsSub', { name: FUND.name })}</p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.documentsSub', { name: fund.name })}</p>
       </div>
 
       {/* Search */}
@@ -1119,12 +1136,13 @@ function DocumentsTab() {
 // ── Ask AI tab ───────────────────────────────────────────────────────────────
 
 function AskTab({ isMobile }: { isMobile?: boolean }) {
+  const { companies, fund } = useFund()
   const { t, lang } = useLang()
   return (
     <AskPanel
       isMobile={isMobile}
       connectedLabel={t('ask.connected')}
-      connectedSub={t('ask.lp.sub', { n: COMPANIES.length, date: loc(FUND.date, lang) })}
+      connectedSub={t('ask.lp.sub', { n: companies.length, date: loc(fund.date, lang) })}
       introTitle={t('ask.lp.introTitle')}
       introBody={t('ask.lp.introBody')}
       placeholder={t('ask.lp.placeholder')}

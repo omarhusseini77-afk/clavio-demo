@@ -4,6 +4,7 @@ import LPView from '@/components/LPView'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
 import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
 import AccountMenu from '@/components/AccountMenu'
+import { FundDataProvider, useFundData, isReady } from '@/lib/useFundData'
 import type { Currency } from '@/lib/currency'
 import { useLang } from '@/lib/i18n'
 
@@ -64,6 +65,7 @@ export default function LPPage() {
   }, [])
 
   return (
+    <FundDataProvider>
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
         {/* Top bar */}
@@ -127,7 +129,7 @@ export default function LPPage() {
         )}
 
         <main style={{ flex: 1, padding: isMobile ? '20px 16px' : '28px 32px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
-          <LPView quarters={[]} currency={currency} isMobile={isMobile} />
+          <LPBody currency={currency} isMobile={isMobile} />
         </main>
       </div>
 
@@ -140,5 +142,35 @@ export default function LPPage() {
         />
       )}
     </div>
+    </FundDataProvider>
   )
+}
+
+// Gate LPView on the data being genuinely present. An investor portal that
+// renders a confident "NAV £0" because a fetch failed is worse than one that
+// admits it could not load, so there is no fallback to empty defaults here.
+function LPBody({ currency, isMobile }: { currency: Currency; isMobile: boolean }) {
+  const { t } = useLang()
+  const { data, loading, error } = useFundData()
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', gap: 10 }}>
+        {t('chrome.loading')}
+      </div>
+    )
+  }
+
+  if (error || !isReady(data)) {
+    return (
+      <div style={{
+        border: '1px solid var(--border)', borderRadius: 12,
+        padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14,
+      }}>
+        {t('lp.loadError')}
+      </div>
+    )
+  }
+
+  return <LPView quarters={[]} currency={currency} isMobile={isMobile} />
 }

@@ -7,6 +7,8 @@ import { fmtShort, fmtFull, symbol } from '@/lib/currency'
 import { useCountUp } from '@/lib/useCountUp'
 import { useLang, loc } from '@/lib/i18n'
 import type { Loc } from '@/lib/loc'
+import type { Anomaly } from '@/lib/fundTypes'
+import { useFundData } from '@/lib/useFundData'
 import AskPanel from './AskPanel'
 
 // Secondary metrics shown beneath the hero (hero covers turnover/gross/op/pbt).
@@ -26,64 +28,6 @@ const ALL_FIELDS: { key: keyof Quarter }[] = [
   { key: 'funds' },
 ]
 
-interface Signal { company: string; detail: Loc; level: 'red' | 'amber' }
-const SIGNALS: Signal[] = [
-  { company: 'Halcyon Textiles', detail: { en: 'Lost client >5% · Bank discussions · Miss next target', fr: 'Perte client >5 % · Discussions bancaires · Objectif suivant manqué' }, level: 'red' },
-  { company: 'Sentinel Security NW', detail: { en: 'Miss next target', fr: 'Objectif suivant manqué' }, level: 'amber' },
-]
-
-interface Anomaly { company: string; title: Loc; detail: Loc; level: 'red' | 'amber'; actions: Loc[] }
-const ANOMALIES: Anomaly[] = [
-  {
-    company: 'HALCYON TEXTILES',
-    title: { en: 'EBITDA margin contracted 4.2pp month-over-month', fr: "Marge d'EBITDA en baisse de 4,2 pts sur un mois" },
-    detail: { en: 'Outside the 95% confidence band of the trailing 6 months. Bad debt also up 14% on receivables.', fr: "Hors de l'intervalle de confiance à 95 % des 6 derniers mois. Créances douteuses également en hausse de 14 %." },
-    level: 'red',
-    actions: [
-      { en: "Request management's written explanation for the 4.2pp EBITDA margin contraction — isolate cost vs. revenue driver", fr: "Demander à la direction une explication écrite sur la contraction de 4,2 pts de la marge EBITDA — isoler l'origine (coûts vs. CA)" },
-      { en: 'Run an EBITDA bridge vs. the prior quarter to identify the specific line items driving the move', fr: 'Établir un pont EBITDA par rapport au trimestre précédent pour identifier les postes en cause' },
-      { en: 'Investigate the 14% receivables increase — request a full aged debtors schedule and top-10 debtor breakdown', fr: 'Analyser la hausse de 14 % des créances — demander un échéancier complet des débiteurs et les 10 principaux clients' },
-      { en: 'Place Halcyon Textiles on the formal watch-list; schedule a partner call within 10 business days', fr: 'Inscrire Halcyon Textiles sur la liste de surveillance formelle ; planifier un appel associé sous 10 jours ouvrés' },
-    ],
-  },
-  {
-    company: 'SENTINEL SECURITY NW',
-    title: { en: 'Reported EBITDA inconsistent with prior pattern', fr: 'EBITDA déclaré incohérent avec la tendance passée' },
-    detail: { en: 'Variance from 6-month trailing average exceeds 2σ. Flagged for partner review.', fr: "L'écart par rapport à la moyenne mobile sur 6 mois dépasse 2σ. Signalé pour revue des associés." },
-    level: 'amber',
-    actions: [
-      { en: 'Request management accounts for the last 3 months to independently validate the reported EBITDA figure', fr: "Demander les comptes de gestion des 3 derniers mois pour valider indépendamment le chiffre d'EBITDA déclaré" },
-      { en: 'Cross-reference with the most recent board pack — check for restatements, reclassifications, or one-off items', fr: 'Croiser avec le dernier board pack — vérifier tout redressement, reclassification ou élément exceptionnel' },
-      { en: 'Ask management to confirm the absence of accounting adjustments that may have suppressed the reported number', fr: "Demander à la direction de confirmer l'absence d'ajustements comptables ayant pu minorer le chiffre déclaré" },
-      { en: 'Suspend pending drawdown approvals until a satisfactory written explanation is received', fr: "Suspendre les approbations de tirage en attente jusqu'à réception d'une explication écrite satisfaisante" },
-    ],
-  },
-  {
-    company: 'HALCYON TEXTILES',
-    title: { en: 'Receivables aging — 18% in 30+ day bucket', fr: 'Vieillissement des créances — 18 % à plus de 30 jours' },
-    detail: { en: 'Up from 9% three months ago. Trend warrants follow-up with management.', fr: 'Contre 9 % il y a trois mois. La tendance justifie un suivi avec la direction.' },
-    level: 'amber',
-    actions: [
-      { en: "Request a full aged debtors schedule — identify the top-5 overdue accounts by value and days outstanding", fr: "Demander l'échéancier complet des débiteurs — identifier les 5 principaux comptes en retard par montant et ancienneté" },
-      { en: 'Assess whether the overdue receivables are concentrated in the recently lost client (>5% of revenue)', fr: 'Évaluer si les créances en retard sont concentrées sur le client récemment perdu (>5 % du CA)' },
-      { en: 'Review credit terms and collections procedures with the CFO — set a 30-day remediation target', fr: 'Examiner les conditions de crédit et procédures de recouvrement avec le DG financier — fixer un objectif de remédiation à 30 jours' },
-      { en: 'Evaluate whether a specific bad debt provision is required and model the downside P&L impact if the bucket does not normalise', fr: "Évaluer si une provision pour créances douteuses est nécessaire et modéliser l'impact négatif sur le résultat si le solde ne se normalise pas" },
-    ],
-  },
-  {
-    company: 'ATELIER SAINT-PIERRE',
-    title: { en: 'Working capital tightened for second consecutive quarter', fr: 'Besoin en fonds de roulement en tension pour le deuxième trimestre consécutif' },
-    detail: { en: 'Cash conversion cycle extended by 18 days vs. the same period last year. Trade creditors are being stretched to fund operations.', fr: "Le cycle de conversion de trésorerie s'est allongé de 18 jours par rapport à la même période l'année dernière. Les fournisseurs sont sollicités pour financer l'exploitation." },
-    level: 'amber',
-    actions: [
-      { en: 'Review the cash flow statement line by line with the CFO — identify the primary driver of the working capital build', fr: 'Examiner le tableau de flux de trésorerie ligne par ligne avec le DG financier — identifier le principal facteur de tension du BFR' },
-      { en: 'Assess current headroom on the revolving credit facility and model cash requirements for the next two quarters', fr: 'Évaluer la disponibilité de la ligne de crédit revolving et modéliser les besoins de trésorerie pour les deux prochains trimestres' },
-      { en: 'Request a 13-week cash flow forecast from management to assess near-term liquidity risk', fr: 'Demander à la direction une prévision de trésorerie sur 13 semaines pour évaluer le risque de liquidité à court terme' },
-      { en: "Consider whether a short-term shareholder loan is warranted as a bridging measure pending a working capital improvement plan", fr: "Envisager si un prêt d'actionnaire à court terme est justifié comme mesure de transition dans l'attente d'un plan d'amélioration du BFR" },
-    ],
-  },
-]
-
 type Props = {
   quarters: Quarter[]
   onDelete: (id: number) => Promise<void>
@@ -94,10 +38,15 @@ type Props = {
 
 export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection }: Props) {
   const { t, lang } = useLang()
+  // The anomaly feed is fund data now, not a constant. Empty until it loads,
+  // and empty for anyone RLS does not show anomalies to.
+  const { data: fundData } = useFundData()
+  const signals = (fundData?.anomalies ?? []).filter(a => a.isSignal)
+  const anomalies = (fundData?.anomalies ?? []).filter(a => !a.isSignal)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
-  const [investigateAnomaly, setInvestigateAnomaly] = useState<typeof ANOMALIES[0] | null>(null)
+  const [investigateAnomaly, setInvestigateAnomaly] = useState<Anomaly | null>(null)
   const [hoveredPoint, setHoveredPoint] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
@@ -372,8 +321,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
             <h3 style={{ ...styles.sectionTitle, marginBottom: 2 }}>{t('gp.signals')}</h3>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.flaggedMonth')}</span>
           </div>
-          {SIGNALS.map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < SIGNALS.length - 1 ? 14 : 0, alignItems: 'flex-start' }}>
+          {signals.map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < signals.length - 1 ? 14 : 0, alignItems: 'flex-start' }}>
               <div style={{
                 width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                 background: s.level === 'red' ? '#FEF2F2' : '#FEF3C7',
@@ -395,7 +344,7 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           <h3 style={{ ...styles.sectionTitle, marginBottom: 2 }}>{t('gp.anomalies')}</h3>
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
         </div>
-        {ANOMALIES.map((a, i) => (
+        {anomalies.map((a, i) => (
           <div key={i} id={`gp-anomaly-${a.company.toLowerCase().replace(/\s+/g, '-')}`} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0,
