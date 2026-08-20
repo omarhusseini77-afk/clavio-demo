@@ -111,10 +111,33 @@ export async function POST(req: Request) {
       ? await fundRes.json()
       : { fund: null, position: null, companies: [], capitalEvents: [], forecast: null, documents: [], anomalies: [] }
 
+    // Prompt caching. The data block is the same bytes on every question in a
+    // session — around 9k tokens for a GP, 3.6k for an LP — and re-sending it
+    // uncached is where nearly all the cost goes.
+    //
+    // Caching is a prefix match, so the language instruction goes in a second
+    // block AFTER the breakpoint rather than appended to the first. Otherwise
+    // English and French would be different prefixes and each would need its
+    // own cache entry.
+    //
+    // Uses the default 5-minute TTL. A 1h TTL would suit a demo better —
+    // questions arrive with gaps, and a miss pays a ~1.25x write premium
+    // rather than the ~0.1x read discount, so isolated questions cost slightly
+    // more than no caching at all. Extended TTL needs a newer @anthropic-ai/sdk
+    // than the 0.52 pinned here, and that upgrade is not worth making blind
+    // while the account has no credits to verify a real call against.
+    // Within a burst of questions — which is what a live demo is — the
+    // 5-minute window still captures nearly all of the saving.
     const base = systemFor(role, contextForRole(role, fundData, quarters))
-    const system = lang === 'fr'
-      ? `${base}\n\nIMPORTANT : réponds toujours en français, quelle que soit la langue de la question. Utilise les conventions de chiffres françaises (espace pour les milliers, virgule décimale) et les symboles de devise £/€.`
-      : base
+    const system: Anthropic.TextBlockParam[] = [
+      { type: 'text', text: base, cache_control: { type: 'ephemeral' } },
+    ]
+    if (lang === 'fr') {
+      system.push({
+        type: 'text',
+        text: 'IMPORTANT : réponds toujours en français, quelle que soit la langue de la question. Utilise les conventions de chiffres françaises (espace pour les milliers, virgule décimale) et les symboles de devise £/€.',
+      })
+    }
 
     const messages: Anthropic.MessageParam[] = [
       ...history.map(t => ({ role: t.role, content: t.content })),
@@ -136,6 +159,17 @@ export async function POST(req: Request) {
       .map(b => b.text)
       .join('\n')
       .trim()
+
+    // Whether caching is actually working is not something to assume: a stray
+    // varying byte in the prefix silently disables it and the only signal is
+    // cache_read_input_tokens staying at zero across repeated questions.
+    const u = response.usage
+    console.log(
+      `[ask] role=${role} lang=${lang} ` +
+      `input=${u.input_tokens} output=${u.output_tokens} ` +
+      `cache_write=${u.cache_creation_input_tokens ?? 0} ` +
+      `cache_read=${u.cache_read_input_tokens ?? 0}`
+    )
 
     return NextResponse.json({ answer })
   } catch (err: unknown) {
