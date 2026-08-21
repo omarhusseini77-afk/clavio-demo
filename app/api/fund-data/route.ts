@@ -137,11 +137,15 @@ export async function GET() {
     } : null,
 
     documents: (documentsRes.data ?? []).map(d => ({
+      id: d.id,
       title: { en: d.title_en, fr: d.title_fr },
       type: { en: d.type_en, fr: d.type_fr },
       typeKey: d.type_key,
       date: d.date_label,
       isNew: d.is_new,
+      // Deliberately a boolean, not the path. The client asks for a signed URL
+      // by id; handing it a path would invite passing someone else's.
+      hasFile: Boolean(d.storage_path),
     })),
 
     anomalies: (anomaliesRes.data ?? []).map(a => ({

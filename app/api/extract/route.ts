@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   // to run documents through the model.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -107,7 +107,49 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ error: 'Could not parse extracted data' }, { status: 500 })
 
     const extracted = JSON.parse(jsonMatch[0])
-    return NextResponse.json(extracted)
+
+    // Keep the source document. Until now it was read into memory, sent to the
+    // model and dropped, leaving the figures a GP sees with nothing behind them.
+    //
+    // Stored under {company_id}/... because the storage policy reads tenancy
+    // from the first path segment — a company physically cannot write outside
+    // its own folder. Uploaded with the caller's session, so that policy is
+    // enforced here rather than trusted.
+    let storedFileId: string | null = null
+    if (profile?.role === 'submit' && profile.company_id) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)
+      const objectPath = `${profile.company_id}/${new Date().getFullYear()}/${crypto.randomUUID()}-${safeName}`
+
+      const { error: upErr } = await supabase.storage
+        .from('submissions')
+        .upload(objectPath, buffer, {
+          contentType: file.type || 'application/octet-stream',
+          upsert: false,
+        })
+
+      if (upErr) {
+        // Extraction already succeeded; losing the file is worth reporting but
+        // not worth discarding the parsed figures the user is waiting on.
+        console.error('[extract] upload failed:', upErr.message)
+      } else {
+        const { data: inserted, error: rowErr } = await supabase
+          .from('submission_files')
+          .insert({
+            company_id: profile.company_id,
+            storage_path: objectPath,
+            filename: file.name,
+            mime_type: file.type || null,
+            size_bytes: buffer.length,
+            uploaded_by: user.id,
+          })
+          .select('id')
+          .single()
+        if (rowErr) console.error('[extract] submission_files insert failed:', rowErr.message)
+        else storedFileId = inserted.id
+      }
+    }
+
+    return NextResponse.json({ ...extracted, storedFileId })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Extraction failed'
     return NextResponse.json({ error: msg }, { status: 500 })

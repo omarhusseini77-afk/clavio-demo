@@ -77,11 +77,15 @@ export interface Forecast {
 }
 
 export interface DocItem {
+  id: string
   title: Loc
   type: Loc
   typeKey: 'Report' | 'Notice' | 'Tax'
   date: string
   isNew: boolean
+  // The path itself is never sent to the client — only whether a file exists,
+  // so the UI can disable Download rather than offer a link that 404s.
+  hasFile: boolean
 }
 
 export interface Anomaly {

@@ -1012,6 +1012,28 @@ function DocumentsTab() {
   const [summaries, setSummaries] = useState<Record<string, string>>({})
   const [loadingDoc, setLoadingDoc] = useState<string | null>(null)
   const [errorDoc, setErrorDoc] = useState<Record<string, string>>({})
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  // Asks the server to mint a signed URL for this document id, then follows it.
+  // The URL is short-lived, so it is fetched at click time and never stored.
+  const download = async (docId: string) => {
+    setDownloading(docId)
+    setErrorDoc(e => ({ ...e, [docId]: '' }))
+    try {
+      const res = await fetch('/api/files/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'document', id: docId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not get download link')
+      window.location.href = data.url
+    } catch (e: unknown) {
+      setErrorDoc(er => ({ ...er, [docId]: e instanceof Error ? e.message : 'Download failed' }))
+    } finally {
+      setDownloading(null)
+    }
+  }
 
   const q = query.trim().toLowerCase()
   const filtered = documents.filter(d =>
@@ -1062,7 +1084,9 @@ function DocumentsTab() {
           <div style={{ padding: '28px 20px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>{t('lp.noDocs', { q: query })}</div>
         )}
         {filtered.map((doc, i) => {
-          const id = doc.title.en
+          // Key on the row id, not the title: download errors are recorded
+          // against the id, so a title-based key would silently fail to show them.
+          const id = doc.id
           const isOpen = openDoc === id
           return (
             <div key={id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
@@ -1094,13 +1118,23 @@ function DocumentsTab() {
                 >
                   ✦ <span className="hide-mobile">{t('lp.summary')}</span>
                 </button>
-                <button style={{
-                  padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
-                  border: '1px solid var(--border)', background: 'white', color: 'var(--text)',
-                  cursor: 'pointer', flexShrink: 0,
-                }}>
-                  <span className="hide-mobile">{t('lp.download')}</span>
-                  <span className="show-mobile">↓</span>
+                <button
+                  onClick={() => doc.hasFile && download(doc.id)}
+                  disabled={!doc.hasFile || downloading === doc.id}
+                  title={doc.hasFile ? undefined : t('lp.noFile')}
+                  style={{
+                    padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                    border: '1px solid var(--border)', background: 'white',
+                    color: doc.hasFile ? 'var(--text)' : 'var(--text-muted)',
+                    cursor: doc.hasFile ? 'pointer' : 'not-allowed',
+                    opacity: doc.hasFile ? 1 : 0.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span className="hide-mobile">
+                    {downloading === doc.id ? t('lp.preparing') : t('lp.download')}
+                  </span>
+                  <span className="show-mobile">{downloading === doc.id ? '…' : '↓'}</span>
                 </button>
               </div>
 
