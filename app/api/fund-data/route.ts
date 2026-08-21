@@ -32,8 +32,9 @@ export async function GET() {
     supabase.from('documents').select('*').order('sort_order'),
     supabase.from('anomalies').select('*, companies(name)').order('sort_order'),
     // Which company /api/quarters will scope to, so the dashboard can name it.
-    // Same rule as that route: most recent submission the caller can see.
-    supabase.from('quarters').select('companies(name)').order('id', { ascending: false }).limit(1),
+    // Must use the same rule as that route — most quarters filed — or the label
+    // and the figures come from different companies.
+    supabase.from('quarters').select('company_id, companies(name)'),
   ])
 
   const symbolFor = (currency: string) =>
@@ -165,10 +166,18 @@ export async function GET() {
     })),
 
     quartersCompany: (() => {
-      // PostgREST returns the embedded relation as an array here.
-      const rel = quartersCompanyRes.data?.[0]?.companies as unknown
-      if (Array.isArray(rel)) return (rel[0] as { name?: string } | undefined)?.name ?? null
-      return (rel as { name?: string } | null)?.name ?? null
+      const rows = quartersCompanyRes.data ?? []
+      const counts = new Map<string, { n: number; name: string }>()
+      for (const r of rows as Array<{ company_id: string | null; companies: unknown }>) {
+        if (!r.company_id) continue
+        const rel = r.companies
+        const name = Array.isArray(rel)
+          ? (rel[0] as { name?: string } | undefined)?.name
+          : (rel as { name?: string } | null)?.name
+        const cur = counts.get(r.company_id) ?? { n: 0, name: name ?? '' }
+        counts.set(r.company_id, { n: cur.n + 1, name: name ?? cur.name })
+      }
+      return [...counts.values()].sort((a, b) => b.n - a.n)[0]?.name ?? null
     })(),
   }
 

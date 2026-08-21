@@ -31,13 +31,15 @@ export async function GET(request: Request) {
     if (profile?.role === 'submit') {
       companyId = profile.company_id
     } else {
-      const { data: latest } = await supabase
-        .from('quarters')
-        .select('company_id')
-        .order('id', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      companyId = latest?.company_id ?? null
+      // Whichever company has filed the most quarters. `id` order is not usable
+      // here: it reflects insertion, so a bulk backfill for another company
+      // would silently reassign the whole dashboard to it.
+      const { data: all } = await supabase.from('quarters').select('company_id')
+      const counts = new Map<string, number>()
+      for (const row of all ?? []) {
+        if (row.company_id) counts.set(row.company_id, (counts.get(row.company_id) ?? 0) + 1)
+      }
+      companyId = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
     }
   }
 
@@ -49,10 +51,18 @@ export async function GET(request: Request) {
     .from('quarters')
     .select('*')
     .eq('company_id', companyId)
-    .order('id', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // Chronological, parsed from the period label. Sorting by `id` gave insertion
+  // order, and sorting the label as text puts "Q4 FY24" after "Q1 FY25".
+  const seq = (p: string) => {
+    const m = /Q(\d)\s*FY(\d+)/i.exec(p ?? '')
+    return m ? Number(m[2]) * 10 + Number(m[1]) : 0
+  }
+  const sorted = [...(data ?? [])].sort((a, b) => seq(a.period) - seq(b.period))
+
+  return NextResponse.json(sorted)
 }
 
 export async function POST(request: Request) {
