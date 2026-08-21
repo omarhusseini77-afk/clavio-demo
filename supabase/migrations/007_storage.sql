@@ -95,9 +95,14 @@ create policy "submissions readable within tenant"
       )
       or (
         public.current_app_role() = 'gp'
+        -- objects.name must be qualified. Unqualified `name` inside this
+        -- subquery resolves to companies.name, because the inner alias shadows
+        -- the outer table, so the comparison silently becomes
+        -- "company id = a fragment of the company's own name" — always false,
+        -- and GPs lose access to their own fund's files with no error anywhere.
         and exists (
           select 1 from public.companies c
-          where c.id::text = (storage.foldername(name))[1]
+          where c.id::text = (storage.foldername(objects.name))[1]
             and c.fund_id = public.current_fund_id()
         )
       )
