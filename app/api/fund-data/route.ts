@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { FundDataPayload } from '@/lib/fundTypes'
+import type { Anomaly, FundDataPayload } from '@/lib/fundTypes'
+import type { Quarter } from '@/lib/supabase'
+import { cfoSignals } from '@/lib/cfoSignals'
+import { gpSignalCopy } from '@/lib/signalText'
 
 // Everything the LP and GP views render, read under the caller's own session.
 //
@@ -19,7 +22,7 @@ export async function GET() {
   const [
     fundsRes, companiesRes, yearsRes, yearInternalsRes, companyInternalsRes,
     positionsRes, eventsRes, forecastsRes, documentsRes, anomaliesRes,
-    quartersCompanyRes,
+    allQuartersRes, quartersCompanyRes,
   ] = await Promise.all([
     supabase.from('funds').select('*').limit(1),
     supabase.from('companies').select('*').order('name'),
@@ -31,6 +34,11 @@ export async function GET() {
     supabase.from('forecasts').select('*').limit(1),
     supabase.from('documents').select('*').order('sort_order'),
     supabase.from('anomalies').select('*, companies(name)').order('sort_order'),
+    // Every quarter the caller may read, for the computed signals below. RLS
+    // decides the scope: a GP gets their own fund's companies, an LP gets none
+    // (006_tenancy_rls.sql admits only gp and submit), so the computed list
+    // arrives empty for an investor without this handler deciding anything.
+    supabase.from('quarters').select('*, companies(name)'),
     // Which company /api/quarters will scope to, so the dashboard can name it.
     // Must use the same rule as that route — most quarters filed — or the label
     // and the figures come from different companies.
@@ -153,17 +161,7 @@ export async function GET() {
       hasFile: Boolean(d.storage_path),
     })),
 
-    anomalies: (anomaliesRes.data ?? []).map(a => ({
-      company: (a.companies as { name: string } | null)?.name ?? '',
-      level: a.level,
-      isSignal: a.is_signal,
-      title: { en: a.title_en ?? '', fr: a.title_fr ?? '' },
-      detail: { en: a.detail_en ?? '', fr: a.detail_fr ?? '' },
-      actions: ((a.actions_en as string[]) ?? []).map((en, i) => ({
-        en,
-        fr: ((a.actions_fr as string[]) ?? [])[i] ?? en,
-      })),
-    })),
+    anomalies: buildAnomalies(anomaliesRes.data ?? [], allQuartersRes.data ?? []),
 
     quartersCompany: (() => {
       const rows = quartersCompanyRes.data ?? []
@@ -182,4 +180,76 @@ export async function GET() {
   }
 
   return NextResponse.json(payload)
+}
+
+// The anomaly feed: partner observations from the database, computed signals
+// from lib/cfoSignals.ts.
+//
+// The dashboard used to label authored rows "Computed from submitted quarterly
+// figures". They were not computed, which meant this surface and the CFO one
+// could describe different things about the same company — and did. Now the
+// only rows read here are the ones a partner explicitly wrote down, and
+// everything presented as derived actually is.
+//
+// `is_signal = false` rows are deliberately NOT read. Migration 010 deletes the
+// four that exist and adds a check constraint forbidding more, but this filter
+// is what makes the code change safe to deploy on its own: the rows go inert
+// rather than the dashboard showing duplicates while the two land.
+function buildAnomalies(
+  rows: Array<Record<string, unknown>>,
+  quarterRows: Array<Record<string, unknown>>,
+): Anomaly[] {
+  const observations: Anomaly[] = rows
+    .filter(a => a.is_signal === true)
+    .map(a => ({
+      company: (a.companies as { name: string } | null)?.name ?? '',
+      level: a.level as 'red' | 'amber',
+      isSignal: true,
+      computed: false,
+      title: { en: (a.title_en as string) ?? '', fr: (a.title_fr as string) ?? '' },
+      detail: { en: (a.detail_en as string) ?? '', fr: (a.detail_fr as string) ?? '' },
+      actions: (((a.actions_en as string[]) ?? []).map((en, i) => ({
+        en,
+        fr: ((a.actions_fr as string[]) ?? [])[i] ?? en,
+      }))),
+    }))
+
+  // Group by company, then run the same function the CFO surface runs. Not a
+  // reimplementation of it — the same module, so the two cannot disagree
+  // without the shared code being wrong for both.
+  const byCompany = new Map<string, { name: string; quarters: Quarter[] }>()
+  for (const row of quarterRows) {
+    const id = row.company_id as string | null
+    if (!id) continue
+    const rel = row.companies
+    const name = Array.isArray(rel)
+      ? (rel[0] as { name?: string } | undefined)?.name ?? ''
+      : (rel as { name?: string } | null)?.name ?? ''
+    const entry = byCompany.get(id) ?? { name, quarters: [] }
+    entry.quarters.push(row as unknown as Quarter)
+    byCompany.set(id, entry)
+  }
+
+  const computed: Anomaly[] = []
+  for (const { name, quarters } of Array.from(byCompany.values())) {
+    for (const signal of cfoSignals(quarters)) {
+      const copy = gpSignalCopy(signal)
+      computed.push({
+        company: name,
+        level: null,
+        isSignal: false,
+        computed: true,
+        period: signal.period,
+        title: copy.heading,
+        detail: copy.detail,
+        actions: copy.steps,
+      })
+    }
+  }
+
+  // Stable order so the dashboard does not reshuffle between loads.
+  computed.sort((a, b) =>
+    a.company.localeCompare(b.company) || a.title.en.localeCompare(b.title.en))
+
+  return [...observations, ...computed]
 }

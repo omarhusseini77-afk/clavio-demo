@@ -1,7 +1,7 @@
 'use client'
 import type { Quarter } from '@/lib/supabase'
 import { cfoSignals, THRESHOLDS } from '@/lib/cfoSignals'
-import { cfoSignalCopy } from '@/lib/cfoSignalText'
+import { cfoSignalCopy } from '@/lib/signalText'
 import { useLang, loc } from '@/lib/i18n'
 
 // The CFO-facing early-warning surface.

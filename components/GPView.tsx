@@ -41,8 +41,12 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   // The anomaly feed is fund data now, not a constant. Empty until it loads,
   // and empty for anyone RLS does not show anomalies to.
   const { data: fundData } = useFundData()
+  // Two different kinds of thing, kept apart on purpose. Observations are what
+  // a partner wrote down; computed items are what lib/cfoSignals.ts derived
+  // from the company's own quarters — the same module the CFO surface runs, so
+  // the two sides cannot describe different things about the same company.
   const signals = (fundData?.anomalies ?? []).filter(a => a.isSignal)
-  const anomalies = (fundData?.anomalies ?? []).filter(a => !a.isSignal)
+  const anomalies = (fundData?.anomalies ?? []).filter(a => a.computed)
   // /api/quarters scopes to one company; name it so the figures are attributed.
   const submittingCompany = fundData?.quartersCompany ?? null
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -352,16 +356,31 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           <h3 style={{ ...styles.sectionTitle, marginBottom: 2 }}>{t('gp.anomalies')}</h3>
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('gp.anomaliesSub')}</span>
         </div>
+        {anomalies.length === 0 && (
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, padding: '4px 0 2px' }}>
+            {t('gp.anomaliesNone')}
+          </div>
+        )}
         {anomalies.map((a, i) => (
           <div key={i} id={`gp-anomaly-${a.company.toLowerCase().replace(/\s+/g, '-')}`} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 0', borderTop: i === 0 ? '1px solid var(--border)' : '1px solid var(--border)' }}>
+            {/* Neutral by design. A rule fired or it did not; there is no
+                severity to render, and colouring by how far past a threshold a
+                value sits would be a model nobody built. */}
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              background: a.level === 'red' ? '#FEF2F2' : '#FEF3C7',
+              background: 'rgba(91,130,189,0.10)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, color: a.level === 'red' ? '#EF4444' : '#D97706', marginTop: 2,
-            }}>!</div>
+              color: 'var(--accent)', marginTop: 2,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 3 }}>{a.company}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 3 }}>
+                {a.company}
+                {a.period && <span style={{ fontWeight: 500, color: 'var(--text-muted)', letterSpacing: 0, marginLeft: 6 }}>· {a.period}</span>}
+              </div>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{loc(a.title, lang)}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{loc(a.detail, lang)}</div>
             </div>
@@ -475,20 +494,43 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       {investigateAnomaly && (
         <Modal title={t('gp.anomalyInvestigation')} onClose={() => setInvestigateAnomaly(null)}>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
+            {/* Neutral for a computed item; the authored observations keep the
+                colour a partner actually assigned. */}
             <div style={{
               width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: investigateAnomaly.level === 'red' ? '#FEF2F2' : '#FEF3C7',
+              background: investigateAnomaly.computed
+                ? 'rgba(91,130,189,0.10)'
+                : investigateAnomaly.level === 'red' ? '#FEF2F2' : '#FEF3C7',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 15, color: investigateAnomaly.level === 'red' ? '#EF4444' : '#D97706',
-            }}>!</div>
+              fontSize: 15,
+              color: investigateAnomaly.computed
+                ? 'var(--accent)'
+                : investigateAnomaly.level === 'red' ? '#EF4444' : '#D97706',
+            }}>
+              {investigateAnomaly.computed ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              ) : '!'}
+            </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 4 }}>{investigateAnomaly.company}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 4 }}>
+                {investigateAnomaly.company}
+                {investigateAnomaly.period && (
+                  <span style={{ fontWeight: 500, color: 'var(--text-muted)', letterSpacing: 0, marginLeft: 6 }}>· {investigateAnomaly.period}</span>
+                )}
+              </div>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{loc(investigateAnomaly.title, lang)}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>{loc(investigateAnomaly.detail, lang)}</div>
             </div>
           </div>
           <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('gp.recommendedActions')}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('gp.suggestedSteps')}</div>
+            {/* Said out loud: these follow from the rule that fired, not from
+                anything known about this company. The authored lists they
+                replaced named companies and prescribed consequences, which read
+                as findings when they were guesses. */}
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 10 }}>{t('gp.suggestedStepsNote')}</div>
             <ul style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: 18 }}>
               {investigateAnomaly.actions.map((action, i) => (
                 <li key={i}>{loc(action, lang)}</li>

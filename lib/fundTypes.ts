@@ -90,10 +90,23 @@ export interface DocItem {
 
 export interface Anomaly {
   company: string
-  level: 'red' | 'amber'
+  /** Severity is a human judgement, so only authored observations carry one.
+   *  A computed signal is null: the rule fired or it did not, and deriving a
+   *  red/amber from how far past a threshold a value sits would be inventing a
+   *  model and rendering it as measurement. */
+  level: 'red' | 'amber' | null
+  /** true = a partner wrote it down. These are observational by nature —
+   *  a lost client, bank discussions — and none of it is in the schema. */
   isSignal: boolean
+  /** true = derived from the company's own quarters by lib/cfoSignals.ts.
+   *  Mutually exclusive with isSignal. */
+  computed: boolean
+  /** Period the rule fired on. Computed items only. */
+  period?: string
   title: Loc
   detail: Loc
+  /** Suggested next steps. For computed items these follow from the rule
+   *  rather than from the company, and are labelled that way. */
   actions: Loc[]
 }
 

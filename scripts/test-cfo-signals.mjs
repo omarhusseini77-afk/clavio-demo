@@ -1,12 +1,21 @@
-// Runs cfoSignals against the real quarterly series in the database.
+// Two things, against the real database.
 //
-// Those series were generated so that the GP anomaly text derives exactly, so
-// they double as fixtures: the rules should fire on the same companies the
-// anomaly feed describes. If they do not, either the rules or the anomaly text
-// is wrong, and the disagreement is the finding — do not tune thresholds to
-// make this pass.
+// 1. THE ONE THAT MATTERS: the GP feed and the CFO surface produce identical
+//    signals for the same company — same rule ids, same periods, same numbers.
+//    Both now call lib/cfoSignals.ts, so this is a check that they still do,
+//    and it goes red the moment either side grows its own copy of a rule.
 //
-//   node scripts/test-cfo-signals.mjs
+//    This replaced an earlier check that asserted each rule fired where an
+//    authored `anomalies` row described it. Those rows are gone (migration 010),
+//    so its subject no longer exists. It is recorded here rather than quietly
+//    dropped: it failed on Halcyon's collection speed, and the resolution was
+//    to retire the authored claim rather than move the threshold — which is why
+//    Halcyon is asserted silent on that rule below rather than simply absent.
+//
+// 2. Boundary behaviour: near-misses must stay silent. Rule boundaries are
+//    where false positives live.
+//
+//   npx tsx scripts/test-cfo-signals.mjs
 
 import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
@@ -19,25 +28,9 @@ for (const line of fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf8
 
 const { cfoSignals, THRESHOLDS } = await import('../lib/cfoSignals.ts')
 
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-const { data: auth } = await db.auth.signInWithPassword({
-  email: 'gp@clavio.app', password: 'ClavioDemo2026',
-})
-if (!auth?.session) { console.error('login failed'); process.exit(1) }
-
-const { data: rows } = await db
-  .from('quarters')
-  .select('*, companies(slug,name)')
-
-const by = new Map()
-for (const r of rows ?? []) {
-  const slug = r.companies.slug
-  if (!by.has(slug)) by.set(slug, { name: r.companies.name, rows: [] })
-  by.get(slug).rows.push(r)
-}
-
-console.log('\nThresholds in force (declared guesses, uncalibrated):')
-console.log(' ', JSON.stringify(THRESHOLDS))
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const PASSWORD = 'ClavioDemo2026'
 
 let failures = 0
 const expect = (label, cond) => {
@@ -45,11 +38,43 @@ const expect = (label, cond) => {
   console.log(`  ${cond ? 'PASS' : 'FAIL'}  ${label}`)
 }
 
-console.log('\n── Signals fired, by company ──')
-const fired = new Map()
-for (const [slug, { name, rows }] of by) {
+const login = async (email) => {
+  const db = createClient(URL, KEY)
+  const { error } = await db.auth.signInWithPassword({ email, password: PASSWORD })
+  if (error) throw new Error(`${email}: ${error.message}`)
+  return db
+}
+
+// A signal reduced to what "identical" is defined to mean. Numbers are fixed to
+// six decimals so a float representation difference between two paths is not
+// mistaken for a disagreement, and not rounded further than that so a genuine
+// one still shows.
+const fingerprint = (s) =>
+  `${s.id}@${s.period}{${Object.keys(s.detail).sort()
+    .map(k => `${k}=${s.detail[k].toFixed(6)}`).join(',')}}`
+
+console.log('\nThresholds in force (declared guesses, uncalibrated):')
+console.log(' ', JSON.stringify(THRESHOLDS))
+
+// ── The GP path ────────────────────────────────────────────────────────────
+// Read the way /api/fund-data reads: every quarter the GP may see, grouped by
+// company. This mirrors the route rather than calling it, so the check does not
+// depend on a server running.
+const gp = await login('gp@clavio.app')
+const { data: gpRows } = await gp.from('quarters').select('*, companies(slug,name)')
+
+const gpByCompany = new Map()
+for (const r of gpRows ?? []) {
+  const slug = r.companies.slug
+  if (!gpByCompany.has(slug)) gpByCompany.set(slug, { name: r.companies.name, rows: [] })
+  gpByCompany.get(slug).rows.push(r)
+}
+
+console.log('\n── Computed signals, as the GP dashboard derives them ──')
+const gpSignals = new Map()
+for (const [slug, { name, rows }] of gpByCompany) {
   const sigs = cfoSignals(rows)
-  fired.set(slug, sigs.map(s => s.id))
+  gpSignals.set(slug, sigs)
   console.log(`\n  ${name} (${rows.length} quarters)`)
   if (!sigs.length) console.log('    (none)')
   for (const s of sigs) {
@@ -58,42 +83,66 @@ for (const [slug, { name, rows }] of by) {
   }
 }
 
-console.log('\n── Reconciliation with the GP anomaly feed ──')
-// Halcyon's anomaly claims a 4.2pp margin break in the latest quarter.
+// ── The CFO path ───────────────────────────────────────────────────────────
+// Each submit account reads only its own company under RLS — the same rows the
+// History tab holds. Comparing this against the GP grouping above is the whole
+// point: two different sessions, two different query scopes, one module.
+console.log('\n── Same signals via each company\'s own submit session ──')
+const CFO_ACCOUNTS = [
+  ['submit@clavio.app', 'mrj'],
+  ['submit.atelier@clavio.app', 'asp'],
+]
+
+for (const [email, slug] of CFO_ACCOUNTS) {
+  const db = await login(email)
+  const { data: ownRows } = await db.from('quarters').select('*, companies(slug)')
+
+  const slugs = Array.from(new Set((ownRows ?? []).map(r => r.companies.slug)))
+  expect(`${email} sees exactly one company, its own (${slug})`,
+    slugs.length === 1 && slugs[0] === slug)
+
+  const cfoSide = cfoSignals(ownRows ?? []).map(fingerprint)
+  const gpSide = (gpSignals.get(slug) ?? []).map(fingerprint)
+
+  console.log(`\n  ${slug}`)
+  console.log(`    GP  : ${gpSide.length ? gpSide.join('\n          ') : '(none)'}`)
+  console.log(`    CFO : ${cfoSide.length ? cfoSide.join('\n          ') : '(none)'}`)
+  expect(
+    `${slug}: GP feed and CFO surface produce identical signals`,
+    JSON.stringify(gpSide) === JSON.stringify(cfoSide),
+  )
+}
+
+// ── The case the authored feed used to disagree about ──────────────────────
+console.log('\n── Halcyon collection speed: silent on both sides ──')
+// Debtor days 25.93 against a trailing four-quarter mean of 22.81 — +13.7%,
+// under the declared 15% threshold. The authored row that described this was
+// retired rather than the threshold moved, so the correct state is silence
+// everywhere. Asserted rather than assumed: "absent" and "never computed" look
+// the same, and the positive control below separates them.
 expect(
-  'Halcyon fires ebitda-margin-outside-band (anomaly claims a 4.2pp EBITDA break)',
-  (fired.get('halcyon') ?? []).includes('ebitda-margin-outside-band'),
+  'Halcyon does not fire collection-speed (13.7% is under the 15% threshold)',
+  !(gpSignals.get('halcyon') ?? []).some(s => s.id === 'collection-speed'),
 )
 expect(
-  'Halcyon does NOT fire gross-margin-outside-band (gross is flat; the point of splitting the rule)',
-  !(fired.get('halcyon') ?? []).includes('gross-margin-outside-band'),
+  'no company fires collection-speed anywhere in the fund',
+  !Array.from(gpSignals.values()).flat().some(s => s.id === 'collection-speed'),
 )
-// KNOWN FAILURE, left failing deliberately.
-//
-// Halcyon's debtor days are 25.93 against a trailing four-quarter mean of
-// 22.81 — a rise of 13.7%, below the declared 15% threshold. The GP feed
-// describes a slowdown the CFO rule stays silent on.
-//
-// This is a real disagreement between the two sides, not a bug, and the
-// resolution is a threshold decision that belongs to a human: lower
-// collectionPct, or accept that the feed can describe a movement the rule does
-// not surface. Tuning the threshold to make this line green would be exactly
-// the calibration-against-synthetic-data that THRESHOLDS warns against.
+// Positive control: Halcyon is not silent because the pipeline is broken.
 expect(
-  'Halcyon fires collection-speed (anomaly claims debtor days 22.8 -> 25.9)',
-  (fired.get('halcyon') ?? []).includes('collection-speed'),
-)
-// Atelier's anomaly claims working capital tightened two consecutive quarters.
-expect(
-  'Atelier fires cash-conversion-extending (anomaly claims WC tightening 2 quarters)',
-  (fired.get('asp') ?? []).includes('cash-conversion-extending'),
-)
-// Marlow & Reed has no anomaly against it.
-expect(
-  'Marlow & Reed fires nothing (no anomaly claims anything about it)',
-  (fired.get('mrj') ?? []).length === 0,
+  'Halcyon still fires ebitda-margin-outside-band (so the silence is a rule, not a breakage)',
+  (gpSignals.get('halcyon') ?? []).some(s => s.id === 'ebitda-margin-outside-band'),
 )
 
+// ── The dashboard is not empty ─────────────────────────────────────────────
+console.log('\n── The feed still reads as a working product ──')
+const total = Array.from(gpSignals.values()).flat().length
+const withSignals = Array.from(gpSignals.entries()).filter(([, v]) => v.length > 0)
+console.log(`  ${total} computed signal(s) across ${withSignals.length} compan(y|ies): ${withSignals.map(([s]) => s).join(', ')}`)
+expect('the GP feed is not empty', total > 0)
+expect('signals span more than one company', withSignals.length > 1)
+
+// ── Boundaries ─────────────────────────────────────────────────────────────
 console.log('\n── Boundary behaviour (near-misses must stay silent) ──')
 const base = (over) => Array.from({ length: 8 }, (_, i) => ({
   period: `Q${(i % 4) + 1} FY2${4 + Math.floor(i / 4)}`,
