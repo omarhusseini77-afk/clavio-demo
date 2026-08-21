@@ -53,6 +53,26 @@ printed it.
 job is to block, the passing case is silent and therefore indistinguishable from
 absence — so the only real proof is watching it block.
 
+## 4. The constraint test that was answered by RLS
+
+Checking that `anomalies_observations_only` rejects an authored-as-computed
+row, the probe ran from a normal client session. The insert came back
+`REJECTED` — by row-level security, which refuses every client write to that
+table long before any constraint is evaluated. The constraint was never
+reached.
+
+It was caught only because the positive control came back rejected too. A
+legitimate observation should have inserted cleanly; when both the bad row and
+the good row failed for the same reason, the reason was clearly not the thing
+being tested.
+
+Redone where the constraint is actually reachable. The authored row was
+rejected by the check constraint and the observation was accepted.
+
+**Rule:** a rejection is only evidence if you know what did the rejecting. This
+is why every denial test is paired with an owner positive control — here the
+pairing is what caught it, one instance after the pattern was written down.
+
 ---
 
 ## The shape of it
