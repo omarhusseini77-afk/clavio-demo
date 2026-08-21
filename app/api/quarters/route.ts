@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       for (const row of all ?? []) {
         if (row.company_id) counts.set(row.company_id, (counts.get(row.company_id) ?? 0) + 1)
       }
-      companyId = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+      companyId = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
     }
   }
 

@@ -177,7 +177,7 @@ export async function GET() {
         const cur = counts.get(r.company_id) ?? { n: 0, name: name ?? '' }
         counts.set(r.company_id, { n: cur.n + 1, name: name ?? cur.name })
       }
-      return [...counts.values()].sort((a, b) => b.n - a.n)[0]?.name ?? null
+      return Array.from(counts.values()).sort((a, b) => b.n - a.n)[0]?.name ?? null
     })(),
   }
 
