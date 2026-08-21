@@ -98,6 +98,8 @@ export interface Anomaly {
 }
 
 export interface FundDataPayload {
+  /** Company whose quarters /api/quarters returns; the dashboard is scoped to it. */
+  quartersCompany: string | null
   fund: Fund | null
   position: LpPosition | null
   companies: Company[]

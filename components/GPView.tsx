@@ -43,6 +43,8 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   const { data: fundData } = useFundData()
   const signals = (fundData?.anomalies ?? []).filter(a => a.isSignal)
   const anomalies = (fundData?.anomalies ?? []).filter(a => !a.isSignal)
+  // /api/quarters scopes to one company; name it so the figures are attributed.
+  const submittingCompany = fundData?.quartersCompany ?? null
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -201,6 +203,12 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>{t('gp.dashboard')}</h1>
+          {/* Names the company these figures belong to. The series is scoped to
+              one company, and an unlabelled "Partner Dashboard" over a
+              multi-company fund reads as fund-wide when it is not. */}
+          {submittingCompany && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{submittingCompany}</span>
+          )}
           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('gp.latest', { period: latest.period })}</span>
         </div>
         {!mobileSection && (

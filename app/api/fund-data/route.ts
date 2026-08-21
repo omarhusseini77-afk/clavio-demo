@@ -19,6 +19,7 @@ export async function GET() {
   const [
     fundsRes, companiesRes, yearsRes, yearInternalsRes, companyInternalsRes,
     positionsRes, eventsRes, forecastsRes, documentsRes, anomaliesRes,
+    quartersCompanyRes,
   ] = await Promise.all([
     supabase.from('funds').select('*').limit(1),
     supabase.from('companies').select('*').order('name'),
@@ -30,6 +31,9 @@ export async function GET() {
     supabase.from('forecasts').select('*').limit(1),
     supabase.from('documents').select('*').order('sort_order'),
     supabase.from('anomalies').select('*, companies(name)').order('sort_order'),
+    // Which company /api/quarters will scope to, so the dashboard can name it.
+    // Same rule as that route: most recent submission the caller can see.
+    supabase.from('quarters').select('companies(name)').order('id', { ascending: false }).limit(1),
   ])
 
   const symbolFor = (currency: string) =>
@@ -159,6 +163,13 @@ export async function GET() {
         fr: ((a.actions_fr as string[]) ?? [])[i] ?? en,
       })),
     })),
+
+    quartersCompany: (() => {
+      // PostgREST returns the embedded relation as an array here.
+      const rel = quartersCompanyRes.data?.[0]?.companies as unknown
+      if (Array.isArray(rel)) return (rel[0] as { name?: string } | undefined)?.name ?? null
+      return (rel as { name?: string } | null)?.name ?? null
+    })(),
   }
 
   return NextResponse.json(payload)
