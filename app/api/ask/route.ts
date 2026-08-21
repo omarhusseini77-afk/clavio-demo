@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { contextForRole, type AskRole } from '@/lib/fundData'
 import type { FundDataPayload } from '@/lib/fundTypes'
 import { createClient } from '@/lib/supabase/server'
+import { fetchScopedQuarters } from '@/lib/quartersScope'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -69,9 +70,11 @@ export async function POST(req: Request) {
 
   // Role comes from profiles, the same authoritative source middleware uses.
   // Never from the request body.
+  // company_id as well as role: the scope helper needs it to give a submitter
+  // its own series rather than falling through to the most-quarters default.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -94,10 +97,16 @@ export async function POST(req: Request) {
     // decides what is visible. body.context is ignored entirely: it is
     // client-controlled and was how the LP view ended up receiving the
     // full-detail dataset.
+    //
+    // Scoped through the same helper the dashboard uses. Querying `quarters`
+    // directly here meant the assistant reasoned over every company in the fund
+    // while the screen beside it showed one, so it answered from a different
+    // dataset than the visible figures — the worst failure available to a
+    // grounded-answers product, because the answer still looks authoritative.
     let quarters: unknown[] = []
     if (role === 'gp' || role === 'submit') {
-      const { data } = await supabase.from('quarters').select('*').order('id', { ascending: true })
-      quarters = data ?? []
+      const scoped = await fetchScopedQuarters(supabase, profile)
+      quarters = scoped.quarters
     }
 
     // Same session, same route the views use, so the assistant is limited to

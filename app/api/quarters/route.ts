@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { fetchScopedQuarters } from '@/lib/quartersScope'
 
 // Session-aware: RLS decides what this caller may see. An unauthenticated
 // request returns an empty list rather than the whole table.
@@ -25,44 +26,12 @@ export async function GET(request: Request) {
     .single()
 
   const requested = new URL(request.url).searchParams.get('company')
-  let companyId: string | null = requested
 
-  if (!companyId) {
-    if (profile?.role === 'submit') {
-      companyId = profile.company_id
-    } else {
-      // Whichever company has filed the most quarters. `id` order is not usable
-      // here: it reflects insertion, so a bulk backfill for another company
-      // would silently reassign the whole dashboard to it.
-      const { data: all } = await supabase.from('quarters').select('company_id')
-      const counts = new Map<string, number>()
-      for (const row of all ?? []) {
-        if (row.company_id) counts.set(row.company_id, (counts.get(row.company_id) ?? 0) + 1)
-      }
-      companyId = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-    }
-  }
+  // Shared with /api/ask so the assistant and the dashboard can never answer
+  // from different companies.
+  const { quarters } = await fetchScopedQuarters(supabase, profile, requested)
 
-  if (!companyId) return NextResponse.json([])
-
-  // Still goes through the session client, so asking for another tenant's
-  // company id simply returns nothing rather than being trusted.
-  const { data, error } = await supabase
-    .from('quarters')
-    .select('*')
-    .eq('company_id', companyId)
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Chronological, parsed from the period label. Sorting by `id` gave insertion
-  // order, and sorting the label as text puts "Q4 FY24" after "Q1 FY25".
-  const seq = (p: string) => {
-    const m = /Q(\d)\s*FY(\d+)/i.exec(p ?? '')
-    return m ? Number(m[2]) * 10 + Number(m[1]) : 0
-  }
-  const sorted = [...(data ?? [])].sort((a, b) => seq(a.period) - seq(b.period))
-
-  return NextResponse.json(sorted)
+  return NextResponse.json(quarters)
 }
 
 export async function POST(request: Request) {
