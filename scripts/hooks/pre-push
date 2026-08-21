@@ -1,0 +1,51 @@
+#!/bin/sh
+# Blocks a push whose tree does not type-check and build.
+#
+# This exists because a TypeScript error reached production once. The command
+# that was supposed to catch it was `npm run build 2>&1 | tail -3 && git push`:
+# in a pipeline the shell reports the exit status of the LAST command, so
+# `tail` succeeding masked the build failing, and `&&` pushed anyway.
+#
+# So the rules here are deliberate:
+#   * no pipes — nothing may sit between a check and its exit status
+#   * output goes to a file and is printed only on failure, so there is never a
+#     reason to add a pipe for quietness later
+#   * `set -e` is NOT relied on; every status is tested explicitly
+#
+# Bypass with --no-verify only when you have run the checks another way.
+
+# Node lives in ~/.local/node on this machine and git hooks do not inherit the
+# interactive shell's PATH.
+PATH="$HOME/.local/node/bin:$PATH"
+export PATH
+
+log=$(mktemp)
+
+printf 'pre-push: type-checking… '
+npx tsc --noEmit >"$log" 2>&1
+status=$?
+if [ $status -ne 0 ]; then
+  printf 'FAILED\n\n'
+  cat "$log"
+  rm -f "$log"
+  echo
+  echo 'pre-push: push blocked. Fix the type errors above, or use --no-verify if you have verified another way.'
+  exit 1
+fi
+printf 'ok\n'
+
+printf 'pre-push: building… '
+npm run build >"$log" 2>&1
+status=$?
+if [ $status -ne 0 ]; then
+  printf 'FAILED\n\n'
+  tail -40 "$log"
+  rm -f "$log"
+  echo
+  echo 'pre-push: push blocked. Fix the build failure above, or use --no-verify if you have verified another way.'
+  exit 1
+fi
+printf 'ok\n'
+
+rm -f "$log"
+exit 0
