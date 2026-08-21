@@ -5,6 +5,7 @@ import { contextForRole, type AskRole } from '@/lib/fundData'
 import type { FundDataPayload } from '@/lib/fundTypes'
 import { createClient } from '@/lib/supabase/server'
 import { fetchScopedQuarters } from '@/lib/quartersScope'
+import { logUsage } from '@/lib/usageLog'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -59,6 +60,7 @@ ${currencies}${scope}`
 interface ChatTurn { role: 'user' | 'assistant'; content: string }
 
 export async function POST(req: Request) {
+  const startedAt = Date.now()
   // Authenticate before anything else. This route sits outside the middleware
   // matcher, which excludes /api/, so this is the only gate it has. It must
   // also come before the API-key check, or a deploy without a key answers
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
   // its own series rather than falling through to the most-quarters default.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, company_id')
+    .select('role, company_id, fund_id')
     .eq('id', user.id)
     .single()
 
@@ -181,6 +183,22 @@ export async function POST(req: Request) {
       `cache_read=${u.cache_read_input_tokens ?? 0}`
     )
 
+    // Token counts, latency and tenancy — never the question or the answer.
+    logUsage(supabase, {
+      route: '/api/ask', method: 'POST', status: 200,
+      durationMs: Date.now() - startedAt,
+      role, userId: user.id,
+      companyId: (profile?.company_id as string | null) ?? null,
+      fundId: (profile?.fund_id as string | null) ?? null,
+      tokens: {
+        input: u.input_tokens,
+        output: u.output_tokens,
+        cacheRead: u.cache_read_input_tokens ?? 0,
+        cacheWrite: u.cache_creation_input_tokens ?? 0,
+      },
+      lang: lang as 'en' | 'fr',
+    })
+
     // Returned as well as logged so caching can be checked without Vercel log
     // access. Counts describe the caller's own request and the route is
     // authenticated, so there is nothing here they cannot already see.
@@ -194,6 +212,13 @@ export async function POST(req: Request) {
       },
     })
   } catch (err: unknown) {
+    logUsage(supabase, {
+      route: '/api/ask', method: 'POST', status: 500,
+      durationMs: Date.now() - startedAt,
+      role, userId: user.id,
+      companyId: (profile?.company_id as string | null) ?? null,
+      fundId: (profile?.fund_id as string | null) ?? null,
+    })
     // The message used to go straight to the caller, which for an SDK failure
     // meant quoting part of the outbound request back at them.
     return fail('POST /api/ask', err)

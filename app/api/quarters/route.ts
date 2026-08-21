@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { fetchScopedQuarters } from '@/lib/quartersScope'
 import { refused } from '@/lib/apiError'
+import { logUsage } from '@/lib/usageLog'
 
 // Session-aware: RLS decides what this caller may see. An unauthenticated
 // request returns an empty list rather than the whole table.
@@ -15,6 +16,7 @@ import { refused } from '@/lib/apiError'
 // Default preserves existing behaviour: a submitter gets its own company, and a
 // GP gets whichever company submitted most recently.
 export async function GET(request: Request) {
+  const startedAt = Date.now()
   const supabase = createClient()
 
   // 401, not an empty array. An empty list is what a company with no filings
@@ -26,7 +28,7 @@ export async function GET(request: Request) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, company_id')
+    .select('role, company_id, fund_id')
     .eq('id', user.id)
     .single()
 
@@ -36,10 +38,22 @@ export async function GET(request: Request) {
   // from different companies.
   const { quarters } = await fetchScopedQuarters(supabase, profile, requested)
 
+  // Row COUNT, never rows. The number of quarters a company has filed is
+  // operational, not financial.
+  logUsage(supabase, {
+    route: '/api/quarters', method: 'GET', status: 200,
+    durationMs: Date.now() - startedAt,
+    role: (profile?.role as string | null) ?? null,
+    userId: user.id,
+    companyId: (profile?.company_id as string | null) ?? null,
+    fundId: (profile?.fund_id as string | null) ?? null,
+  })
+
   return NextResponse.json(quarters)
 }
 
 export async function POST(request: Request) {
+  const startedAt = Date.now()
   const body = await request.json()
   const supabase = createClient()
 
@@ -48,9 +62,12 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
+  // fund_id is selected only so the usage log row is readable by the GP whose
+  // fund it belongs to — the read policy on usage_log is fund-scoped, and a row
+  // written with a null fund_id is visible to nobody at all.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('company_id')
+    .select('company_id, fund_id')
     .eq('id', user.id)
     .single()
 
@@ -61,6 +78,26 @@ export async function POST(request: Request) {
     .single()
 
   // An RLS refusal surfaces here as an error rather than a silent no-op.
-  if (error) return refused('POST /api/quarters', error, 'That submission was not accepted.')
+  if (error) {
+    logUsage(supabase, {
+      route: '/api/quarters', method: 'POST', status: 403,
+      durationMs: Date.now() - startedAt,
+      role: 'submit', userId: user.id,
+      companyId: (profile?.company_id as string | null) ?? null,
+      fundId: (profile?.fund_id as string | null) ?? null,
+    })
+    return refused('POST /api/quarters', error, 'That submission was not accepted.')
+  }
+
+  // Nothing from `body` is logged. The submitted figures are the single most
+  // sensitive thing this route touches.
+  logUsage(supabase, {
+    route: '/api/quarters', method: 'POST', status: 201,
+    durationMs: Date.now() - startedAt,
+    role: 'submit', userId: user.id,
+    companyId: (profile?.company_id as string | null) ?? null,
+      fundId: (profile?.fund_id as string | null) ?? null,
+  })
+
   return NextResponse.json(data, { status: 201 })
 }
