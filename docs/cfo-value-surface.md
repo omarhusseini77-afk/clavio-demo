@@ -212,6 +212,22 @@ English.
 
 ---
 
+## Decisions taken
+
+1. **Benchmarking is deferred entirely** — not a degraded version, not a toggle.
+   Cross-fund pooling is a separate future project with its own consent basis,
+   not a deferred feature flag.
+2. **Simultaneity is a per-fund setting**, defaulting to CFO and GP seeing
+   signals at the same time.
+3. **The GP does not see whether the CFO viewed a signal.** Not built.
+4. **The `anomalies` table is not reused** — CFO wording is generated from the
+   rule that fired.
+5. **DSO is labelled "collection speed"**, never "ageing", until real bucket data
+   exists.
+
+Build design for the two features that are proceeding:
+`cfo-own-trend-and-early-warning.md`.
+
 ## Open questions
 
 1. **Does the CFO see the same signals the GP sees, always?** Simultaneous
