@@ -13,6 +13,12 @@
 #   * `set -e` is NOT relied on; every status is tested explicitly
 #
 # Bypass with --no-verify only when you have run the checks another way.
+#
+# If you are changing this file, note that git says nothing when core.hooksPath
+# points at a directory that does not exist — it runs no hook and reports no
+# error. An earlier version of this hook was reported as working while it was
+# never committed at all. See docs/verification-notes.md; confirm a change here
+# by making a push actually fail.
 
 # Node lives in ~/.local/node on this machine and git hooks do not inherit the
 # interactive shell's PATH.

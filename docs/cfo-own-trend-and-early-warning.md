@@ -149,6 +149,33 @@ standing parity rule.
 
 ---
 
+## Outstanding: the GP feed does not compute from this module
+
+**"What your investor will see" is not literally true yet.** The CFO surface
+computes its signals from `lib/cfoSignals.ts` against the company's own
+quarters. The GP's anomaly feed does not — those are authored rows in the
+`anomalies` table, written by hand. The two sides can therefore disagree, and
+already do.
+
+The live example: Halcyon's anomaly describes a collection slowdown, and the
+rule stays silent on it. Debtor days are 25.93 against a trailing four-quarter
+mean of 22.81 — a rise of 13.7%, under the declared 15% threshold. The
+threshold was deliberately left alone rather than moved to make the two agree,
+because tuning a rule so a synthetic company lights up is exactly what
+`THRESHOLDS` warns against. `scripts/test-cfo-signals.mjs` asserts the
+agreement and fails on it on purpose, so the gap stays visible.
+
+Until the GP feed computes from the same module, the honest reading of the CFO
+surface is "here is what your own figures show", not "here is what your
+investor sees". The wording on the surface is a claim the architecture does not
+yet support.
+
+Closing it means deriving the GP anomaly rows from `cfoSignals` rather than
+authoring them — at which point a disagreement becomes impossible by
+construction rather than by discipline. The partner-authored observations are a
+separate thing and should stay authored; they are already labelled as entered
+by the deal team rather than computed.
+
 ## Open, still
 
 1. **Thresholds.** Guesses until real submissions exist.
