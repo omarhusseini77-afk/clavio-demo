@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { refused } from '@/lib/apiError'
 
 // Session-aware so RLS sees the caller's role. Postgres, not this handler,
 // decides whether the delete or update is allowed.
@@ -7,7 +8,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const supabase = createClient()
 
   const { error } = await supabase.from('quarters').delete().eq('id', params.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 403 })
+  if (error) return refused(`DELETE /api/quarters/${params.id}`, error, 'That quarter could not be deleted.')
   return NextResponse.json({ success: true })
 }
 
@@ -22,6 +23,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 403 })
+  if (error) return refused(`PATCH /api/quarters/${params.id}`, error, 'That quarter could not be updated.')
   return NextResponse.json(data)
 }

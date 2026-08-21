@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { fail } from '@/lib/apiError'
 import Anthropic from '@anthropic-ai/sdk'
 import { contextForRole, type AskRole } from '@/lib/fundData'
 import type { FundDataPayload } from '@/lib/fundTypes'
@@ -193,7 +194,8 @@ export async function POST(req: Request) {
       },
     })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Request failed'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    // The message used to go straight to the caller, which for an SDK failure
+    // meant quoting part of the outbound request back at them.
+    return fail('POST /api/ask', err)
   }
 }

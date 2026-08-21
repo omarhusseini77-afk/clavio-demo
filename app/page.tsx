@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import PortfolioView from '@/components/PortfolioView'
 import HistoryView from '@/components/HistoryView'
 import BottomTabBar from '@/components/BottomTabBar'
+import ErrorBanner from '@/components/ErrorBanner'
 import { DesktopLangToggle, MobileLangToggle } from '@/components/TopControls'
 import AccountMenu from '@/components/AccountMenu'
 import { useQuarters } from '@/lib/useQuarters'
@@ -17,7 +18,7 @@ export default function PortfolioPage() {
   const [tab, setTab] = useState<Tab>('submit')
   // Both tabs read the same series through the same hook, so the History table
   // reflects a submission the moment it lands rather than after a reload.
-  const { quarters, loading, onSubmit } = useQuarters()
+  const { quarters, loading, error, onSubmit } = useQuarters()
   const { company } = useOwnCompany()
 
   useEffect(() => {
@@ -125,6 +126,9 @@ export default function PortfolioPage() {
           paddingBottom: isMobile ? 90 : undefined,
           maxWidth: 960, width: '100%', margin: '0 auto',
         }}>
+          {/* Above both tabs, not just History: a CFO filling in the form
+              needs to know the connection is failing before they submit. */}
+          {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}
           {body}
         </main>
 

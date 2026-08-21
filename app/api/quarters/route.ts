@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { fetchScopedQuarters } from '@/lib/quartersScope'
+import { refused } from '@/lib/apiError'
 
 // Session-aware: RLS decides what this caller may see. An unauthenticated
 // request returns an empty list rather than the whole table.
@@ -16,8 +17,12 @@ import { fetchScopedQuarters } from '@/lib/quartersScope'
 export async function GET(request: Request) {
   const supabase = createClient()
 
+  // 401, not an empty array. An empty list is what a company with no filings
+  // looks like, so returning it for an auth failure made the two states
+  // indistinguishable on screen — the same silence-equals-success shape
+  // docs/verification-notes.md is about.
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json([])
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -56,6 +61,6 @@ export async function POST(request: Request) {
     .single()
 
   // An RLS refusal surfaces here as an error rather than a silent no-op.
-  if (error) return NextResponse.json({ error: error.message }, { status: 403 })
+  if (error) return refused('POST /api/quarters', error, 'That submission was not accepted.')
   return NextResponse.json(data, { status: 201 })
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { fail } from '@/lib/apiError'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
@@ -151,7 +152,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ...extracted, storedFileId })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Extraction failed'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return fail('POST /api/extract', err)
   }
 }

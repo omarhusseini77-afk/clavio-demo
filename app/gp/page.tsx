@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import GPView from '@/components/GPView'
+import ErrorBanner from '@/components/ErrorBanner'
 import GPSettingsTab from '@/components/GPSettingsTab'
 import BottomTabBar from '@/components/BottomTabBar'
 import AccountMenu from '@/components/AccountMenu'
@@ -70,7 +71,7 @@ export default function GPPage() {
   const [gpSection, setGpSection] = useState<GpSection>('overview')
   const [showNotifs, setShowNotifs] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>(GP_NOTIFICATIONS)
-  const { quarters, loading, onDelete, onUpdate } = useQuarters()
+  const { quarters, loading, error, onDelete, onUpdate } = useQuarters()
 
   const unreadCount = notifications.filter(n => !n.read).length
   const markRead = (id: string) =>
@@ -194,13 +195,23 @@ export default function GPPage() {
               <Spinner /> {t('chrome.loading')}
             </div>
           ) : (
-            <GPView
+            <>
+            {/* Rendered above the dashboard rather than instead of it: the
+                figures already loaded are still the last ones filed, and a
+                partner mid-review should not lose them to a failed refresh.
+                But with NOTHING loaded, the dashboard's own empty state says
+                "No data yet", which is a false statement when the truth is
+                that the request failed — so in that case the banner stands
+                alone. */}
+            {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}
+            {!(error && quarters.length === 0) && <GPView
               quarters={quarters}
               onDelete={onDelete}
               onUpdate={onUpdate}
               currency={currency}
               mobileSection={isMobile ? gpSection : undefined}
-            />
+            />}
+            </>
           )}
         </main>
       </div>
