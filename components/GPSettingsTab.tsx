@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLang } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
+import AdminPanel from './AdminPanel'
 
-type View = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'terms' | 'download' | 'signout'
+type View = 'main' | 'change-password' | 'two-factor' | 'privacy' | 'terms' | 'download' | 'signout' | 'admin'
 
 function BackBar({ title, onBack }: { title: string; onBack: () => void }) {
   const { t } = useLang()
@@ -42,6 +43,13 @@ export default function GPSettingsTab() {
   const [signoutConfirm, setSignoutConfirm] = useState(false)
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }) }, [view])
+
+  if (view === 'admin') return (
+    <div>
+      <BackBar title={t('settings.adminPanel')} onBack={() => goBack()} />
+      <AdminPanel isMobile={typeof window !== 'undefined' && window.innerWidth < 768} />
+    </div>
+  )
 
   if (view === 'change-password') return (
     <div>
@@ -229,6 +237,14 @@ export default function GPSettingsTab() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Reached from the settings list rather than a route of its own, so it
+          inherits the session, the role check and the layout — and appears at
+          both breakpoints without a second navigation to maintain. */}
+      <div style={{ ...card, marginBottom: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{t('settings.admin')}</div>
+        {row(t('settings.adminPanel'), t('settings.adminPanelHint'), () => goTo('admin'))}
       </div>
 
       <div style={{ ...card, marginBottom: 12 }}>
