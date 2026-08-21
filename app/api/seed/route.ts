@@ -11,10 +11,20 @@ export async function POST() {
 
   const { data: existing } = await supabase.from('quarters').select('id, period')
   const count = existing?.length ?? 0
+  // Rows a failed extraction wrote with the label glued to the value.
+  const dirty = (existing ?? []).filter(r => r.period.startsWith('Period:'))
 
-  // Skip if already seeded with clean data (no "Period:" prefix in any row)
-  const hasDirty = existing?.some(r => r.period.startsWith('Period:')) ?? false
-  if (count === seedData.length && !hasDirty) {
+  // This route used to wipe and re-insert whenever the row count differed from
+  // the seed file's 13. That made every genuine filing temporary: submit a
+  // fourteenth quarter, and the next page load deleted it and restored the
+  // demo set — while the confirmation screen said the GP dashboard had been
+  // updated. Invisible until the History tab started showing a company its own
+  // filings back; now it would be the first thing a CFO noticed.
+  //
+  // Seeding is therefore bootstrap-only. An empty table gets the demo set; a
+  // table with real rows in it is left alone, and only genuinely malformed
+  // rows are removed.
+  if (count > 0 && dirty.length === 0) {
     return NextResponse.json({ message: 'Already seeded' })
   }
 
@@ -26,6 +36,16 @@ export async function POST() {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
+  // Remove only the malformed rows, never the sound ones beside them.
+  if (dirty.length > 0) {
+    for (const row of dirty) {
+      await supabase.from('quarters').delete().eq('id', row.id)
+    }
+    if (count > dirty.length) {
+      return NextResponse.json({ message: `Removed ${dirty.length} malformed quarter(s)` })
+    }
+  }
+
   // Seeded rows belong to the caller's company. company_id becomes NOT NULL in
   // 006, so this must ship before that migration runs.
   const { data: profile } = await supabase
@@ -34,12 +54,6 @@ export async function POST() {
     .eq('id', user.id)
     .single()
 
-  // Delete all and re-insert
-  if (existing && existing.length > 0) {
-    for (const row of existing) {
-      await supabase.from('quarters').delete().eq('id', row.id)
-    }
-  }
   const { error } = await supabase
     .from('quarters')
     .insert(seedData.map(row => ({ ...row, company_id: profile?.company_id ?? null })))

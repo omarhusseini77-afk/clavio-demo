@@ -18,8 +18,10 @@ const DAYS_IN_QUARTER = 91
 export type CfoSignalId =
   | 'working-capital-divergence'
   | 'revenue-cash-divergence'
-  | 'margin-outside-band'
+  | 'gross-margin-outside-band'
+  | 'ebitda-margin-outside-band'
   | 'collection-speed'
+  | 'cash-conversion-extending'
 
 export interface CfoSignal {
   id: CfoSignalId
@@ -47,7 +49,9 @@ export const THRESHOLDS = {
   revenueGrowthPct: 10,
   /** Cash counts as "flat" inside this band, either direction. */
   cashFlatPct: 2,
-  /** Standard deviations from the trailing mean before a margin break fires. */
+  /** Standard deviations from the trailing mean before a margin break fires.
+   *  Applied to gross and EBITDA margin separately — they mean different
+   *  things, so collapsing them into one rule loses the distinction. */
   marginSigma: 2,
   /** Quarters in the trailing window for the margin band. */
   marginWindow: 6,
@@ -55,6 +59,10 @@ export const THRESHOLDS = {
   collectionPct: 15,
   /** Quarters in the trailing window for collection speed. */
   collectionWindow: 4,
+  /** Consecutive quarters the cash conversion cycle must lengthen. */
+  cccConsecutiveQuarters: 2,
+  /** Days the cycle must extend across those quarters before firing. */
+  cccExtensionDays: 5,
 } as const
 
 const pctChange = (now: number, then: number) =>
@@ -68,10 +76,22 @@ const stdDev = (xs: number[]) => {
 
 /** EBITDA is not a stored column. */
 export const ebitda = (q: Quarter) =>
-  (q.op ?? 0) + ((q as { depreciation_amortisation?: number }).depreciation_amortisation ?? 0)
+  (q.op ?? 0) + (q.depreciation_amortisation ?? 0)
 
 export const grossMarginPct = (q: Quarter) =>
   q.turnover === 0 ? 0 : (q.gross / q.turnover) * 100
+
+export const ebitdaMarginPct = (q: Quarter) =>
+  q.turnover === 0 ? 0 : (ebitda(q) / q.turnover) * 100
+
+/** Stock days. Part of the cash conversion cycle. */
+export const stockDays = (q: Quarter) =>
+  q.cos === 0 ? 0 : (q.stock / q.cos) * DAYS_IN_QUARTER
+
+/** Debtor days + stock days - creditor days. How long cash is tied up between
+ *  paying for inputs and being paid for output. */
+export const cashConversionCycle = (q: Quarter) =>
+  debtorDays(q) + stockDays(q) - creditorDays(q)
 
 /** Debtor days. Labelled "collection speed" in the UI — never "ageing", which
  *  would imply 30/60/90 buckets the schema does not hold. */
@@ -112,21 +132,41 @@ export function cfoSignals(input: Quarter[]): CfoSignal[] {
     })
   }
 
-  // Margin outside its own trailing band. Needs a full window plus the latest
-  // quarter — a band computed from two points is noise, so it stays silent
-  // rather than guessing.
+  // Margin outside its own trailing band, checked on BOTH margins because they
+  // say different things: gross moving points at pricing or input costs, while
+  // EBITDA moving with gross flat points at overhead or a one-off. Collapsing
+  // them into one rule would hide which of the two happened.
+  //
+  // Needs a full window plus the latest quarter — a band from two points is
+  // noise, so it stays silent rather than guessing.
   if (qs.length >= THRESHOLDS.marginWindow + 1) {
-    const window = qs.slice(-(THRESHOLDS.marginWindow + 1), -1).map(grossMarginPct)
-    const m = mean(window)
-    const sd = stdDev(window)
-    const current = grossMarginPct(latest)
-    const lower = m - THRESHOLDS.marginSigma * sd
-    const upper = m + THRESHOLDS.marginSigma * sd
-    if (sd > 0 && (current < lower || current > upper)) {
+    const window = qs.slice(-(THRESHOLDS.marginWindow + 1), -1)
+
+    const bandBreak = (metric: (q: Quarter) => number) => {
+      const series = window.map(metric)
+      const m = mean(series)
+      const sd = stdDev(series)
+      const current = metric(latest)
+      if (sd <= 0) return null
+      const lower = m - THRESHOLDS.marginSigma * sd
+      const upper = m + THRESHOLDS.marginSigma * sd
+      if (current >= lower && current <= upper) return null
+      return { current, trailingMean: m, lower, upper }
+    }
+
+    const gross = bandBreak(grossMarginPct)
+    const ebit = bandBreak(ebitdaMarginPct)
+
+    if (gross) {
+      out.push({ id: 'gross-margin-outside-band', period: latest.period, detail: gross })
+    }
+    if (ebit) {
       out.push({
-        id: 'margin-outside-band',
+        id: 'ebitda-margin-outside-band',
         period: latest.period,
-        detail: { current, trailingMean: m, lower, upper },
+        // Whether gross held steady is the whole diagnostic value here, so it
+        // travels with the signal rather than being re-derived by the UI.
+        detail: { ...ebit, grossHeldSteady: gross ? 0 : 1 },
       })
     }
   }
@@ -142,6 +182,31 @@ export function cfoSignals(input: Quarter[]): CfoSignal[] {
         id: 'collection-speed',
         period: latest.period,
         detail: { current, trailingMean, change },
+      })
+    }
+  }
+
+  // Cash tied up for longer, quarter after quarter. Distinct from the
+  // working-capital divergence rule, which needs debtors to fall: a company can
+  // stretch payables AND collect more slowly at the same time, and that pattern
+  // was invisible until this rule existed.
+  const needed = THRESHOLDS.cccConsecutiveQuarters
+  if (qs.length >= needed + 1) {
+    const window = qs.slice(-(needed + 1))
+    const cycle = window.map(cashConversionCycle)
+    let rising = true
+    for (let i = 1; i < cycle.length; i++) if (cycle[i] <= cycle[i - 1]) rising = false
+    const extension = cycle[cycle.length - 1] - cycle[0]
+    if (rising && extension >= THRESHOLDS.cccExtensionDays) {
+      out.push({
+        id: 'cash-conversion-extending',
+        period: latest.period,
+        detail: {
+          current: cycle[cycle.length - 1],
+          from: cycle[0],
+          extensionDays: extension,
+          quarters: needed,
+        },
       })
     }
   }

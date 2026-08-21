@@ -1,6 +1,6 @@
 #!/bin/sh
-# Node lives in ~/.local/node on this machine and is not on the launcher's
-# inherited PATH, so put it there before handing off to npm.
+# Node lives in ~/.local/node, which is on PATH via .zshrc but not in the
+# non-login shell the preview server launches with.
 export PATH="$HOME/.local/node/bin:$PATH"
-cd "$(dirname "$0")/.." || exit 1
-exec npm run dev "$@"
+cd /Users/omarhusseini/dev/clavio-demo
+exec npm run dev

@@ -4,9 +4,7 @@
     {
       "name": "clavio-dev",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": [
-        "/Users/omarhusseini/Library/Mobile Documents/com~apple~CloudDocs/CLAVIO/clavio-demo/.claude/dev.sh"
-      ],
+      "runtimeArgs": ["/Users/omarhusseini/dev/clavio-demo/.claude/dev.sh"],
       "port": 3000
     }
   ]

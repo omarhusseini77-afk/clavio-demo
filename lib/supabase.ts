@@ -26,4 +26,10 @@ export type Quarter = {
   net_assets: number
   funds: number
   created_at?: string
+  // Present in the table but not on every submission path: the quarterly
+  // generator writes them, the manual form does not. Optional so a row from
+  // either source type-checks, and so `ebitda` can add D&A without a cast.
+  depreciation_amortisation?: number
+  long_term_liabilities?: number
+  company_id?: string
 }

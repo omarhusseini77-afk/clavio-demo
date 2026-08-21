@@ -73,3 +73,25 @@ Only the endpoints (£16.9M invested, £23.5M current) come from the database. T
 attribution between them is not derivable — the schema holds no entry/exit
 multiples, debt paydown history or FX rates. It carries an `ILLUSTRATIVE` badge
 and a note, in the same visible way the forecast carries `PROJECTED`.
+
+## Marlow & Reed's depreciation was zeroed and reconstructed (21 Aug 2026)
+
+While verifying the CFO History tab, `POST /api/seed` wiped Marlow & Reed's 13
+quarters and re-inserted them from `clavio_seed_data.json`, which carried no
+`depreciation_amortisation` column. The company's D&A went to 0, and with it
+every EBITDA figure the History tab and the margin rules compute.
+
+The values were reconstructed, not invented. Seven of the thirteen quarters had
+been rendered on screen before the wipe, and in all seven D&A was exactly
+**12.00% of fixed assets**. That rule was applied to all thirteen rows and then
+checked back against those seven EBITDA totals, which reconcile exactly.
+
+`clavio_seed_data.json` now carries the column, so a future re-seed reproduces
+the same figures instead of dropping them.
+
+**The cause is fixed too.** `/api/seed` used to wipe and re-insert whenever the
+row count differed from the seed file's 13 — which meant every genuine filing
+was deleted on the next page load, while the confirmation screen said the GP
+dashboard had been updated. It is now bootstrap-only: it seeds an empty table
+and removes malformed `Period:`-prefixed rows, and otherwise leaves the data
+alone.

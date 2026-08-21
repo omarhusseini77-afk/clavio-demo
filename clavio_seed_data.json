@@ -16,7 +16,8 @@
     "cash": 1217583,
     "creditors": 340144,
     "net_assets": 2128364,
-    "funds": 2128364
+    "funds": 2128364,
+    "depreciation_amortisation": 37670
   },
   {
     "period": "Q2 FY19",
@@ -35,7 +36,8 @@
     "cash": 1233396,
     "creditors": 344562,
     "net_assets": 2156006,
-    "funds": 2156006
+    "funds": 2156006,
+    "depreciation_amortisation": 38160
   },
   {
     "period": "Q3 FY19",
@@ -54,7 +56,8 @@
     "cash": 1249209,
     "creditors": 348980,
     "net_assets": 2183647,
-    "funds": 2183647
+    "funds": 2183647,
+    "depreciation_amortisation": 38649
   },
   {
     "period": "Q4 FY19",
@@ -73,7 +76,8 @@
     "cash": 1265022,
     "creditors": 353397,
     "net_assets": 2211288,
-    "funds": 2211288
+    "funds": 2211288,
+    "depreciation_amortisation": 39138
   },
   {
     "period": "Q1 FY20",
@@ -92,7 +96,8 @@
     "cash": 1360052,
     "creditors": 342468,
     "net_assets": 2320316,
-    "funds": 2320316
+    "funds": 2320316,
+    "depreciation_amortisation": 38787
   },
   {
     "period": "Q2 FY20",
@@ -111,7 +116,8 @@
     "cash": 1455082,
     "creditors": 331540,
     "net_assets": 2429345,
-    "funds": 2429345
+    "funds": 2429345,
+    "depreciation_amortisation": 38437
   },
   {
     "period": "Q3 FY20",
@@ -130,7 +136,8 @@
     "cash": 1550113,
     "creditors": 320611,
     "net_assets": 2538374,
-    "funds": 2538374
+    "funds": 2538374,
+    "depreciation_amortisation": 38086
   },
   {
     "period": "Q4 FY20",
@@ -149,7 +156,8 @@
     "cash": 1645143,
     "creditors": 309682,
     "net_assets": 2647402,
-    "funds": 2647402
+    "funds": 2647402,
+    "depreciation_amortisation": 37736
   },
   {
     "period": "Q1 FY21",
@@ -168,7 +176,8 @@
     "cash": 1856490,
     "creditors": 369551,
     "net_assets": 2822858,
-    "funds": 2822858
+    "funds": 2822858,
+    "depreciation_amortisation": 38545
   },
   {
     "period": "Q2 FY21",
@@ -187,7 +196,8 @@
     "cash": 2067838,
     "creditors": 429420,
     "net_assets": 2998315,
-    "funds": 2998315
+    "funds": 2998315,
+    "depreciation_amortisation": 39355
   },
   {
     "period": "Q3 FY21",
@@ -206,7 +216,8 @@
     "cash": 2279185,
     "creditors": 489288,
     "net_assets": 3173772,
-    "funds": 3173772
+    "funds": 3173772,
+    "depreciation_amortisation": 40165
   },
   {
     "period": "Q4 FY21",
@@ -225,7 +236,8 @@
     "cash": 2490532,
     "creditors": 549157,
     "net_assets": 3349228,
-    "funds": 3349228
+    "funds": 3349228,
+    "depreciation_amortisation": 40975
   },
   {
     "period": "Q1 FY22",
@@ -244,6 +256,7 @@
     "cash": 2702344,
     "creditors": 609016,
     "net_assets": 3549980,
-    "funds": 3549980
+    "funds": 3549980,
+    "depreciation_amortisation": 41784
   }
 ]

@@ -61,17 +61,32 @@ for (const [slug, { name, rows }] of by) {
 console.log('\n── Reconciliation with the GP anomaly feed ──')
 // Halcyon's anomaly claims a 4.2pp margin break in the latest quarter.
 expect(
-  'Halcyon fires margin-outside-band (anomaly claims a 4.2pp EBITDA break)',
-  (fired.get('halcyon') ?? []).includes('margin-outside-band'),
+  'Halcyon fires ebitda-margin-outside-band (anomaly claims a 4.2pp EBITDA break)',
+  (fired.get('halcyon') ?? []).includes('ebitda-margin-outside-band'),
 )
+expect(
+  'Halcyon does NOT fire gross-margin-outside-band (gross is flat; the point of splitting the rule)',
+  !(fired.get('halcyon') ?? []).includes('gross-margin-outside-band'),
+)
+// KNOWN FAILURE, left failing deliberately.
+//
+// Halcyon's debtor days are 25.93 against a trailing four-quarter mean of
+// 22.81 — a rise of 13.7%, below the declared 15% threshold. The GP feed
+// describes a slowdown the CFO rule stays silent on.
+//
+// This is a real disagreement between the two sides, not a bug, and the
+// resolution is a threshold decision that belongs to a human: lower
+// collectionPct, or accept that the feed can describe a movement the rule does
+// not surface. Tuning the threshold to make this line green would be exactly
+// the calibration-against-synthetic-data that THRESHOLDS warns against.
 expect(
   'Halcyon fires collection-speed (anomaly claims debtor days 22.8 -> 25.9)',
   (fired.get('halcyon') ?? []).includes('collection-speed'),
 )
 // Atelier's anomaly claims working capital tightened two consecutive quarters.
 expect(
-  'Atelier fires at least one signal (anomaly claims WC tightening)',
-  (fired.get('asp') ?? []).length > 0,
+  'Atelier fires cash-conversion-extending (anomaly claims WC tightening 2 quarters)',
+  (fired.get('asp') ?? []).includes('cash-conversion-extending'),
 )
 // Marlow & Reed has no anomaly against it.
 expect(
