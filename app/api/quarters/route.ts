@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchScopedQuarters } from '@/lib/quartersScope'
 import { refused } from '@/lib/apiError'
 import { logUsage } from '@/lib/usageLog'
+import { composeSubmissionNotifications } from '@/lib/composeNotifications'
 
 // Session-aware: RLS decides what this caller may see. An unauthenticated
 // request returns an empty list rather than the whole table.
@@ -87,6 +88,17 @@ export async function POST(request: Request) {
       fundId: (profile?.fund_id as string | null) ?? null,
     })
     return refused('POST /api/quarters', error, 'That submission was not accepted.')
+  }
+
+  // Composed into the outbox, never transmitted here. Fire-and-forget: a
+  // notification that cannot be composed must not fail a successful filing.
+  if (profile?.company_id && typeof body?.period === 'string') {
+    composeSubmissionNotifications(supabase, {
+      companyId: profile.company_id as string,
+      submitterProfileId: user.id,
+      period: body.period,
+      lang: 'en',
+    })
   }
 
   // Nothing from `body` is logged. The submitted figures are the single most

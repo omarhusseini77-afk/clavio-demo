@@ -2,58 +2,47 @@
 import { useEffect, useState } from 'react'
 import LPView from '@/components/LPView'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
-import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
+import NotificationsPanel from '@/components/NotificationsPanel'
+import { lpNotifications } from '@/lib/notifications'
 import AccountMenu from '@/components/AccountMenu'
 import { FundDataProvider, useFundData, isReady } from '@/lib/useFundData'
 import type { Currency } from '@/lib/currency'
 import { useLang } from '@/lib/i18n'
 
-const LP_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'lp-1',
-    type: 'call',
-    title: 'Capital Call · Call 7',
-    body: '£250,000 due by 15 April 2026. Wire instructions attached.',
-    time: '2 Apr 2026',
-    read: false,
-  },
-  {
-    id: 'lp-2',
-    type: 'document',
-    title: 'Q1 2026 Quarterly Report',
-    body: 'Your Q1 2026 investor report is now available in the portal.',
-    time: '16 Apr 2026',
-    read: true,
-  },
-  {
-    id: 'lp-3',
-    type: 'distribution',
-    title: 'Distribution Notice · Dist 3',
-    body: '£180,000 distribution processed. Expected in your account within 3–5 business days.',
-    time: '20 Nov 2025',
-    read: true,
-  },
-]
 
+// FundDataProvider has to sit above whatever reads it, and the bells are now
+// derived from capital events and document rows.
 export default function LPPage() {
-  const { t } = useLang()
+  return (
+      <LPPageInner />
+  )
+}
+
+function LPPageInner() {
+  const { t, lang } = useLang()
   const [currency, setCurrency] = useState<Currency>('GBP')
   const [isMobile, setIsMobile] = useState(false)
   const [showNotifs, setShowNotifs] = useState(false)
-  const [notifications, setNotifications] = useState<AppNotification[]>(LP_NOTIFICATIONS)
+  const { data: fundData } = useFundData()
+
+  // Real rows: capital_events and documents, each with the date it carries.
+  const derived = lpNotifications(fundData?.capitalEvents ?? [], fundData?.documents ?? [], lang)
+  const [readIds, setReadIds] = useState<string[]>([])
+  const notifications = derived.map(n => readIds.includes(n.id) ? { ...n, read: true } : n)
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  const markRead = (id: string) =>
-    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
+  const markRead = (id: string) => setReadIds(ids => ids.includes(id) ? ids : [...ids, id])
 
+  // By kind, not by a fixed id list — the feed is as long as the data is.
   const handleNavigate = (id: string) => {
-    const routes: Record<string, { tab: string; section?: string }> = {
-      'lp-1': { tab: 'account', section: 'lp-capital-called' },
-      'lp-2': { tab: 'account', section: 'lp-documents' },
-      'lp-3': { tab: 'account', section: 'lp-activity' },
-    }
-    const route = routes[id]
+    const n = notifications.find(x => x.id === id)
+    if (!n) return
+    const route =
+      n.type === 'call' ? { tab: 'account', section: 'lp-capital-called' }
+      : n.type === 'distribution' ? { tab: 'account', section: 'lp-activity' }
+      : n.type === 'document' ? { tab: 'documents' }
+      : null
     if (route) window.dispatchEvent(new CustomEvent('clavio:lp-navigate', { detail: route }))
   }
 
@@ -123,6 +112,25 @@ export default function LPPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <DesktopControls currency={currency} setCurrency={setCurrency} />
+              {/* Desktop had no bell at all — an investor on a laptop never
+                  saw a capital call or a new document notice. */}
+              <button
+                onClick={() => setShowNotifs(true)}
+                aria-label="Notifications"
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 0, right: 0, minWidth: 15, height: 15,
+                    borderRadius: 8, background: '#DC2626', color: 'white',
+                    fontSize: 9.5, fontWeight: 700, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', padding: '0 4px',
+                  }}>{unreadCount}</span>
+                )}
+              </button>
               <AccountMenu />
             </div>
           </div>

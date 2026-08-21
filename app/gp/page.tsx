@@ -7,37 +7,13 @@ import BottomTabBar from '@/components/BottomTabBar'
 import AccountMenu from '@/components/AccountMenu'
 import { FundDataProvider } from '@/lib/useFundData'
 import { DesktopControls, MobileCurrencyToggle } from '@/components/TopControls'
-import NotificationsPanel, { type AppNotification } from '@/components/NotificationsPanel'
+import NotificationsPanel from '@/components/NotificationsPanel'
+import { gpNotificationsFrom } from '@/lib/notifications'
+import { useFundData } from '@/lib/useFundData'
 import type { Currency } from '@/lib/currency'
 import { useQuarters } from '@/lib/useQuarters'
 import { useLang } from '@/lib/i18n'
 
-const GP_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'gp-1',
-    type: 'submission',
-    title: 'New submission — Marlow & Reed',
-    body: 'Marlow & Reed Joinery submitted Q1 FY22 financials. Review now.',
-    time: '2 hours ago',
-    read: false,
-  },
-  {
-    id: 'gp-2',
-    type: 'anomaly',
-    title: 'Anomaly detected — Halcyon Textiles',
-    body: 'EBITDA margin contracted 4.2pp month-over-month, outside the 95% confidence band.',
-    time: '1 day ago',
-    read: false,
-  },
-  {
-    id: 'gp-3',
-    type: 'watchlist',
-    title: 'Watch-list flag — Atelier Saint-Pierre',
-    body: 'Working capital tightened for the second consecutive quarter. Flagged for partner review.',
-    time: '3 days ago',
-    read: true,
-  },
-]
 
 type GpSection = 'overview' | 'ask' | 'data' | 'settings'
 
@@ -64,26 +40,55 @@ const GP_TABS = [
   },
 ]
 
+// The provider has to sit ABOVE the component that reads it, and the
+// notification bells are now derived from fund data — so the page is split
+// rather than wrapping its own return value.
 export default function GPPage() {
-  const { t } = useLang()
+  return (
+    <FundDataProvider>
+      <GPPageInner />
+    </FundDataProvider>
+  )
+}
+
+function GPPageInner() {
+  const { t, lang } = useLang()
   const [currency, setCurrency] = useState<Currency>('GBP')
   const [isMobile, setIsMobile] = useState(false)
   const [gpSection, setGpSection] = useState<GpSection>('overview')
   const [showNotifs, setShowNotifs] = useState(false)
-  const [notifications, setNotifications] = useState<AppNotification[]>(GP_NOTIFICATIONS)
   const { quarters, loading, error, onDelete, onUpdate } = useQuarters()
+  const { data: fundData } = useFundData()
+
+  // Derived from real filings and from the signals lib/cfoSignals.ts actually
+  // computed — not an authored list. Read state is held locally because
+  // "have I looked at this" is per-session and there is no table for it; the
+  // initial value comes from the event's own recency.
+  const derived = gpNotificationsFrom(quarters, fundData, lang)
+  const [readIds, setReadIds] = useState<string[]>([])
+  const notifications = derived.map(n => readIds.includes(n.id) ? { ...n, read: true } : n)
 
   const unreadCount = notifications.filter(n => !n.read).length
-  const markRead = (id: string) =>
-    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
+  const markRead = (id: string) => setReadIds(ids => ids.includes(id) ? ids : [...ids, id])
 
+  // Keyed on the notification's kind rather than a hardcoded id list. The old
+  // map named three specific ids that no longer exist, and a derived feed has
+  // as many entries as the data does.
   const handleNavigate = (id: string) => {
-    const routes: Record<string, { gpSection: GpSection; section?: string; highlight?: string }> = {
-      'gp-1': { gpSection: 'data' },
-      'gp-2': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-halcyon-textiles' },
-      'gp-3': { gpSection: 'overview', section: 'gp-anomalies', highlight: 'gp-anomaly-atelier-saint-pierre' },
-    }
-    const route = routes[id]
+    const n = notifications.find(x => x.id === id)
+    if (!n) return
+    const route: { gpSection: GpSection; section?: string; highlight?: string } | undefined =
+      n.type === 'submission'
+        ? { gpSection: 'data' }
+        : n.type === 'anomaly'
+        ? {
+            gpSection: 'overview',
+            section: 'gp-anomalies',
+            // The company name is in the title; the anomaly rows carry an id
+            // built the same way, so the highlight still lands on the right one.
+            highlight: `gp-anomaly-${(n.title.split('—')[1] ?? '').trim().toLowerCase().replace(/\s+/g, '-')}`,
+          }
+        : undefined
     if (!route) return
     setGpSection(route.gpSection)
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
@@ -100,7 +105,6 @@ export default function GPPage() {
   }, [])
 
   return (
-    <FundDataProvider>
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
         {/* Top bar */}
@@ -155,6 +159,26 @@ export default function GPPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <DesktopControls currency={currency} setCurrency={setCurrency} />
+              {/* The bell existed only on the mobile bar, so a partner on a
+                  desktop never saw a notification at all. Same state, same
+                  panel, per the standing parity rule. */}
+              <button
+                onClick={() => setShowNotifs(true)}
+                aria-label="Notifications"
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-muted)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 0, right: 0, minWidth: 15, height: 15,
+                    borderRadius: 8, background: '#DC2626', color: 'white',
+                    fontSize: 9.5, fontWeight: 700, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', padding: '0 4px',
+                  }}>{unreadCount}</span>
+                )}
+              </button>
               {/* Desktop has no bottom tab bar, so this is the only route to
                   settings and sign-out at this breakpoint. */}
               <AccountMenu onOpenSettings={() => setGpSection('settings')} />
@@ -233,7 +257,6 @@ export default function GPPage() {
         />
       )}
     </div>
-    </FundDataProvider>
   )
 }
 

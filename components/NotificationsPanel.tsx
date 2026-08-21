@@ -2,7 +2,10 @@
 
 export type AppNotification = {
   id: string
-  type: 'call' | 'distribution' | 'document' | 'anomaly' | 'submission' | 'watchlist'
+  // 'watchlist' is gone. It was an authored bell with no event and no
+  // timestamp behind it — there is no watch-list in the schema — so it was
+  // retired rather than rewritten when the feed became derived.
+  type: 'call' | 'distribution' | 'document' | 'anomaly' | 'submission'
   title: string
   body: string
   time: string
@@ -29,10 +32,6 @@ const ICON_DEFS: Record<AppNotification['type'], { bg: string; stroke: string; p
   submission: {
     bg: '#ECFDF5', stroke: '#059669',
     path: <><polyline points="20 6 9 17 4 12"/></>,
-  },
-  watchlist: {
-    bg: '#FEF2F2', stroke: '#DC2626',
-    path: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
   },
 }
 
