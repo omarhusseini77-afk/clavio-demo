@@ -537,13 +537,23 @@ function PerformanceTab() {
       {/* Value creation bridge */}
       <div style={{ ...styles.card, marginBottom: 12 }}>
         <div style={{ marginBottom: 4 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{t('lp.bridge')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('lp.bridge')}</div>
+            {/* Only the endpoints come from the database. The schema holds no
+                entry/exit multiples, debt paydown history or FX rates, so the
+                attribution between them cannot be derived and is illustrative.
+                Badged like the forecast rather than left to read as analysis. */}
+            <span style={{ fontSize: 10, fontWeight: 700, background: '#B45309', color: 'white', padding: '2px 7px', borderRadius: 20 }}>{t('lp.illustrative')}</span>
+          </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('lp.bridgeSub')}</div>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
           {t('lp.bridgeDesc')}
         </p>
         <ValueBridge />
+        <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 12, lineHeight: 1.5, fontStyle: 'italic' }}>
+          {t('lp.illustrativeNote')}
+        </p>
       </div>
 
       {/* J-curve + allocation row */}
