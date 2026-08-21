@@ -24,6 +24,19 @@ const currencyOf = (sym: string) => (sym === '£' ? 'GBP' : sym === '€' ? 'EUR
 // because RLS withheld company_year_internals. Naming each field explicitly
 // here rather than spreading the record means anything added to the schema
 // later is excluded by default rather than leaking.
+
+// The quarterly rows carry a company_id UUID and no name. Passed through raw,
+// the assistant answers with "company ID 0569c146…" — accurate and useless to a
+// partner. Names the series and drops the identifier, which the model has no
+// use for anyway.
+function labelledQuarters(data: FundDataPayload, quarters: unknown[]) {
+  const rows = (quarters as Array<Record<string, unknown>>).map(q => {
+    const { company_id: _ignored, ...rest } = q
+    return rest
+  })
+  return { company: data.quartersCompany ?? 'the portfolio company', quarters: rows }
+}
+
 export function contextForRole(
   role: AskRole,
   data: FundDataPayload,
@@ -31,7 +44,7 @@ export function contextForRole(
 ): string {
   if (role === 'submit') {
     // The portfolio company sees only what it has filed. No fund, no siblings.
-    return JSON.stringify({ standardisedQuarters: quarters }, null, 2)
+    return JSON.stringify({ standardisedQuarters: labelledQuarters(data, quarters) }, null, 2)
   }
 
   const fund = data.fund
@@ -86,6 +99,6 @@ export function contextForRole(
       annualAccounts: c.data,
       note: c.commentary.en,
     })),
-    standardisedQuarters: quarters,
+    standardisedQuarters: labelledQuarters(data, quarters),
   }, null, 2)
 }
