@@ -10,6 +10,7 @@ import { useLang, loc } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
 import AskPanel from './AskPanel'
 import BottomTabBar from './BottomTabBar'
+import { buildLpReportPdf } from '@/lib/lpReportPdf'
 
 const LP_TABS = [
   {
@@ -31,6 +32,14 @@ const LP_TABS = [
     id: 'portfolio', label: 'Portfolio',
     icon:       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
     activeIcon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+  },
+  {
+    // Documents was absent from this bar AND from the desktop tab strip, so the
+    // section was reachable only through one link on the overview — on both
+    // layouts. It carries the report export now, so it needs to be findable.
+    id: 'documents', label: 'Docs',
+    icon:       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
+    activeIcon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
   },
   {
     id: 'settings', label: 'Settings',
@@ -89,7 +98,11 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {/* Desktop tabs */}
       {!isMobile && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
-          {(['account', 'ask', 'performance', 'portfolio', 'settings'] as Tab[]).map(id => {
+          {/* 'documents' was missing here while the mobile bottom bar carried it,
+              so the Documents section was unreachable on desktop except through
+              one link on the overview. Both layouts now list the same tabs, per
+              the standing parity rule. */}
+          {(['account', 'ask', 'performance', 'portfolio', 'documents', 'settings'] as Tab[]).map(id => {
             const isAsk = id === 'ask'
             const active = tab === id
             return (
@@ -124,7 +137,7 @@ export default function LPView({ quarters, currency, isMobile }: { quarters: Qua
       {tab === 'ask' && <AskTab isMobile={isMobile} />}
       {tab === 'performance' && <PerformanceTab />}
       {tab === 'portfolio' && <PortfolioTab selectedCompany={selectedCompany} setSelectedCompany={setSelectedCompany} />}
-      {tab === 'documents' && <DocumentsTab />}
+      {tab === 'documents' && <DocumentsTab currency={currency} />}
       {tab === 'settings' && <SettingsTab />}
 
       {/* Mobile bottom tab bar */}
@@ -1014,9 +1027,37 @@ function SettingsTab() {
   )
 }
 
-function DocumentsTab() {
-  const { documents, fund } = useFund()
+function DocumentsTab({ currency }: { currency: Currency }) {
+  const data = useFund()
+  const { documents, fund } = data
   const { t, lang } = useLang()
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  // Built in the browser from the payload already rendered on this page. No
+  // endpoint, no second assembly of the figures — and nothing an investor is
+  // not shown can appear, because it never arrived in this session.
+  const exportReport = async () => {
+    setExporting(true)
+    setExportError(null)
+    try {
+      const blob = await buildLpReportPdf(data, lang, currency)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `clavio-investor-report-${new Date().toISOString().slice(0, 10)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      // Revoked on the next tick rather than immediately: Safari cancels the
+      // download if the object URL disappears before it has started reading.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    } catch (e: unknown) {
+      setExportError(e instanceof Error ? e.message : 'Could not generate the report.')
+    } finally {
+      setExporting(false)
+    }
+  }
   const [query, setQuery] = useState('')
   const [openDoc, setOpenDoc] = useState<string | null>(null)
   const [summaries, setSummaries] = useState<Record<string, string>>({})
@@ -1076,6 +1117,29 @@ function DocumentsTab() {
       <div className="hide-mobile" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('lp.section.documents')}</h2>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{t('lp.documentsSub', { name: fund.name })}</p>
+      </div>
+
+      {/* Export the investor's own report. Same card at both breakpoints —
+          the panel below it is the only thing that changes shape. */}
+      <div style={{ ...styles.card, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 14, fontWeight: 650, color: 'var(--text)', marginBottom: 3 }}>{t('lp.export.title')}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('lp.export.body')}</div>
+          {exportError && (
+            <div style={{ fontSize: 12.5, color: '#B45309', marginTop: 8 }}>{exportError}</div>
+          )}
+        </div>
+        <button
+          onClick={exportReport}
+          disabled={exporting}
+          style={{
+            border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 13.5, fontWeight: 600,
+            background: 'var(--accent)', color: 'white', cursor: exporting ? 'default' : 'pointer',
+            opacity: exporting ? 0.65 : 1, flexShrink: 0,
+          }}
+        >
+          {exporting ? t('lp.export.working') : t('lp.export.button')}
+        </button>
       </div>
 
       {/* Search */}
