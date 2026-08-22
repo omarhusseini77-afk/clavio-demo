@@ -12,7 +12,14 @@ const sortQuarters = (data: Quarter[]) =>
     return parse(a.period) - parse(b.period)
   })
 
-export function useQuarters() {
+/**
+ * @param companyId Which company's series to fetch. Undefined or null means
+ *   "let the server decide", which is the default behaviour and what the GP
+ *   dashboard uses before a selection is made. Passing an id NARROWS within
+ *   what RLS already permits — it is not an access decision, and an id from
+ *   another fund comes back as an empty series rather than that fund's rows.
+ */
+export function useQuarters(companyId?: string | null) {
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
   // A failed fetch used to land as an empty array, which renders identically to
@@ -27,7 +34,8 @@ export function useQuarters() {
 
   const fetchQuarters = async () => {
     try {
-      const res = await fetch('/api/quarters')
+      const url = companyId ? `/api/quarters?company=${encodeURIComponent(companyId)}` : '/api/quarters'
+      const res = await fetch(url)
 
       // Parsed defensively rather than with a bare res.json(). An unhandled
       // server error returns an empty body, so res.json() rejects with
@@ -70,7 +78,10 @@ export function useQuarters() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quarters' }, fetchQuarters)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [supabase])
+    // companyId is a dependency: changing the selection has to refetch, and the
+    // realtime subscription has to be rebuilt against the new scope.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, companyId])
 
   const onSubmit = async (q: Omit<Quarter, 'id' | 'created_at'>) => {
     const res = await fetch('/api/quarters', {

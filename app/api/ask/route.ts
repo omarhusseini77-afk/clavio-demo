@@ -106,10 +106,24 @@ export async function POST(req: Request) {
     // while the screen beside it showed one, so it answered from a different
     // dataset than the visible figures — the worst failure available to a
     // grounded-answers product, because the answer still looks authoritative.
+    // The company the caller is LOOKING AT. Without this the assistant resolves
+    // the server default every time, so a partner who switched the dashboard to
+    // another company would get a confident answer about the previous one —
+    // the same dashboard/assistant drift lib/quartersScope.ts exists to end,
+    // reintroduced through the selector.
+    //
+    // An id only, and its own field rather than smuggled through `context`
+    // (which stays ignored). It is not an access decision: fetchScopedQuarters
+    // filters with .eq() under the caller's own session, so an id from another
+    // fund yields an empty series rather than that fund's figures.
+    const requestedCompany = typeof body.company === 'string' ? body.company : null
+
     let quarters: unknown[] = []
+    let quartersCompanyId: string | null = null
     if (role === 'gp' || role === 'submit') {
-      const scoped = await fetchScopedQuarters(supabase, profile)
+      const scoped = await fetchScopedQuarters(supabase, profile, requestedCompany)
       quarters = scoped.quarters
+      quartersCompanyId = scoped.companyId
     }
 
     // Same session, same route the views use, so the assistant is limited to
@@ -121,7 +135,17 @@ export async function POST(req: Request) {
     })
     const fundData: FundDataPayload = fundRes.ok
       ? await fundRes.json()
-      : { fund: null, position: null, companies: [], capitalEvents: [], forecast: null, documents: [], anomalies: [] }
+      : { fund: null, position: null, companies: [], capitalEvents: [], forecast: null, documents: [], anomalies: [], quartersCompany: null, quartersCompanies: [] }
+
+    // `quartersCompany` is the DEFAULT company's name. The series above may be
+    // a different one, and contextForRole uses that name to label the rows —
+    // so without this the model would be handed Halcyon's figures under Marlow
+    // & Reed's name and would cite them that way. Corrected from the same list
+    // the selector is built from, and left alone when nothing was requested.
+    if (quartersCompanyId) {
+      const match = (fundData.quartersCompanies ?? []).find(c => c.id === quartersCompanyId)
+      if (match) fundData.quartersCompany = match.name
+    }
 
     // Prompt caching. The data block is the same bytes on every question in a
     // session — around 9k tokens for a GP, 3.6k for an LP — and re-sending it

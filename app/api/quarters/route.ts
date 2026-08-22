@@ -14,8 +14,16 @@ import { composeSubmissionNotifications } from '@/lib/composeNotifications'
 // headline figures. RLS bounds this to the caller's fund; the scoping below is
 // about coherence, not access.
 //
-// Default preserves existing behaviour: a submitter gets its own company, and a
-// GP gets whichever company submitted most recently.
+// Default: a submitter gets its own company, and a GP gets whichever company
+// has filed the MOST quarters they can see — not the most recent one. An
+// earlier version did sort by recency, via `id`, and bulk inserts made it
+// reassign the dashboard to whichever company happened to be backfilled last.
+// See resolveQuartersCompany, which is the authority on this.
+//
+// `?company=` narrows to one company WITHIN what RLS already allows. It is not
+// an access decision: the query underneath is .eq() under the caller's own
+// session, so an id from another fund returns zero rows rather than that
+// fund's data.
 export async function GET(request: Request) {
   const startedAt = Date.now()
   const supabase = createClient()

@@ -57,7 +57,10 @@ function GPPageInner() {
   const [isMobile, setIsMobile] = useState(false)
   const [gpSection, setGpSection] = useState<GpSection>('overview')
   const [showNotifs, setShowNotifs] = useState(false)
-  const { quarters, loading, error, onDelete, onUpdate } = useQuarters()
+  // null until the partner chooses, so the first load resolves exactly as it
+  // does today and nothing about the default changes.
+  const [companyId, setCompanyId] = useState<string | null>(null)
+  const { quarters, loading, error, onDelete, onUpdate } = useQuarters(companyId)
   const { data: fundData } = useFundData()
 
   // Derived from real filings and from the signals lib/cfoSignals.ts actually
@@ -234,6 +237,8 @@ function GPPageInner() {
               onUpdate={onUpdate}
               currency={currency}
               mobileSection={isMobile ? gpSection : undefined}
+              selectedCompanyId={companyId}
+              onSelectCompany={setCompanyId}
             />}
             </>
           )}

@@ -34,9 +34,12 @@ type Props = {
   onUpdate: (id: number, q: Omit<Quarter, 'id' | 'created_at'>) => Promise<boolean>
   currency: Currency
   mobileSection?: 'overview' | 'data' | 'ask'
+  /** Selected company, or null while the server default is in force. */
+  selectedCompanyId?: string | null
+  onSelectCompany?: (id: string) => void
 }
 
-export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection }: Props) {
+export default function GPView({ quarters, onDelete, onUpdate, currency, mobileSection, selectedCompanyId, onSelectCompany }: Props) {
   const { t, lang } = useLang()
   // The anomaly feed is fund data now, not a constant. Empty until it loads,
   // and empty for anyone RLS does not show anomalies to.
@@ -47,8 +50,19 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
   // the two sides cannot describe different things about the same company.
   const signals = (fundData?.anomalies ?? []).filter(a => a.isSignal)
   const anomalies = (fundData?.anomalies ?? []).filter(a => a.computed)
+  // Every company the caller can see quarters for. RLS decided this list on
+  // the server — a company from another fund was never in the payload.
+  const companyOptions = fundData?.quartersCompanies ?? []
   // /api/quarters scopes to one company; name it so the figures are attributed.
-  const submittingCompany = fundData?.quartersCompany ?? null
+  // Follows the SELECTION when there is one, and falls back to the server's
+  // default name before the first choice is made. Reading quartersCompany
+  // unconditionally would leave the header naming the default company while
+  // another company's figures were on screen.
+  const selectedCompany = companyOptions.find(c => c.id === selectedCompanyId) ?? null
+  // The option matching whatever the server resolved by default, so the control
+  // shows it as chosen without a parameter having been sent.
+  const defaultOptionId = companyOptions.find(c => c.name === fundData?.quartersCompany)?.id ?? ''
+  const submittingCompany = selectedCompany?.name ?? fundData?.quartersCompany ?? null
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<Partial<Quarter>>({})
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -205,12 +219,43 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
       {showOverview && (
         <>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        {/* Wraps: at the mobile breakpoint the title, the selector and the
+            period do not fit on one line, and without this the period breaks
+            a word at a time down the right edge. */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>{t('gp.dashboard')}</h1>
           {/* Names the company these figures belong to. The series is scoped to
               one company, and an unlabelled "Partner Dashboard" over a
               multi-company fund reads as fund-wide when it is not. */}
-          {submittingCompany && (
+          {/* A select rather than a tab strip: six companies in the fund would
+              wrap badly on a phone and need a different shape at each
+              breakpoint, where one control behaves correctly at both and
+              becomes the native picker on mobile. */}
+          {companyOptions.length > 1 && onSelectCompany ? (
+            <select
+              // Before a choice is made the fetch runs with no parameter, but
+              // the control still has to SHOW the company the server picked —
+              // otherwise the default appears twice, once as a placeholder and
+              // once as a real option. Resolved by name against the same list.
+              value={selectedCompanyId ?? defaultOptionId}
+              onChange={e => onSelectCompany(e.target.value)}
+              aria-label={t('gp.companySelector')}
+              style={{
+                fontSize: 13, fontWeight: 600, color: 'var(--text)',
+                background: 'var(--white)', border: '1px solid var(--border)',
+                borderRadius: 8, padding: '5px 10px', cursor: 'pointer', maxWidth: 260,
+              }}
+            >
+              {/* Only if the server's default could not be matched to an
+                  option, so the control never renders blank. */}
+              {!selectedCompanyId && !defaultOptionId && <option value="">{submittingCompany ?? '—'}</option>}
+              {companyOptions.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name} · {c.quartersFiled}
+                </option>
+              ))}
+            </select>
+          ) : submittingCompany && (
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{submittingCompany}</span>
           )}
           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('gp.latest', { period: latest.period })}</span>
@@ -402,6 +447,10 @@ export default function GPView({ quarters, onDelete, onUpdate, currency, mobileS
           <AskPanel
             isMobile={mobileSection === 'ask'}
             context={askContext}
+            // Same company the chart and the table are showing. Without this
+            // the assistant answers from the server default while the screen
+            // shows something else.
+            companyId={selectedCompanyId ?? null}
             connectedLabel={t('ask.connected')}
             connectedSub={t('ask.gp.sub', { n: quarters.length, period: latest.period })}
             introTitle={t('ask.gp.introTitle')}

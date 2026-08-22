@@ -110,9 +110,20 @@ export interface Anomaly {
   actions: Loc[]
 }
 
+export interface QuartersCompany {
+  id: string
+  name: string
+  quartersFiled: number
+  latestPeriod: string | null
+}
+
 export interface FundDataPayload {
-  /** Company whose quarters /api/quarters returns; the dashboard is scoped to it. */
+  /** Company whose quarters /api/quarters returns by DEFAULT; the dashboard
+   *  header falls back to this before a selection is made. */
   quartersCompany: string | null
+  /** Every company the caller can see quarters for — the selector's options.
+   *  Empty for an LP, whose session reads no quarters at all. */
+  quartersCompanies: QuartersCompany[]
   fund: Fund | null
   position: LpPosition | null
   companies: Company[]

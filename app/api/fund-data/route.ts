@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Anomaly, FundDataPayload } from '@/lib/fundTypes'
 import type { Quarter } from '@/lib/supabase'
 import { cfoSignals } from '@/lib/cfoSignals'
+import { periodSeq } from '@/lib/quartersScope'
 import { gpSignalCopy } from '@/lib/signalText'
 
 // Everything the LP and GP views render, read under the caller's own session.
@@ -162,6 +163,36 @@ export async function GET() {
     })),
 
     anomalies: buildAnomalies(anomaliesRes.data ?? [], allQuartersRes.data ?? []),
+
+    // The selector's options, derived from the all-quarters read this route
+    // already performs for the computed signals — no extra query. Only
+    // companies that have actually filed: a company with nothing filed cannot
+    // be a dashboard scope, and offering it would be a choice that leads to an
+    // empty screen.
+    //
+    // RLS is what makes this list safe, not the filtering here: allQuartersRes
+    // came back under the caller's own session, so a company in another fund
+    // was never in it to be listed.
+    quartersCompanies: (() => {
+      const rows = (allQuartersRes.data ?? []) as Array<Record<string, unknown>>
+      const byId = new Map<string, { id: string; name: string; quartersFiled: number; latestPeriod: string | null }>()
+      for (const r of rows) {
+        const id = r.company_id as string | null
+        if (!id) continue
+        const rel = r.companies
+        const name = Array.isArray(rel)
+          ? (rel[0] as { name?: string } | undefined)?.name ?? ''
+          : (rel as { name?: string } | null)?.name ?? ''
+        const cur = byId.get(id) ?? { id, name, quartersFiled: 0, latestPeriod: null }
+        cur.quartersFiled++
+        const period = r.period as string
+        if (!cur.latestPeriod || periodSeq(period) > periodSeq(cur.latestPeriod)) {
+          cur.latestPeriod = period
+        }
+        byId.set(id, cur)
+      }
+      return Array.from(byId.values()).sort((a, b) => b.quartersFiled - a.quartersFiled || a.name.localeCompare(b.name))
+    })(),
 
     quartersCompany: (() => {
       const rows = quartersCompanyRes.data ?? []

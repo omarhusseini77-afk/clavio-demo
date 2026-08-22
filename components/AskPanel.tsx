@@ -14,10 +14,13 @@ interface Props {
   // Optional dataset the assistant should reason over. When omitted, the
   // server falls back to the default fund context.
   context?: unknown
+  /** Company the caller is looking at. Forwarded so the assistant answers about
+   *  the same company the screen shows — an id only, resolved server-side. */
+  companyId?: string | null
   isMobile?: boolean
 }
 
-export default function AskPanel({ suggestions, introTitle, introBody, connectedLabel, connectedSub, placeholder, context, isMobile }: Props) {
+export default function AskPanel({ suggestions, introTitle, introBody, connectedLabel, connectedSub, placeholder, context, companyId, isMobile }: Props) {
   const { t, lang } = useLang()
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState('')
@@ -41,7 +44,7 @@ export default function AskPanel({ suggestions, introTitle, introBody, connected
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, messages: history, context, lang }),
+        body: JSON.stringify({ question: q, messages: history, context, lang, company: companyId ?? undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
