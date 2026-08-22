@@ -42,10 +42,28 @@ const filenames = (docs ?? []).flatMap(d => [d.storage_path].filter(Boolean))
 const emails = ['gp@clavio.app', 'lp@clavio.app', 'submit@clavio.app', 'submit.atelier@clavio.app']
 const questionish = ['why did', 'cash fall', 'What is my total return', 'gross margin']
 
+// `id` and `created_at` are excluded from the FIGURE scan, and only from that.
+// A bigserial and a microsecond timestamp are structurally incapable of
+// carrying a leaked figure, but their digit runs collide with one constantly —
+// "...984173+00:00" contains 4173, which is also an interest value in a
+// quarter row. Left in, the scan reports a leak that is not one, and a test
+// that cries wolf gets ignored, which is worse than not having it.
+//
+// They remain in the text scan below: if a filename, address or question
+// fragment ever appeared in either, that WOULD be real.
+const NUMERIC_NOISE = new Set(['id', 'created_at'])
+
 function scan(rows) {
   const hits = []
+  const textBlob = rows.map(r => Object.entries(r)
+    .filter(([k]) => !NUMERIC_NOISE.has(k))
+    .map(([, v]) => (v === null ? '' : String(v))).join(' ')).join('\n')
   const blob = rows.map(r => Object.values(r).map(v => (v === null ? '' : String(v))).join(' ')).join('\n')
-  for (const f of figures)   if (blob.includes(f)) hits.push(`figure ${f}`)
+  // Figures matched as whole numbers, not substrings: 4173 inside 984173 is a
+  // coincidence, 4173 standing alone would not be.
+  for (const f of figures) {
+    if (new RegExp(`(^|[^0-9])${f}([^0-9]|$)`).test(textBlob)) hits.push(`figure ${f}`)
+  }
   for (const f of filenames) if (blob.includes(f)) hits.push(`filename ${f}`)
   for (const e of emails)    if (blob.includes(e)) hits.push(`email ${e}`)
   for (const q of questionish) if (blob.toLowerCase().includes(q.toLowerCase())) hits.push(`question text "${q}"`)
